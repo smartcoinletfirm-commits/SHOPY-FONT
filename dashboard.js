@@ -1,140 +1,95 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101d36">
-  <title>SHOPY FONT — The World Connected Through Opportunity</title>
-  <meta name="description" content="A connected marketplace for products, services, campaigns, learning and opportunity.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script defer src="config.js"></script>
-  <script defer src="auth.js"></script>
-  <script defer src="dashboard.js"></script>
-  <script defer src="marketplace.js"></script>
-  <script defer src="referrals.js"></script>
-  <script defer src="admin.js"></script>
-  <script defer src="app.js"></script>
-</head>
-<body>
-  <div class="announcement">THE WORLD CONNECTED THROUGH OPPORTUNITY <span>✦</span> SHOP • MARKET • LEARN • GROW</div>
-  <header class="topbar">
-    <a class="brand" href="#" data-view="home"><span class="brand-mark">SF</span><span>SHOPY <b>FONT</b><small>GLOBAL OPPORTUNITY PLATFORM</small></span></a>
-    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
-    <nav id="mainNav">
-      <a href="#marketplace" data-view="marketplace">Marketplace</a>
-      <a href="#opportunities" data-view="opportunities">Opportunities</a>
-      <a href="#scholarbridge" data-view="scholarbridge">ScholarBridge</a>
-      <a href="#dashboard" data-view="dashboard" class="signed-only hidden">My dashboard</a>
-      <button class="btn btn-outline" data-action="login">Log in</button>
-      <button class="btn btn-gold" data-action="register">Join now</button>
-      <button class="btn btn-outline signed-only hidden" data-action="logout">Log out</button>
-    </nav>
-  </header>
 
-  <main>
-    <section id="homeView" class="view active">
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">ONE PLATFORM. GLOBAL POSSIBILITIES.</p>
-          <h1>The world connected through <em>opportunity.</em></h1>
-          <p class="hero-lead">Discover genuine products, promote approved listings, find opportunities, build skills and grow your digital presence in one connected marketplace.</p>
-          <div class="hero-actions"><button class="btn btn-gold btn-large" data-action="register">Create your account <span>→</span></button><button class="btn btn-light-outline btn-large" data-view="marketplace">Explore marketplace</button></div>
-          <div class="hero-proof"><span>🌍 Global reach</span><span>🔒 Account security</span><span>🤝 Connected opportunity</span></div>
-        </div>
-        <div class="hero-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-          <div class="hero-card hero-card-main"><span class="card-kicker">YOUR NEXT OPPORTUNITY</span><div class="globe">◎</div><h3>Connect beyond borders.</h3><p>Products · Services · Skills · Growth</p></div>
-          <div class="floating-tag tag-one">✦ Global marketplace</div><div class="floating-tag tag-two">↗ Grow your reach</div>
-        </div>
-      </section>
-      <section class="section intro-section"><div><p class="eyebrow">A CONNECTED DIGITAL WORLD</p><h2>More than a marketplace.</h2></div><p class="section-intro">SHOPY FONT brings commerce, advertising, affiliate promotion, freelance services and learning together. Explore opportunities at your pace and always review the terms before participating.</p></section>
-      <section class="feature-grid">
-        <article class="feature-card"><span class="feature-icon">▦</span><h3>Marketplace</h3><p>Browse approved product listings from sellers and connected suppliers.</p><button class="text-link" data-view="marketplace">Explore products →</button></article>
-        <article class="feature-card"><span class="feature-icon">↗</span><h3>Affiliate & campaigns</h3><p>Share approved promotions and track referral activity transparently.</p><button class="text-link" data-view="opportunities">Explore opportunities →</button></article>
-        <article class="feature-card"><span class="feature-icon">✎</span><h3>Jobs & freelance</h3><p>Discover work listings and services. Review requirements before applying.</p><button class="text-link" data-view="opportunities">Find opportunities →</button></article>
-        <article class="feature-card"><span class="feature-icon">⌂</span><h3>ScholarBridge</h3><p>A dedicated academic-writing and learning department within SHOPY FONT.</p><button class="text-link" data-view="scholarbridge">Visit department →</button></article>
-      </section>
-      <section class="cta-band"><div><p class="eyebrow">START CONNECTING TODAY</p><h2>Your next step starts here.</h2><p>Create an account to access your member workspace.</p></div><button class="btn btn-gold btn-large" data-action="register">Get started →</button></section>
-    </section>
+window.SF = window.SF || {};
 
-    <section id="authView" class="view">
-      <div class="auth-shell">
-        <div class="auth-aside"><span class="brand-mark">SF</span><p class="eyebrow">WELCOME TO SHOPY FONT</p><h2>Opportunity has no borders.</h2><p>Join a connected community for commerce, promotion, services and learning.</p></div>
-        <div class="auth-panel">
-          <div class="auth-tabs"><button class="auth-tab active" data-auth-tab="login">Log in</button><button class="auth-tab" data-auth-tab="register">Create account</button></div>
-          <form id="loginForm" class="auth-form"><h2>Welcome back</h2><p class="muted">Log in to continue to your workspace.</p>
-            <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
-            <label>Password<input name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password"></label>
-            <button class="btn btn-gold btn-full" type="submit">Log in</button>
-          </form>
-          <form id="registerForm" class="auth-form hidden"><h2>Create your account</h2><p class="muted">A few details to get you started.</p>
-            <label>Full name<input name="full_name" required maxlength="100" placeholder="Your full name"></label>
-            <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
-            <label>Country<input name="country" required maxlength="80" placeholder="Your country"></label>
-            <label>Password<input name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters"></label>
-            <button class="btn btn-gold btn-full" type="submit">Create account</button>
-            <small class="muted">By joining, you agree to follow platform rules and applicable laws.</small>
-          </form>
-          <p id="authMessage" class="form-message" role="status"></p>
-        </div>
-      </div>
-    </section>
+SF.loadDashboard = async () => {
+  if (!SF.currentUser) {
+    throw new Error("Please sign in to continue.");
+  }
 
-    <section id="marketplaceView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">DISCOVER & CONNECT</p><h1>Marketplace</h1><p>Explore genuine products submitted by sellers or connected suppliers and approved for listing.</p></div>
-      <div class="market-tools"><input id="productSearch" type="search" placeholder="Search products..." aria-label="Search products"><select id="productCategory"><option value="">All categories</option><option>Electronics</option><option>Fashion</option><option>Home & Furniture</option><option>Beauty</option><option>Sports</option><option>Other</option></select></div>
-      <div id="productGrid" class="product-grid"><div class="empty-state">Loading approved listings…</div></div>
-      <div class="seller-panel"><div><p class="eyebrow">SELLER SPACE</p><h2>Have a product to list?</h2><p>Submit genuine product details for review. Listings appear publicly only after approval.</p></div><button class="btn btn-gold" data-action="sell-product">Submit a product</button></div>
-      <form id="productForm" class="form-card hidden">
-        <h3>Submit product for review</h3>
-        <div class="form-grid"><label>Product name<input name="title" required maxlength="150"></label><label>Category<select name="category"><option>Electronics</option><option>Fashion</option><option>Home & Furniture</option><option>Beauty</option><option>Sports</option><option>Other</option></select></label><label>Price (USD)<input name="price_usd" type="number" min="0.01" step="0.01" required></label><label>Image URL<input name="image_url" type="url" placeholder="https://..."></label><label class="span-2">Product description<textarea name="description" rows="3" required maxlength="1500"></textarea></label><label>Seller / supplier reference<input name="supplier_reference" maxlength="150" placeholder="Optional reference"></label></div>
-        <p class="notice">Member submissions are always marked as seller submissions. Only an administrator can approve a supplier-source listing.</p>
-        <button class="btn btn-gold" type="submit">Submit for approval</button><button class="btn btn-quiet" type="button" data-action="cancel-product">Cancel</button><p id="productFormMessage" class="form-message"></p>
-      </form>
-    </section>
+  const db = SF.getClient();
+  const profile = SF.profile || await SF.loadProfile();
 
-    <section id="opportunitiesView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">BUILD YOUR NEXT CHAPTER</p><h1>Opportunities</h1><p>Explore work, services, advertising campaigns and affiliate promotions.</p></div>
-      <div class="opportunity-grid">
-        <article class="opportunity-card"><span>⌑</span><h2>Jobs</h2><p>Browse opportunities posted by businesses. Confirm the employer and terms before applying.</p><button class="btn btn-outline" data-action="show-coming">View job listings</button></article>
-        <article class="opportunity-card"><span>✧</span><h2>Freelance services</h2><p>Showcase your skills or find independent professionals for your projects.</p><button class="btn btn-outline" data-action="show-coming">Explore services</button></article>
-        <article class="opportunity-card"><span>◉</span><h2>Advertising campaigns</h2><p>Discover business campaigns and review eligibility, deliverables and payment terms.</p><button class="btn btn-outline" data-action="show-coming">Explore campaigns</button></article>
-        <article class="opportunity-card"><span>↗</span><h2>Affiliate promotions</h2><p>Share approved listings using your unique referral link. Verified activity is tracked.</p><button class="btn btn-gold" data-view="referrals">My referral centre</button></article>
-      </div>
-      <p class="notice">Opportunity listings and payouts must be verified. SHOPY FONT does not guarantee income or employment.</p>
-    </section>
+  if (!profile) {
+    throw new Error("Your member profile could not be loaded.");
+  }
 
-    <section id="scholarbridgeView" class="view page-view">
-      <div class="scholar-hero"><p class="eyebrow">AN ACADEMIC DEPARTMENT OF SHOPY FONT</p><h1>Scholar<span>Bridge</span></h1><p>Learn, research and develop academic-writing skills with responsible study support.</p><button class="btn btn-gold" data-action="show-coming">Explore learning resources</button></div>
-      <div class="feature-grid scholar-features"><article class="feature-card"><h3>Academic writing</h3><p>Learn planning, structure, referencing and clear academic communication.</p></article><article class="feature-card"><h3>Study resources</h3><p>Build your understanding with guided learning materials and practice.</p></article><article class="feature-card"><h3>Responsible support</h3><p>Promote original work, proper citations and academic integrity.</p></article></div>
-    </section>
+  const put = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent =
+        value == null || value === "" ? "—" : String(value);
+    }
+  };
 
-    <section id="dashboardView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">MEMBER WORKSPACE</p><h1>My dashboard</h1><p id="welcomeName">Welcome back.</p></div>
-      <div class="stats-grid"><article class="stat-card"><span>Account status</span><strong id="memberStatus">Member</strong></article><article class="stat-card"><span>Referral code</span><strong id="memberCode">—</strong></article><article class="stat-card"><span>Confirmed referrals</span><strong id="verifiedReferrals">0</strong></article><article class="stat-card"><span>Available wallet</span><strong id="walletBalance">KES 0.00</strong></article></div>
-      <div class="dashboard-grid"><article class="panel"><div class="panel-heading"><h2>Account overview</h2><span class="status-pill">Connected</span></div><p id="memberEmail" class="muted"></p><p id="memberCountry" class="muted"></p><p id="walletReserved" class="muted">Reserved: —</p><button class="btn btn-outline" data-view="referrals">Open referral centre</button></article><article class="panel"><div class="panel-heading"><h2>Recent activity</h2></div><div id="activityList" class="activity-list"><p class="muted">No recent activity to display.</p></div></article></div>
-    </section>
+  const firstName = String(profile.full_name || "Member")
+    .trim()
+    .split(/\s+/)[0];
 
-    <section id="referralsView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">GROW YOUR NETWORK</p><h1>Referral centre</h1><p>Share your unique link and track registrations and eligible referrals.</p></div>
-      <div class="panel referral-panel"><p class="muted">Your personal referral link</p><div class="copy-row"><input id="referralLink" readonly value="Log in to view your link"><button class="btn btn-gold" data-action="copy-referral">Copy link</button></div>
-        <div class="stats-grid compact"><article class="stat-card"><span>Total sign-ups</span><strong id="refTotal">0</strong></article><article class="stat-card"><span>Eligible / rewarded</span><strong id="refVerified">0</strong></article><article class="stat-card"><span>Pending</span><strong id="refPending">0</strong></article></div>
-        <p class="notice">Referral counts come from the existing platform referral records. Commissions are not displayed until the payment, currency-conversion and wallet-posting rules have been confirmed and implemented.</p>
-      </div>
-    </section>
+  put("welcomeName", "Welcome back, " + firstName + ".");
+  put("memberStatus", profile.account_status || "awaiting_activation");
+  put("memberCode", profile.referral_code || "—");
+  put("memberEmail", SF.currentUser.email || profile.email || "");
+  put("memberCountry", profile.country || "");
+  put("walletBalance", "Not available");
+  put(
+    "walletReserved",
+    "Wallet figures will appear when wallet posting is connected."
+  );
 
-    <section id="adminView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">RESTRICTED WORKSPACE</p><h1>Administration</h1><p>Review marketplace submissions, existing payment submissions and product-sale records.</p></div>
-      <div class="admin-tabs"><button class="btn btn-outline" data-admin-tab="products">Products</button><button class="btn btn-outline" data-admin-tab="payments">Payments</button><button class="btn btn-outline" data-admin-tab="sales">Product sales</button></div>
-      <div id="adminContent" class="panel"><p class="muted">Checking administrator access…</p></div>
-    </section>
-  </main>
+  const { count, error: referralError } = await db
+    .from("referrals")
+    .select("id", { count: "exact", head: true })
+    .eq("referrer_id", SF.currentUser.id);
 
-  <footer class="footer"><a class="brand footer-brand" href="#" data-view="home"><span class="brand-mark">SF</span><span>SHOPY <b>FONT</b><small>THE WORLD CONNECTED THROUGH OPPORTUNITY</small></span></a><p>© <span id="year"></span> SHOPY FONT. Use the platform responsibly.</p><div><a href="#" data-view="scholarbridge">ScholarBridge</a><a href="#" data-view="marketplace">Marketplace</a></div></footer>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-</body>
-</html>
-  
+  if (!referralError) {
+    put("verifiedReferrals", count || 0);
+  }
+
+  const activity = document.getElementById("activityList");
+
+  if (!activity) return;
+
+  activity.innerHTML =
+    '<p class="muted">Loading your account activity…</p>';
+
+  const { data, error } = await db
+    .from("activation_requests")
+    .select(
+      "id,membership_level,status,created_at,assigned_position_number,submitted_position_number"
+    )
+    .eq("user_id", SF.currentUser.id)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    activity.innerHTML =
+      '<p class="muted">Account activity is temporarily unavailable.</p>';
+    return;
+  }
+
+  if (!data || !data.length) {
+    activity.innerHTML =
+      '<p class="muted">No activation request found.</p>';
+    return;
+  }
+
+  const request = data[0];
+
+  activity.innerHTML = `
+    <div class="activity-item">
+      <strong>Membership activation · Level ${
+        SF.escapeHtml(request.membership_level)
+      }</strong>
+      <p class="muted">Status: ${
+        SF.escapeHtml(request.status || "requested")
+      }</p>
+      <p class="muted">${
+        request.submitted_position_number
+          ? "Position submitted"
+          : request.assigned_position_number
+            ? "Position issued"
+            : "Awaiting position"
+      }</p>
+    </div>
+  `;
+};
