@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101d36">
   <title>SHOPY FONT — The World Connected Through Opportunity</title>
-  <meta name="description" content="A global marketplace for products, services, campaigns, learning and opportunity.">
+  <meta name="description" content="A connected marketplace for products, services, campaigns, learning and opportunity.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -41,20 +41,16 @@
         <div class="hero-copy">
           <p class="eyebrow">ONE PLATFORM. GLOBAL POSSIBILITIES.</p>
           <h1>The world connected through <em>opportunity.</em></h1>
-          <p class="hero-lead">Discover products, promote trusted businesses, find work, build skills and grow your digital presence in one connected marketplace.</p>
+          <p class="hero-lead">Discover genuine products, promote approved listings, find opportunities, build skills and grow your digital presence in one connected marketplace.</p>
           <div class="hero-actions"><button class="btn btn-gold btn-large" data-action="register">Create your account <span>→</span></button><button class="btn btn-light-outline btn-large" data-view="marketplace">Explore marketplace</button></div>
           <div class="hero-proof"><span>🌍 Global reach</span><span>🔒 Account security</span><span>🤝 Connected opportunity</span></div>
         </div>
-        <div class="hero-art">
-          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="hero-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
           <div class="hero-card hero-card-main"><span class="card-kicker">YOUR NEXT OPPORTUNITY</span><div class="globe">◎</div><h3>Connect beyond borders.</h3><p>Products · Services · Skills · Growth</p></div>
           <div class="floating-tag tag-one">✦ Global marketplace</div><div class="floating-tag tag-two">↗ Grow your reach</div>
         </div>
       </section>
-      <section class="section intro-section">
-        <div><p class="eyebrow">A CONNECTED DIGITAL WORLD</p><h2>More than a marketplace.</h2></div>
-        <p class="section-intro">SHOPY FONT brings commerce, advertising, affiliate promotion, freelance services and learning together. Explore opportunities at your pace and always review the terms before participating.</p>
-      </section>
+      <section class="section intro-section"><div><p class="eyebrow">A CONNECTED DIGITAL WORLD</p><h2>More than a marketplace.</h2></div><p class="section-intro">SHOPY FONT brings commerce, advertising, affiliate promotion, freelance services and learning together. Explore opportunities at your pace and always review the terms before participating.</p></section>
       <section class="feature-grid">
         <article class="feature-card"><span class="feature-icon">▦</span><h3>Marketplace</h3><p>Browse approved product listings from sellers and connected suppliers.</p><button class="text-link" data-view="marketplace">Explore products →</button></article>
         <article class="feature-card"><span class="feature-icon">↗</span><h3>Affiliate & campaigns</h3><p>Share approved promotions and track referral activity transparently.</p><button class="text-link" data-view="opportunities">Explore opportunities →</button></article>
@@ -69,14 +65,12 @@
         <div class="auth-aside"><span class="brand-mark">SF</span><p class="eyebrow">WELCOME TO SHOPY FONT</p><h2>Opportunity has no borders.</h2><p>Join a connected community for commerce, promotion, services and learning.</p></div>
         <div class="auth-panel">
           <div class="auth-tabs"><button class="auth-tab active" data-auth-tab="login">Log in</button><button class="auth-tab" data-auth-tab="register">Create account</button></div>
-          <form id="loginForm" class="auth-form">
-            <h2>Welcome back</h2><p class="muted">Log in to continue to your workspace.</p>
+          <form id="loginForm" class="auth-form"><h2>Welcome back</h2><p class="muted">Log in to continue to your workspace.</p>
             <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
             <label>Password<input name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password"></label>
             <button class="btn btn-gold btn-full" type="submit">Log in</button>
           </form>
-          <form id="registerForm" class="auth-form hidden">
-            <h2>Create your account</h2><p class="muted">A few details to get you started.</p>
+          <form id="registerForm" class="auth-form hidden"><h2>Create your account</h2><p class="muted">A few details to get you started.</p>
             <label>Full name<input name="full_name" required maxlength="100" placeholder="Your full name"></label>
             <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
             <label>Country<input name="country" required maxlength="80" placeholder="Your country"></label>
@@ -90,13 +84,14 @@
     </section>
 
     <section id="marketplaceView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">DISCOVER & CONNECT</p><h1>Marketplace</h1><p>Explore products submitted by sellers and approved for listing.</p></div>
+      <div class="page-heading"><p class="eyebrow">DISCOVER & CONNECT</p><h1>Marketplace</h1><p>Explore genuine products submitted by sellers or connected suppliers and approved for listing.</p></div>
       <div class="market-tools"><input id="productSearch" type="search" placeholder="Search products..." aria-label="Search products"><select id="productCategory"><option value="">All categories</option><option>Electronics</option><option>Fashion</option><option>Home & Furniture</option><option>Beauty</option><option>Sports</option><option>Other</option></select></div>
       <div id="productGrid" class="product-grid"><div class="empty-state">Loading approved listings…</div></div>
       <div class="seller-panel"><div><p class="eyebrow">SELLER SPACE</p><h2>Have a product to list?</h2><p>Submit genuine product details for review. Listings appear publicly only after approval.</p></div><button class="btn btn-gold" data-action="sell-product">Submit a product</button></div>
       <form id="productForm" class="form-card hidden">
         <h3>Submit product for review</h3>
-        <div class="form-grid"><label>Product name<input name="title" required maxlength="150"></label><label>Category<select name="category"><option>Electronics</option><option>Fashion</option><option>Home & Furniture</option><option>Beauty</option><option>Sports</option><option>Other</option></select></label><label>Price (USD)<input name="price_usd" type="number" min="0.01" step="0.01" required></label><label>Image URL<input name="image_url" type="url" placeholder="https://..."></label><label class="span-2">Product description<textarea name="description" rows="3" required maxlength="1500"></textarea></label><label>Seller / supplier reference<input name="supplier_reference" maxlength="150" placeholder="Supplier or seller name"></label><label>Product source<select name="source_type"><option value="seller_submission">My own listing</option><option value="authorized_supplier">Authorized supplier</option></select></label></div>
+        <div class="form-grid"><label>Product name<input name="title" required maxlength="150"></label><label>Category<select name="category"><option>Electronics</option><option>Fashion</option><option>Home & Furniture</option><option>Beauty</option><option>Sports</option><option>Other</option></select></label><label>Price (USD)<input name="price_usd" type="number" min="0.01" step="0.01" required></label><label>Image URL<input name="image_url" type="url" placeholder="https://..."></label><label class="span-2">Product description<textarea name="description" rows="3" required maxlength="1500"></textarea></label><label>Seller / supplier reference<input name="supplier_reference" maxlength="150" placeholder="Optional reference"></label></div>
+        <p class="notice">Member submissions are always marked as seller submissions. Only an administrator can approve a supplier-source listing.</p>
         <button class="btn btn-gold" type="submit">Submit for approval</button><button class="btn btn-quiet" type="button" data-action="cancel-product">Cancel</button><p id="productFormMessage" class="form-message"></p>
       </form>
     </section>
@@ -119,18 +114,21 @@
 
     <section id="dashboardView" class="view page-view">
       <div class="page-heading"><p class="eyebrow">MEMBER WORKSPACE</p><h1>My dashboard</h1><p id="welcomeName">Welcome back.</p></div>
-      <div class="stats-grid"><article class="stat-card"><span>Account status</span><strong id="memberStatus">Member</strong></article><article class="stat-card"><span>Referral code</span><strong id="memberCode">—</strong></article><article class="stat-card"><span>Verified referrals</span><strong id="verifiedReferrals">0</strong></article><article class="stat-card"><span>Wallet ledger</span><strong id="walletBalance">USD 0.00</strong></article></div>
-      <div class="dashboard-grid"><article class="panel"><div class="panel-heading"><h2>Account overview</h2><span class="status-pill">Connected</span></div><p id="memberEmail" class="muted"></p><p id="memberCountry" class="muted"></p><button class="btn btn-outline" data-view="referrals">Open referral centre</button></article><article class="panel"><div class="panel-heading"><h2>Recent activity</h2></div><div id="activityList" class="activity-list"><p class="muted">No recent activity to display.</p></div></article></div>
+      <div class="stats-grid"><article class="stat-card"><span>Account status</span><strong id="memberStatus">Member</strong></article><article class="stat-card"><span>Referral code</span><strong id="memberCode">—</strong></article><article class="stat-card"><span>Confirmed referrals</span><strong id="verifiedReferrals">0</strong></article><article class="stat-card"><span>Available wallet</span><strong id="walletBalance">KES 0.00</strong></article></div>
+      <div class="dashboard-grid"><article class="panel"><div class="panel-heading"><h2>Account overview</h2><span class="status-pill">Connected</span></div><p id="memberEmail" class="muted"></p><p id="memberCountry" class="muted"></p><p id="walletReserved" class="muted">Reserved: —</p><button class="btn btn-outline" data-view="referrals">Open referral centre</button></article><article class="panel"><div class="panel-heading"><h2>Recent activity</h2></div><div id="activityList" class="activity-list"><p class="muted">No recent activity to display.</p></div></article></div>
     </section>
 
     <section id="referralsView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">GROW YOUR NETWORK</p><h1>Referral centre</h1><p>Share your unique link and track sign-ups and verified referrals.</p></div>
-      <div class="panel referral-panel"><p class="muted">Your personal referral link</p><div class="copy-row"><input id="referralLink" readonly value="Log in to view your link"><button class="btn btn-gold" data-action="copy-referral">Copy link</button></div><div class="stats-grid compact"><article class="stat-card"><span>Total sign-ups</span><strong id="refTotal">0</strong></article><article class="stat-card"><span>Verified</span><strong id="refVerified">0</strong></article><article class="stat-card"><span>Pending</span><strong id="refPending">0</strong></article></div><p class="notice">The stated 78% direct-referral commission is calculated only on eligible payments after administrator verification. Pending or failed payments do not generate commission. Applicable terms and legal requirements still apply.</p></div>
+      <div class="page-heading"><p class="eyebrow">GROW YOUR NETWORK</p><h1>Referral centre</h1><p>Share your unique link and track registrations and eligible referrals.</p></div>
+      <div class="panel referral-panel"><p class="muted">Your personal referral link</p><div class="copy-row"><input id="referralLink" readonly value="Log in to view your link"><button class="btn btn-gold" data-action="copy-referral">Copy link</button></div>
+        <div class="stats-grid compact"><article class="stat-card"><span>Total sign-ups</span><strong id="refTotal">0</strong></article><article class="stat-card"><span>Eligible / rewarded</span><strong id="refVerified">0</strong></article><article class="stat-card"><span>Pending</span><strong id="refPending">0</strong></article></div>
+        <p class="notice">Referral counts come from the existing platform referral records. Commissions are not displayed until the payment, currency-conversion and wallet-posting rules have been confirmed and implemented.</p>
+      </div>
     </section>
 
     <section id="adminView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">RESTRICTED WORKSPACE</p><h1>Administration</h1><p>Review product submissions and payment records.</p></div>
-      <div class="admin-tabs"><button class="btn btn-outline" data-admin-tab="products">Product submissions</button><button class="btn btn-outline" data-admin-tab="payments">Payment reviews</button></div>
+      <div class="page-heading"><p class="eyebrow">RESTRICTED WORKSPACE</p><h1>Administration</h1><p>Review marketplace submissions, existing payment submissions and product-sale records.</p></div>
+      <div class="admin-tabs"><button class="btn btn-outline" data-admin-tab="products">Products</button><button class="btn btn-outline" data-admin-tab="payments">Payments</button><button class="btn btn-outline" data-admin-tab="sales">Product sales</button></div>
       <div id="adminContent" class="panel"><p class="muted">Checking administrator access…</p></div>
     </section>
   </main>
@@ -138,4 +136,5 @@
   <footer class="footer"><a class="brand footer-brand" href="#" data-view="home"><span class="brand-mark">SF</span><span>SHOPY <b>FONT</b><small>THE WORLD CONNECTED THROUGH OPPORTUNITY</small></span></a><p>© <span id="year"></span> SHOPY FONT. Use the platform responsibly.</p><div><a href="#" data-view="scholarbridge">ScholarBridge</a><a href="#" data-view="marketplace">Marketplace</a></div></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
-                                          </html>
+                                                                                                 </html>
+  
