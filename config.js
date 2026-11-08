@@ -1,13 +1,13 @@
-/* SHOPY FONT public browser configuration.
-   The Supabase publishable/anon key is designed for browser use.
-   Never place a service_role key or private payment secret in this file. */
+/* Public browser configuration only.
+   The publishable key is designed for frontend use.
+   Never place a Supabase service_role key or private payment secret here. */
 window.SHOPY_CONFIG = Object.freeze({
   SUPABASE_URL: "https://vulbvlardmvvxdhqyopn.supabase.co",
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_hve5CvGEO3tyocvupHOv9w_zEVEaN9a",
   PLATFORM_NAME: "SHOPY FONT",
-  DEFAULT_CURRENCY: "USD",
-  DIRECT_REFERRAL_RATE: 0.78
+  DEFAULT_CURRENCY: "USD"
 });
+
 window.sfSupabase = null;
 try {
   if (window.supabase?.createClient) {
@@ -20,3 +20,4 @@ try {
 } catch (error) {
   console.error("Supabase initialization failed:", error);
 }
+
