@@ -575,5 +575,45 @@ SF.adminBindActions = box => {
     });
   });
 
+  
   box.querySelectorAll("[data-review-minipay]").forEach(button => {
-    button.addEventListene
+    button.addEventListener("click", () =>
+      SF.reviewMiniPay(
+        button.dataset.reviewMinipay,
+        button.dataset.action
+      )
+    );
+  });
+
+  box.querySelectorAll("[data-review-fbk]").forEach(button => {
+    button.addEventListener("click", () =>
+      SF.reviewFBK(
+        button.dataset.reviewFbk,
+        button.dataset.action
+      )
+    );
+  });
+
+  box.querySelectorAll("[data-review-product]").forEach(button => {
+    button.addEventListener("click", () =>
+      SF.reviewProduct(
+        button.dataset.reviewProduct,
+        button.dataset.status
+      )
+    );
+  });
+
+  box.querySelectorAll("[data-review-sale]").forEach(button => {
+    button.addEventListener("click", () =>
+      SF.reviewSale(
+        button.dataset.reviewSale,
+        button.dataset.status
+      )
+    );
+  });
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Admin navigation is generated inside adminContent.
+});
+
