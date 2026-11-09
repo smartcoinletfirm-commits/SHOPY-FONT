@@ -327,81 +327,162 @@
         <p id="welcomeName">Welcome back.</p>
       </div>
 
-      <!-- ACTIVATION -->
-      <div id="activationWorkspace" class="panel">
-        <h2>Membership activation</h2>
-        <p class="muted">Enter your details, select your country and choose your membership package.</p>
+      
+<!-- ACTIVATION -->
+<div id="activationWorkspace" class="sf-activation">
 
-        <div class="package-price-list">
-          <h3>Membership packages</h3>
-          <p class="muted">Choose a package after checking the price in your country's currency.</p>
+  <div class="sf-activation-heading">
+    <span class="sf-kicker">SHOPY FONT MEMBERSHIP</span>
+    <h2>Choose your <em>membership level.</em></h2>
+    <p>Choose the package that suits your membership plans and continue with registration.</p>
+  </div>
 
-          <div class="package-price-grid">
-            <article class="package-price-card">
-              <strong>Level 1</strong>
-              <span>Kenya: KES 580</span>
-              <span>Nigeria: ₦6,017</span>
-              <span>Ghana: GH₵52.20</span>
-            </article>
-            <article class="package-price-card">
-              <strong>Level 2</strong>
-              <span>Kenya: KES 1,000</span>
-              <span>Nigeria: ₦10,373</span>
-              <span>Ghana: GH₵90.01</span>
-            </article>
-            <article class="package-price-card">
-              <strong>Level 3</strong>
-              <span>Kenya: KES 2,000</span>
-              <span>Nigeria: ₦20,747</span>
-              <span>Ghana: GH₵180.01</span>
-            </article>
-            <article class="package-price-card">
-              <strong>Level 4</strong>
-              <span>Kenya: KES 4,500</span>
-              <span>Nigeria: ₦46,680</span>
-              <span>Ghana: GH₵405.03</span>
-            </article>
-          </div>
+  <div class="sf-progress">
+    <div class="sf-progress-step active">
+      <span>01</span>
+      <div><strong>Choose level</strong><small>Select a package</small></div>
+    </div>
+    <div class="sf-progress-line"></div>
+    <div class="sf-progress-step">
+      <span>02</span>
+      <div><strong>Your details</strong><small>Complete your profile</small></div>
+    </div>
+    <div class="sf-progress-line"></div>
+    <div class="sf-progress-step">
+      <span>03</span>
+      <div><strong>Payment</strong><small>Activate membership</small></div>
+    </div>
+  </div>
+
+  <div class="sf-package-intro">
+    <div>
+      <span class="sf-kicker">MEMBERSHIP PACKAGES</span>
+      <h3>Find your level</h3>
+    </div>
+    <p>All prices are displayed before you proceed.</p>
+  </div>
+
+  <div class="sf-level-grid">
+
+    <article class="sf-level-card">
+      <div class="sf-level-top">
+        <span class="sf-level-number">01</span>
+        <span class="sf-level-label">STARTER</span>
+      </div>
+      <h3>Level 1</h3>
+      <p class="sf-level-description">Entry membership package</p>
+      <div class="sf-price-main">KES 580</div>
+      <div class="sf-price-divider"></div>
+      <div class="sf-currency-row"><span>Nigeria</span><strong>₦6,017</strong></div>
+      <div class="sf-currency-row"><span>Ghana</span><strong>GH₵52.20</strong></div>
+      <button type="button" class="sf-level-button" data-select-level="1">Choose Level 1</button>
+    </article>
+
+    <article class="sf-level-card">
+      <div class="sf-level-top">
+        <span class="sf-level-number">02</span>
+        <span class="sf-level-label">STANDARD</span>
+      </div>
+      <h3>Level 2</h3>
+      <p class="sf-level-description">Standard membership package</p>
+      <div class="sf-price-main">KES 1,000</div>
+      <div class="sf-price-divider"></div>
+      <div class="sf-currency-row"><span>Nigeria</span><strong>₦10,373</strong></div>
+      <div class="sf-currency-row"><span>Ghana</span><strong>GH₵90.01</strong></div>
+      <button type="button" class="sf-level-button" data-select-level="2">Choose Level 2</button>
+    </article>
+
+    <article class="sf-level-card">
+      <div class="sf-level-top">
+        <span class="sf-level-number">03</span>
+        <span class="sf-level-label">ADVANCED</span>
+      </div>
+      <h3>Level 3</h3>
+      <p class="sf-level-description">Advanced membership package</p>
+      <div class="sf-price-main">KES 2,000</div>
+      <div class="sf-price-divider"></div>
+      <div class="sf-currency-row"><span>Nigeria</span><strong>₦20,747</strong></div>
+      <div class="sf-currency-row"><span>Ghana</span><strong>GH₵180.01</strong></div>
+      <button type="button" class="sf-level-button" data-select-level="3">Choose Level 3</button>
+    </article>
+
+    <article class="sf-level-card sf-level-premium">
+      <div class="sf-level-top">
+        <span class="sf-level-number">04</span>
+        <span class="sf-level-label">PREMIUM</span>
+      </div>
+      <h3>Level 4</h3>
+      <p class="sf-level-description">Premium membership package</p>
+      <div class="sf-price-main">KES 4,500</div>
+      <div class="sf-price-divider"></div>
+      <div class="sf-currency-row"><span>Nigeria</span><strong>₦46,680</strong></div>
+      <div class="sf-currency-row"><span>Ghana</span><strong>GH₵405.03</strong></div>
+      <button type="button" class="sf-level-button" data-select-level="4">Choose Level 4</button>
+    </article>
+
+  </div>
+
+  <div class="sf-registration-card" id="sfRegistrationDetails">
+    <div class="sf-registration-heading">
+      <span class="sf-registration-icon">✦</span>
+      <div>
+        <span class="sf-kicker">STEP TWO · REGISTRATION</span>
+        <h3>Your membership details</h3>
+        <p>Complete the information below to continue.</p>
+      </div>
+    </div>
+
+    <form id="activationForm" class="sf-registration-form">
+
+      <div class="sf-selected-package">
+        <div>
+          <small>SELECTED MEMBERSHIP</small>
+          <strong id="sfSelectedLevel">No level selected</strong>
         </div>
-
-        <form id="activationForm" class="form-card">
-          <label>Full name
-            <input name="full_name" required maxlength="100" placeholder="Enter your full name">
-          </label>
-
-          <label>Phone number
-            <input name="phone" type="tel" required maxlength="30" placeholder="+254...">
-          </label>
-
-          <label>Country
-            <select name="country" id="activationCountry" required>
-              <option value="">Select your country</option>
-              <option value="Kenya">🇰🇪 Kenya</option>
-              <option value="Nigeria">🇳🇬 Nigeria</option>
-              <option value="Ghana">🇬🇭 Ghana</option>
-            </select>
-          </label>
-
-          <label>Membership package
-            <select name="membership_level" id="activationLevel" required>
-              <option value="">Select membership level</option>
-              <option value="1">Level 1</option>
-              <option value="2">Level 2</option>
-              <option value="3">Level 3</option>
-              <option value="4">Level 4</option>
-            </select>
-          </label>
-
-          <div id="packagePricePreview" class="notice">
-            Select your country and membership level to view your exact package price.
-          </div>
-
-          <button class="btn btn-gold btn-full" type="submit">Continue to payment instructions →</button>
-        </form>
-
-        <p id="activationMessage" class="form-message" role="status"></p>
+        <span id="sfSelectedPrice">Choose a package above</span>
       </div>
 
+      <div class="sf-form-grid">
+        <label>
+          Full name
+          <input name="full_name" required maxlength="100"
+            autocomplete="name" placeholder="Enter your full name">
+        </label>
+
+        <label>
+          Phone number
+          <input name="phone" type="tel" required maxlength="30"
+            autocomplete="tel" placeholder="+254 700 000 000">
+        </label>
+
+        <label class="sf-form-wide">
+          Country of residence
+          <select name="country" id="activationCountry" required>
+            <option value="">Select your country</option>
+            <option value="Kenya">🇰🇪 Kenya</option>
+            <option value="Nigeria">🇳🇬 Nigeria</option>
+            <option value="Ghana">🇬🇭 Ghana</option>
+          </select>
+        </label>
+
+        <input type="hidden" name="membership_level" id="activationLevel" required>
+      </div>
+
+      <div id="packagePricePreview" class="sf-price-preview">
+        Select a membership level and country to see your exact payment amount.
+      </div>
+
+      <button class="sf-continue-button" type="submit">
+        Continue to payment instructions <span>→</span>
+      </button>
+
+      <p class="sf-secure-note">🔒 Your registration details are handled securely.</p>
+    </form>
+  </div>
+
+  <p id="activationMessage" class="form-message" role="status"></p>
+</div>
+      
       <!-- NIGERIA AND GHANA MINIPAY -->
       <div id="miniPayWorkspace" class="panel hidden">
         <p class="eyebrow">INTERNATIONAL MEMBERSHIP PAYMENT</p>
