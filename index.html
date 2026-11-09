@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,11 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101d36">
   <title>SHOPY FONT — The World Connected Through Opportunity</title>
-  <meta name="description" content="A connected marketplace for products, services, campaigns, learning and opportunity.">
+  <meta name="description" content="A global platform connecting commerce, services, learning and opportunities.">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="config.js"></script>
   <script defer src="auth.js"></script>
@@ -19,12 +22,21 @@
   <script defer src="admin.js"></script>
   <script defer src="app.js"></script>
 </head>
+
 <body>
-  <div class="announcement">THE WORLD CONNECTED THROUGH OPPORTUNITY <span>✦</span> SHOP • MARKET • LEARN • GROW</div>
+  <div class="announcement">
+    THE WORLD CONNECTED THROUGH OPPORTUNITY
+    <span>✦</span> SHOP • MARKET • LEARN • GROW
+  </div>
 
   <header class="topbar">
-    <a class="brand" href="#" data-view="home"><span class="brand-mark">SF</span><span>SHOPY <b>FONT</b><small>GLOBAL OPPORTUNITY PLATFORM</small></span></a>
+    <a class="brand" href="#" data-view="home">
+      <span class="brand-mark">SF</span>
+      <span>SHOPY <b>FONT</b><small>GLOBAL OPPORTUNITY PLATFORM</small></span>
+    </a>
+
     <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
+
     <nav id="mainNav">
       <a href="#marketplace" data-view="marketplace">Marketplace</a>
       <a href="#opportunities" data-view="opportunities">Opportunities</a>
@@ -37,93 +49,341 @@
   </header>
 
   <main>
+
+    <!-- HOME -->
     <section id="homeView" class="view active">
       <section class="hero">
         <div class="hero-copy">
           <p class="eyebrow">ONE PLATFORM. GLOBAL POSSIBILITIES.</p>
           <h1>The world connected through <em>opportunity.</em></h1>
-          <p class="hero-lead">Discover genuine products, promote approved listings, find opportunities, build skills and grow your digital presence in one connected marketplace.</p>
-          <div class="hero-actions"><button class="btn btn-gold btn-large" data-action="register">Create your account <span>→</span></button><button class="btn btn-light-outline btn-large" data-view="marketplace">Explore marketplace</button></div>
-          <div class="hero-proof"><span>🌍 Global reach</span><span>🔒 Account security</span><span>🤝 Connected opportunity</span></div>
+          <p class="hero-lead">
+            Discover products, promote approved listings, explore services,
+            develop skills and connect with opportunities across borders.
+          </p>
+
+          <div class="hero-actions">
+            <button class="btn btn-gold btn-large" data-action="register">Create your account →</button>
+            <button class="btn btn-light-outline btn-large" data-view="auth">Member login</button>
+          </div>
+
+          <div class="hero-proof">
+            <span>🌍 Global reach</span>
+            <span>🔒 Account security</span>
+            <span>🤝 Connected opportunity</span>
+          </div>
         </div>
-        <div class="hero-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-          <div class="hero-card hero-card-main"><span class="card-kicker">YOUR NEXT OPPORTUNITY</span><div class="globe">◎</div><h3>Connect beyond borders.</h3><p>Products · Services · Skills · Growth</p></div>
-          <div class="floating-tag tag-one">✦ Global marketplace</div><div class="floating-tag tag-two">↗ Grow your reach</div>
+
+        <div class="hero-art">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="hero-card hero-card-main">
+            <span class="card-kicker">YOUR NEXT OPPORTUNITY</span>
+            <div class="globe">◎</div>
+            <h3>Connect beyond borders.</h3>
+            <p>Products · Services · Skills · Growth</p>
+          </div>
+          <div class="floating-tag tag-one">✦ Global marketplace</div>
+          <div class="floating-tag tag-two">↗ Grow your reach</div>
         </div>
       </section>
-      <section class="section intro-section"><div><p class="eyebrow">A CONNECTED DIGITAL WORLD</p><h2>More than a marketplace.</h2></div><p class="section-intro">SHOPY FONT brings commerce, advertising, affiliate promotion, freelance services and learning together. Explore opportunities at your pace and always review the terms before participating.</p></section>
+
+      <section class="section intro-section">
+        <div>
+          <p class="eyebrow">A CONNECTED DIGITAL WORLD</p>
+          <h2>More than a marketplace.</h2>
+        </div>
+        <p class="section-intro">
+          SHOPY FONT brings commerce, promotion, freelance services and learning
+          together in one connected platform.
+        </p>
+      </section>
+
       <section class="feature-grid">
-        <article class="feature-card"><span class="feature-icon">▦</span><h3>Marketplace</h3><p>Browse approved product listings from sellers and connected suppliers.</p><button class="text-link" data-view="marketplace">Explore products →</button></article>
-        <article class="feature-card"><span class="feature-icon">↗</span><h3>Affiliate & campaigns</h3><p>Share approved promotions and track referral activity transparently.</p><button class="text-link" data-view="opportunities">Explore opportunities →</button></article>
-        <article class="feature-card"><span class="feature-icon">✎</span><h3>Jobs & freelance</h3><p>Discover work listings and services. Review requirements before applying.</p><button class="text-link" data-view="opportunities">Find opportunities →</button></article>
-        <article class="feature-card"><span class="feature-icon">⌂</span><h3>ScholarBridge</h3><p>A dedicated academic-writing and learning department within SHOPY FONT.</p><button class="text-link" data-view="scholarbridge">Visit department →</button></article>
+        <article class="feature-card">
+          <span class="feature-icon">▦</span>
+          <h3>Marketplace</h3>
+          <p>Browse approved product listings from sellers and suppliers.</p>
+          <button class="text-link" data-view="marketplace">Explore products →</button>
+        </article>
+
+        <article class="feature-card">
+          <span class="feature-icon">↗</span>
+          <h3>Affiliate & campaigns</h3>
+          <p>Share approved promotions and track referral activity.</p>
+          <button class="text-link" data-view="opportunities">Explore opportunities →</button>
+        </article>
+
+        <article class="feature-card">
+          <span class="feature-icon">✎</span>
+          <h3>Jobs & freelance</h3>
+          <p>Discover services and opportunities posted on the platform.</p>
+          <button class="text-link" data-view="opportunities">Find opportunities →</button>
+        </article>
+
+        <article class="feature-card">
+          <span class="feature-icon">⌂</span>
+          <h3>ScholarBridge</h3>
+          <p>Academic writing, study resources and learning support.</p>
+          <button class="text-link" data-view="scholarbridge">Visit department →</button>
+        </article>
       </section>
-      <section class="cta-band"><div><p class="eyebrow">START CONNECTING TODAY</p><h2>Your next step starts here.</h2><p>Create an account to access your member workspace.</p></div><button class="btn btn-gold btn-large" data-action="register">Get started →</button></section>
+
+      <section class="cta-band">
+        <div>
+          <p class="eyebrow">START CONNECTING TODAY</p>
+          <h2>Your next step starts here.</h2>
+          <p>Create an account and complete membership activation.</p>
+        </div>
+        <button class="btn btn-gold btn-large" data-action="register">Get started →</button>
+      </section>
     </section>
 
+    <!-- AUTHENTICATION -->
     <section id="authView" class="view">
       <div class="auth-shell">
-        <div class="auth-aside"><span class="brand-mark">SF</span><p class="eyebrow">WELCOME TO SHOPY FONT</p><h2>Opportunity has no borders.</h2><p>Join a connected community for commerce, promotion, services and learning.</p></div>
+        <div class="auth-aside">
+          <span class="brand-mark">SF</span>
+          <p class="eyebrow">WELCOME TO SHOPY FONT</p>
+          <h2>Opportunity has no borders.</h2>
+          <p>Join a connected community for commerce, promotion, services and learning.</p>
+        </div>
+
         <div class="auth-panel">
-          <div class="auth-tabs"><button class="auth-tab active" data-auth-tab="login">Log in</button><button class="auth-tab" data-auth-tab="register">Create account</button></div>
-          <form id="loginForm" class="auth-form"><h2>Welcome back</h2><p class="muted">Log in to continue to your workspace.</p>
-            <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
-            <label>Password<input name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password"></label>
+          <div class="auth-tabs">
+            <button class="auth-tab active" data-auth-tab="login">Log in</button>
+            <button class="auth-tab" data-auth-tab="register">Create account</button>
+          </div>
+
+          <form id="loginForm" class="auth-form">
+            <h2>Welcome back</h2>
+            <p class="muted">Log in to continue to your workspace.</p>
+            <label>Email address
+              <input name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+            </label>
+            <label>Password
+              <input name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password">
+            </label>
             <button class="btn btn-gold btn-full" type="submit">Log in</button>
           </form>
-          <form id="registerForm" class="auth-form hidden"><h2>Create your account</h2><p class="muted">A few details to get you started.</p>
-            <label>Full name<input name="full_name" required maxlength="100" placeholder="Your full name"></label>
-            <label>Email address<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
-            <label>Country<input name="country" required maxlength="80" placeholder="Your country"></label>
-            <label>Password<input name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters"></label>
+
+          <form id="registerForm" class="auth-form hidden">
+            <h2>Create your account</h2>
+            <p class="muted">A few details to get you started.</p>
+            <label>Full name
+              <input name="full_name" required maxlength="100" placeholder="Your full name">
+            </label>
+            <label>Email address
+              <input name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+            </label>
+            <label>Country
+              <select name="country" required>
+                <option value="">Select your country</option>
+                <option value="Kenya">Kenya</option>
+                <option value="Nigeria">Nigeria</option>
+                <option value="Ghana">Ghana</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label>Password
+              <input name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="At least 8 characters">
+            </label>
             <button class="btn btn-gold btn-full" type="submit">Create account</button>
             <small class="muted">By joining, you agree to follow platform rules and applicable laws.</small>
           </form>
+
           <p id="authMessage" class="form-message" role="status"></p>
         </div>
       </div>
     </section>
 
+    <!-- MARKETPLACE -->
     <section id="marketplaceView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">DISCOVER & CONNECT</p><h1>Marketplace</h1><p>Explore genuine products submitted by sellers or connected suppliers and approved for listing.</p></div>
-      <div class="market-tools"><input id="productSearch" type="search" placeholder="Search products..." aria-label="Search products"><select id="productCategory"><option value="">All categories</option><option>Electronics</option><option>Fashion</option><option>Home & Furniture</option><option>Beauty</option><option>Sports</option><option>Other</option></select></div>
-      <div id="productGrid" class="product-grid"><div class="empty-state">Loading approved listings…</div></div>
-      <div class="seller-panel"><div><p class="eyebrow">SELLER SPACE</p><h2>Have a product to list?</h2><p>Submit genuine product details for review. Listings appear publicly only after approval.</p></div><button class="btn btn-gold" data-action="sell-product">Submit a product</button></div>
+      <div class="page-heading">
+        <p class="eyebrow">DISCOVER & CONNECT</p>
+        <h1>Marketplace</h1>
+        <p>Explore genuine products submitted by sellers or connected suppliers and approved for listing.</p>
+      </div>
+
+      <div class="market-tools">
+        <input id="productSearch" type="search" placeholder="Search products..." aria-label="Search products">
+        <select id="productCategory">
+          <option value="">All categories</option>
+          <option>Electronics</option>
+          <option>Fashion</option>
+          <option>Home & Furniture</option>
+          <option>Beauty</option>
+          <option>Sports</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div id="productGrid" class="product-grid">
+        <div class="empty-state">Loading approved listings…</div>
+      </div>
+
+      <div class="seller-panel">
+        <div>
+          <p class="eyebrow">SELLER SPACE</p>
+          <h2>Have a product to list?</h2>
+          <p>Submit genuine product details for review. Listings appear after approval.</p>
+        </div>
+        <button class="btn btn-gold" data-action="sell-product">Submit a product</button>
+      </div>
+
       <form id="productForm" class="form-card hidden">
         <h3>Submit product for review</h3>
-        <div class="form-grid"><label>Product name<input name="title" required maxlength="150"></label><label>Category<select name="category"><option>Electronics</option><option>Fashion</option><option>Home & Furniture</option><option>Beauty</option><option>Sports</option><option>Other</option></select></label><label>Price (USD)<input name="price_usd" type="number" min="0.01" step="0.01" required></label><label>Image URL<input name="image_url" type="url" placeholder="https://..."></label><label class="span-2">Product description<textarea name="description" rows="3" required maxlength="1500"></textarea></label><label>Seller / supplier reference<input name="supplier_reference" maxlength="150" placeholder="Optional reference"></label></div>
-        <p class="notice">Member submissions are always marked as seller submissions. Only an administrator can approve a supplier-source listing.</p>
-        <button class="btn btn-gold" type="submit">Submit for approval</button><button class="btn btn-quiet" type="button" data-action="cancel-product">Cancel</button><p id="productFormMessage" class="form-message"></p>
+        <div class="form-grid">
+          <label>Product name<input name="title" required maxlength="150"></label>
+          <label>Category
+            <select name="category">
+              <option>Electronics</option>
+              <option>Fashion</option>
+              <option>Home & Furniture</option>
+              <option>Beauty</option>
+              <option>Sports</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>Price (USD)<input name="price_usd" type="number" min="0.01" step="0.01" required></label>
+          <label>Image URL<input name="image_url" type="url" placeholder="https://..."></label>
+          <label class="span-2">Product description<textarea name="description" rows="3" required maxlength="1500"></textarea></label>
+          <label>Seller / supplier reference<input name="supplier_reference" maxlength="150" placeholder="Optional reference"></label>
+        </div>
+        <p class="notice">Member submissions are marked as seller submissions. Only an administrator can approve supplier-source listings.</p>
+        <button class="btn btn-gold" type="submit">Submit for approval</button>
+        <button class="btn btn-quiet" type="button" data-action="cancel-product">Cancel</button>
+        <p id="productFormMessage" class="form-message"></p>
       </form>
     </section>
 
+    <!-- OPPORTUNITIES -->
     <section id="opportunitiesView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">BUILD YOUR NEXT CHAPTER</p><h1>Opportunities</h1><p>Explore work, services, advertising campaigns and affiliate promotions.</p></div>
-      <div class="opportunity-grid">
-        <article class="opportunity-card"><span>⌑</span><h2>Jobs</h2><p>Browse opportunities posted by businesses. Confirm the employer and terms before applying.</p><button class="btn btn-outline" data-action="show-coming">View job listings</button></article>
-        <article class="opportunity-card"><span>✧</span><h2>Freelance services</h2><p>Showcase your skills or find independent professionals for your projects.</p><button class="btn btn-outline" data-action="show-coming">Explore services</button></article>
-        <article class="opportunity-card"><span>◉</span><h2>Advertising campaigns</h2><p>Discover business campaigns and review eligibility, deliverables and payment terms.</p><button class="btn btn-outline" data-action="show-coming">Explore campaigns</button></article>
-        <article class="opportunity-card"><span>↗</span><h2>Affiliate promotions</h2><p>Share approved listings using your unique referral link. Verified activity is tracked.</p><button class="btn btn-gold" data-view="referrals">My referral centre</button></article>
+      <div class="page-heading">
+        <p class="eyebrow">BUILD YOUR NEXT CHAPTER</p>
+        <h1>Opportunities</h1>
+        <p>Explore work, services, advertising campaigns and affiliate promotions.</p>
       </div>
+
+      <div class="opportunity-grid">
+        <article class="opportunity-card">
+          <span>⌑</span>
+          <h2>Jobs</h2>
+          <p>Browse opportunities posted by businesses. Confirm the employer and terms before applying.</p>
+          <button class="btn btn-outline" data-action="show-coming">View job listings</button>
+        </article>
+        <article class="opportunity-card">
+          <span>✧</span>
+          <h2>Freelance services</h2>
+          <p>Showcase your skills or find independent professionals for your projects.</p>
+          <button class="btn btn-outline" data-action="show-coming">Explore services</button>
+        </article>
+        <article class="opportunity-card">
+          <span>◉</span>
+          <h2>Advertising campaigns</h2>
+          <p>Discover campaigns and review eligibility, deliverables and payment terms.</p>
+          <button class="btn btn-outline" data-action="show-coming">Explore campaigns</button>
+        </article>
+        <article class="opportunity-card">
+          <span>↗</span>
+          <h2>Affiliate promotions</h2>
+          <p>Share approved listings using your unique referral link.</p>
+          <button class="btn btn-gold" data-view="referrals">My referral centre</button>
+        </article>
+      </div>
+
       <p class="notice">Opportunity listings and payouts must be verified. SHOPY FONT does not guarantee income or employment.</p>
     </section>
 
+    <!-- SCHOLARBRIDGE -->
     <section id="scholarbridgeView" class="view page-view">
-      <div class="scholar-hero"><p class="eyebrow">AN ACADEMIC DEPARTMENT OF SHOPY FONT</p><h1>Scholar<span>Bridge</span></h1><p>Learn, research and develop academic-writing skills with responsible study support.</p><button class="btn btn-gold" data-action="show-coming">Explore learning resources</button></div>
-      <div class="feature-grid scholar-features"><article class="feature-card"><h3>Academic writing</h3><p>Learn planning, structure, referencing and clear academic communication.</p></article><article class="feature-card"><h3>Study resources</h3><p>Build your understanding with guided learning materials and practice.</p></article><article class="feature-card"><h3>Responsible support</h3><p>Promote original work, proper citations and academic integrity.</p></article></div>
+      <div class="scholar-hero">
+        <p class="eyebrow">AN ACADEMIC DEPARTMENT OF SHOPY FONT</p>
+        <h1>Scholar<span>Bridge</span></h1>
+        <p>Learn, research and develop academic-writing skills with responsible study support.</p>
+        <button class="btn btn-gold" data-action="show-coming">Explore learning resources</button>
+      </div>
+
+      <div class="feature-grid scholar-features">
+        <article class="feature-card">
+          <h3>Academic writing</h3>
+          <p>Learn planning, structure, referencing and clear academic communication.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Study resources</h3>
+          <p>Build your understanding with guided learning materials and practice.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Responsible support</h3>
+          <p>Promote original work, proper citations and academic integrity.</p>
+        </article>
+      </div>
     </section>
 
+    <!-- SINGLE MEMBER DASHBOARD -->
     <section id="dashboardView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">MEMBER WORKSPACE</p><h1>My dashboard</h1><p id="welcomeName">Welcome back.</p></div>
+      <div class="page-heading">
+        <p class="eyebrow">MEMBER WORKSPACE</p>
+        <h1>My dashboard</h1>
+        <p id="welcomeName">Welcome back.</p>
+      </div>
 
+      <!-- ACTIVATION -->
       <div id="activationWorkspace" class="panel">
         <h2>Membership activation</h2>
-        <p class="muted">Complete your membership details to continue.</p>
+        <p class="muted">Enter your details, select your country and choose your membership package.</p>
+
+        <div class="package-price-list">
+          <h3>Membership packages</h3>
+          <p class="muted">Choose a package after checking the price in your country's currency.</p>
+
+          <div class="package-price-grid">
+            <article class="package-price-card">
+              <strong>Level 1</strong>
+              <span>Kenya: KES 580</span>
+              <span>Nigeria: ₦6,017</span>
+              <span>Ghana: GH₵52.20</span>
+            </article>
+            <article class="package-price-card">
+              <strong>Level 2</strong>
+              <span>Kenya: KES 1,000</span>
+              <span>Nigeria: ₦10,373</span>
+              <span>Ghana: GH₵90.01</span>
+            </article>
+            <article class="package-price-card">
+              <strong>Level 3</strong>
+              <span>Kenya: KES 2,000</span>
+              <span>Nigeria: ₦20,747</span>
+              <span>Ghana: GH₵180.01</span>
+            </article>
+            <article class="package-price-card">
+              <strong>Level 4</strong>
+              <span>Kenya: KES 4,500</span>
+              <span>Nigeria: ₦46,680</span>
+              <span>Ghana: GH₵405.03</span>
+            </article>
+          </div>
+        </div>
+
         <form id="activationForm" class="form-card">
-          <label>Full name<input name="full_name" required maxlength="100"></label>
-          <label>Phone number<input name="phone" type="tel" required maxlength="30" placeholder="+254..."></label>
-          <label>Membership level
-            <select name="membership_level" required>
+          <label>Full name
+            <input name="full_name" required maxlength="100" placeholder="Enter your full name">
+          </label>
+
+          <label>Phone number
+            <input name="phone" type="tel" required maxlength="30" placeholder="+254...">
+          </label>
+
+          <label>Country
+            <select name="country" id="activationCountry" required>
+              <option value="">Select your country</option>
+              <option value="Kenya">🇰🇪 Kenya</option>
+              <option value="Nigeria">🇳🇬 Nigeria</option>
+              <option value="Ghana">🇬🇭 Ghana</option>
+            </select>
+          </label>
+
+          <label>Membership package
+            <select name="membership_level" id="activationLevel" required>
               <option value="">Select membership level</option>
               <option value="1">Level 1</option>
               <option value="2">Level 2</option>
@@ -131,232 +391,186 @@
               <option value="4">Level 4</option>
             </select>
           </label>
-          <button class="btn btn-gold" type="submit">Submit activation request</button>
+
+          <div id="packagePricePreview" class="notice">
+            Select your country and membership level to view your exact package price.
+          </div>
+
+          <button class="btn btn-gold btn-full" type="submit">Continue to payment instructions →</button>
         </form>
+
         <p id="activationMessage" class="form-message" role="status"></p>
       </div>
 
+      <!-- NIGERIA AND GHANA MINIPAY -->
+      <div id="miniPayWorkspace" class="panel hidden">
+        <p class="eyebrow">INTERNATIONAL MEMBERSHIP PAYMENT</p>
+        <h2>Complete your payment</h2>
+        <p class="muted">Follow the steps below and submit your private MiniPay shareable link for review.</p>
+
+        <div class="notice">
+          <strong id="miniPayCountryLabel">International payment</strong>
+          <p>Selected package: <strong id="miniPayLevelLabel">—</strong></p>
+          <p>Amount to deposit: <strong id="miniPayAmount">—</strong></p>
+          <p>Payment method: <strong>MiniPay</strong></p>
+        </div>
+
+        <h3>How to pay using MiniPay</h3>
+        <ol>
+          <li>Install the official MiniPay application.</li>
+          <li>Open MiniPay and deposit the exact amount shown above.</li>
+          <li>Choose <strong>Send Money</strong>.</li>
+          <li>Generate your shareable payment link.</li>
+          <li>Copy the generated link.</li>
+          <li>Return to SHOPY FONT and paste the link in the form below.</li>
+        </ol>
+
+        <div class="notice">
+          <strong>Keep your payment link private.</strong>
+          <p>Submit your own payment link only through this form. Do not publish it or send it to other members.</p>
+        </div>
+
+        <form id="miniPayForm" class="form-card">
+          <label>MiniPay shareable payment link
+            <input type="url" name="payment_link" id="miniPayLink" required maxlength="2000" placeholder="Paste your private MiniPay link here">
+          </label>
+          <button class="btn btn-gold btn-full" type="submit">Submit payment for review</button>
+        </form>
+
+        <p id="miniPayMessage" class="form-message" role="status"></p>
+      </div>
+
+      <!-- KENYA FBK -->
       <div id="fbkWorkspace" class="panel hidden">
+        <p class="eyebrow">KENYA MEMBERSHIP ACTIVATION</p>
         <h2>FBK submission</h2>
         <p class="muted">Enter your four-digit FBK number for administrator review.</p>
+
         <form id="fbkForm" class="form-card">
           <label>Four-digit FBK number
             <input name="fbk_code" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" required placeholder="0000">
           </label>
-          <button class="btn btn-gold" type="submit">Submit FBK</button>
+          <button class="btn btn-gold btn-full" type="submit">Submit FBK</button>
         </form>
+
         <p id="fbkMessage" class="form-message" role="status"></p>
       </div>
 
+      <!-- SYSTEM REVIEW -->
       <div id="reviewWorkspace" class="panel hidden">
+        <p class="eyebrow">MEMBERSHIP STATUS</p>
         <h2>Submission under review</h2>
-        <p>Your FBK submission has been received and is awaiting administrator review.</p>
-        <strong class="status-pill">UNDER REVIEW</strong>
+        <p>Your submission has been received successfully.</p>
+        <p>Our administration team will review your membership activation request.</p>
+        <strong class="status-pill">UNDER SYSTEM REVIEW</strong>
         <p id="reviewDetails" class="muted"></p>
       </div>
 
+      
+      <!-- REJECTION -->
       <div id="rejectedWorkspace" class="panel hidden">
         <h2>Activation not approved</h2>
-        <p id="rejectionDetails">Your submission was rejected. Contact support for assistance.</p>
+        <p id="rejectionDetails">Your submission was not approved. Contact support for assistance.</p>
       </div>
 
+      <!-- APPROVED MEMBER DASHBOARD -->
       <div id="approvedDashboard" class="hidden">
         <div class="stats-grid">
-          <article class="stat-card"><span>Account status</span><strong id="memberStatus">Member</strong></article>
-          <article class="stat-card"><span>Referral code</span><strong id="memberCode">—</strong></article>
-          <article class="stat-card"><span>Confirmed referrals</span><strong id="verifiedReferrals">0</strong></article>
-          <article class="stat-card"><span>Available wallet</span><strong id="walletBalance">KES 0.00</strong></article>
+          <article class="stat-card">
+            <span>Account status</span>
+            <strong id="memberStatus">Member</strong>
+          </article>
+          <article class="stat-card">
+            <span>Referral code</span>
+            <strong id="memberCode">—</strong>
+          </article>
+          <article class="stat-card">
+            <span>Confirmed referrals</span>
+            <strong id="verifiedReferrals">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Available wallet</span>
+            <strong id="walletBalance">KES 0.00</strong>
+          </article>
         </div>
+
         <div class="dashboard-grid">
-          <article class="panel"><div class="panel-heading"><h2>Account overview</h2><span class="status-pill">Connected</span></div><p id="memberEmail" class="muted"></p><p id="memberCountry" class="muted"></p><p id="walletReserved" class="muted">Reserved: —</p><button class="btn btn-outline" data-view="referrals">Open referral centre</button></article>
-          <article class="panel"><div class="panel-heading"><h2>Recent activity</h2></div><div id="activityList" class="activity-list"><p class="muted">No recent activity to display.</p></div></article>
+          <article class="panel">
+            <h2>Account overview</h2>
+            <p id="memberEmail" class="muted"></p>
+            <p id="memberCountry" class="muted"></p>
+            <p id="walletReserved" class="muted"></p>
+            <button class="btn btn-outline" data-view="referrals">Open referral centre</button>
+          </article>
+
+          <article class="panel">
+            <h2>Recent activity</h2>
+            <div id="activityList">
+              <p class="muted">No recent activity to display.</p>
+            </div>
+          </article>
         </div>
       </div>
     </section>
 
+    <!-- REFERRALS -->
     <section id="referralsView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">GROW YOUR NETWORK</p><h1>Referral centre</h1><p>Share your unique link and track registrations and eligible referrals.</p></div>
-      <div class="panel referral-panel"><p class="muted">Your personal referral link</p><div class="copy-row"><input id="referralLink" readonly value="Log in to view your link"><button class="btn btn-gold" data-action="copy-referral">Copy link</button></div>
-        <div class="stats-grid compact"><article class="stat-card"><span>Total sign-ups</span><strong id="refTotal">0</strong></article><article class="stat-card"><span>Eligible / rewarded</span><strong id="refVerified">0</strong></article><article class="stat-card"><span>Pending</span><strong id="refPending">0</strong></article></div>
-        <p class="notice">Referral counts come from the existing platform referral records. Commissions are not displayed until the payment, currency-conversion and wallet-posting rules have been confirmed and implemented.</p>
+      <div class="page-heading">
+        <p class="eyebrow">GROW YOUR NETWORK</p>
+        <h1>Referral centre</h1>
+        <p>Share your personal referral link and track registrations.</p>
+      </div>
+
+      <div class="panel referral-panel">
+        <p class="muted">Your personal referral link</p>
+        <div class="copy-row">
+          <input id="referralLink" readonly value="Log in to view your link">
+          <button class="btn btn-gold" data-action="copy-referral">Copy link</button>
+        </div>
+
+        <div class="stats-grid compact">
+          <article class="stat-card">
+            <span>Total sign-ups</span>
+            <strong id="refTotal">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Eligible / rewarded</span>
+            <strong id="refVerified">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Pending</span>
+            <strong id="refPending">0</strong>
+          </article>
+        </div>
       </div>
     </section>
 
-    
-<section id="dashboardView" class="view page-view">
-  <div class="page-heading">
-    <p class="eyebrow">MEMBER WORKSPACE</p>
-    <h1>My dashboard</h1>
-    <p id="welcomeName">Welcome back.</p>
-  </div>
-
-  <!-- MEMBERSHIP DETAILS -->
-  <div id="activationWorkspace" class="panel">
-    <h2>Membership activation</h2>
-    <p class="muted">Enter your details and select your country and membership package.</p>
-
-    <form id="activationForm" class="form-card">
-      <label>Full name
-        <input name="full_name" required maxlength="100">
-      </label>
-
-      <label>Phone number
-        <input name="phone" type="tel" required maxlength="30" placeholder="+254...">
-      </label>
-
-      <label>Country
-        <select name="country" id="activationCountry" required>
-          <option value="">Select your country</option>
-          <option value="Kenya">🇰🇪 Kenya</option>
-          <option value="Nigeria">🇳🇬 Nigeria</option>
-          <option value="Ghana">🇬🇭 Ghana</option>
-        </select>
-      </label>
-
-      <label>Membership package
-        <select name="membership_level" id="activationLevel" required>
-          <option value="">Select membership level</option>
-          <option value="1">Level 1</option>
-          <option value="2">Level 2</option>
-          <option value="3">Level 3</option>
-          <option value="4">Level 4</option>
-        </select>
-      </label>
-
-      <div id="packagePricePreview" class="notice">
-        Select your country and membership level to view the package price.
+    <!-- ADMIN AREA -->
+    <section id="adminView" class="view page-view">
+      <div class="page-heading">
+        <p class="eyebrow">PLATFORM MANAGEMENT</p>
+        <h1>Administration</h1>
       </div>
+      <div id="adminContent" class="panel">
+        <p class="muted">Loading administration workspace…</p>
+      </div>
+    </section>
 
-      <button class="btn btn-gold" type="submit">Continue</button>
-    </form>
+  </main>
 
-    <p id="activationMessage" class="form-message" role="status"></p>
-  </div>
-
-  <!-- NIGERIA AND GHANA MINIPAY -->
-  <div id="miniPayWorkspace" class="panel hidden">
-    <h2>Complete your membership payment</h2>
-    <p class="muted">Follow these instructions to submit your private MiniPay payment link.</p>
-
-    <div class="notice">
-      <strong id="miniPayCountryLabel">International payment</strong>
-      <p>Selected package: <strong id="miniPayLevelLabel">—</strong></p>
-      <p>Amount to deposit: <strong id="miniPayAmount">—</strong></p>
-      <p>Payment method: MiniPay</p>
+  <footer class="footer">
+    <a class="brand footer-brand" href="#" data-view="home">
+      <span class="brand-mark">SF</span>
+      <span>SHOPY <b>FONT</b><small>THE WORLD CONNECTED THROUGH OPPORTUNITY</small></span>
+    </a>
+    <p>© <span id="year"></span> SHOPY FONT. Use the platform responsibly.</p>
+    <div>
+      <a href="#" data-view="home">Home</a>
+      <a href="#auth" data-view="auth">Member login</a>
     </div>
+  </footer>
 
-    <h3>Payment instructions</h3>
-    <ol>
-      <li>Install the official MiniPay application.</li>
-      <li>Open MiniPay and deposit the exact amount displayed above.</li>
-      <li>Choose <strong>Send Money</strong>.</li>
-      <li>Generate your shareable payment link.</li>
-      <li>Copy the generated link.</li>
-      <li>Return here and paste the link below.</li>
-    </ol>
-
-    <div class="notice">
-      <strong>Important privacy instruction</strong>
-      <p>This link is for your own SHOPY FONT membership activation payment. Do not publish it or send it to friends. Submit it privately through this form.</p>
-    </div>
-
-    <form id="miniPayForm" class="form-card">
-      <label>Paste your MiniPay shareable payment link
-        <input
-          type="url"
-          name="payment_link"
-          id="miniPayLink"
-          required
-          maxlength="2000"
-          placeholder="Paste your private MiniPay link here">
-      </label>
-
-      <button class="btn btn-gold" type="submit">
-        Submit payment for review
-      </button>
-    </form>
-
-    <p id="miniPayMessage" class="form-message" role="status"></p>
-  </div>
-
-  <!-- KENYA FBK -->
-  <div id="fbkWorkspace" class="panel hidden">
-    <h2>FBK submission</h2>
-    <p class="muted">Enter your four-digit FBK number for administrator review.</p>
-
-    <form id="fbkForm" class="form-card">
-      <label>Four-digit FBK number
-        <input name="fbk_code" inputmode="numeric" pattern="[0-9]{4}"
-          minlength="4" maxlength="4" required placeholder="0000">
-      </label>
-      <button class="btn btn-gold" type="submit">Submit FBK</button>
-    </form>
-
-    <p id="fbkMessage" class="form-message" role="status"></p>
-  </div>
-
-  <!-- SYSTEM REVIEW -->
-  <div id="reviewWorkspace" class="panel hidden">
-    <h2>System review</h2>
-    <p>Your submission has been received successfully.</p>
-    <p>Our administration team will review your membership activation request.</p>
-    <strong class="status-pill">UNDER SYSTEM REVIEW</strong>
-    <p id="reviewDetails" class="muted"></p>
-  </div>
-
-  <!-- REJECTION -->
-  <div id="rejectedWorkspace" class="panel hidden">
-    <h2>Activation not approved</h2>
-    <p id="rejectionDetails">Your submission was not approved. Contact support for assistance.</p>
-  </div>
-
-  <!-- APPROVED MEMBER DASHBOARD -->
-  <div id="approvedDashboard" class="hidden">
-    <div class="stats-grid">
-      <article class="stat-card">
-        <span>Account status</span>
-        <strong id="memberStatus">Member</strong>
-      </article>
-      <article class="stat-card">
-        <span>Referral code</span>
-        <strong id="memberCode">—</strong>
-      </article>
-      <article class="stat-card">
-        <span>Confirmed referrals</span>
-        <strong id="verifiedReferrals">0</strong>
-      </article>
-      <article class="stat-card">
-        <span>Available wallet</span>
-        <strong id="walletBalance">KES 0.00</strong>
-      </article>
-    </div>
-
-    <div class="dashboard-grid">
-      <article class="panel">
-        <div class="panel-heading">
-          <h2>Account overview</h2>
-          <span class="status-pill">Connected</span>
-        </div>
-        <p id="memberEmail" class="muted"></p>
-        <p id="memberCountry" class="muted"></p>
-        <p id="walletReserved" class="muted">Reserved: —</p>
-        <button class="btn btn-outline" data-view="referrals">Open referral centre</button>
-      </article>
-
-      <article class="panel">
-        <div class="panel-heading">
-          <h2>Recent activity</h2>
-        </div>
-        <div id="activityList" class="activity-list">
-          <p class="muted">No recent activity to display.</p>
-        </div>
-      </article>
-    </div>
-  </div>
-</section>
-    
-
-  <footer class="footer"><a class="brand footer-brand" href="#" data-view="home"><span class="brand-mark">SF</span><span>SHOPY <b>FONT</b><small>THE WORLD CONNECTED THROUGH OPPORTUNITY</small></span></a><p>© <span id="year"></span> SHOPY FONT. Use the platform responsibly.</p><div><a href="#" data-view="scholarbridge">ScholarBridge</a><a href="#" data-view="marketplace">Marketplace</a></div></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
-                </html>
+  </html>
+  
