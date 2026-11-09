@@ -24,11 +24,46 @@ SF.showToast = message => {
   );
 };
 
+
 SF.navigate = async view => {
+  // Dashboard and account pages require login.
   if (["dashboard", "referrals", "admin"].includes(view) && !SF.currentUser) {
     SF.setAuthTab("login");
     SF.navigate("auth");
     return;
+  }
+
+  // These sections require an approved membership.
+  const restrictedViews = [
+    "marketplace",
+    "scholarbridge",
+    "opportunities"
+  ];
+
+  if (restrictedViews.includes(view)) {
+    if (!SF.currentUser) {
+      SF.navigate("auth");
+      SF.setAuthTab("register");
+      SF.showAuthMessage(
+        "Create an account and complete activation to access this section."
+      );
+      return;
+    }
+
+    try {
+      await SF.loadProfile();
+
+      if (SF.profile?.account_status !== "approved") {
+        SF.showToast(
+          "Access restricted. Complete your membership activation first."
+        );
+        SF.navigate("dashboard");
+        return;
+      }
+    } catch (err) {
+      SF.showToast("Unable to verify your membership. Please try again.");
+      return;
+    }
   }
 
   if (view === "referrals" && SF.currentUser) {
@@ -79,6 +114,7 @@ SF.navigate = async view => {
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
+
 
 SF.updateNavigation = () => {
   document.querySelectorAll(".signed-only").forEach(el => {
