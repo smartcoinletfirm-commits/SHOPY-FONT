@@ -182,17 +182,179 @@
       </div>
     </section>
 
-    <section id="adminView" class="view page-view">
-      <div class="page-heading"><p class="eyebrow">RESTRICTED WORKSPACE</p><h1>Administration</h1><p>Review marketplace submissions, payments, product sales and FBK submissions.</p></div>
-      <div class="admin-tabs">
-        <button class="btn btn-outline" data-admin-tab="products">Products</button>
-        <button class="btn btn-outline" data-admin-tab="payments">Payments</button>
-        <button class="btn btn-outline" data-admin-tab="sales">Product sales</button>
-        <button class="btn btn-outline" data-admin-tab="fbk">Alarm 2 · FBK</button>
+    
+<section id="dashboardView" class="view page-view">
+  <div class="page-heading">
+    <p class="eyebrow">MEMBER WORKSPACE</p>
+    <h1>My dashboard</h1>
+    <p id="welcomeName">Welcome back.</p>
+  </div>
+
+  <!-- MEMBERSHIP DETAILS -->
+  <div id="activationWorkspace" class="panel">
+    <h2>Membership activation</h2>
+    <p class="muted">Enter your details and select your country and membership package.</p>
+
+    <form id="activationForm" class="form-card">
+      <label>Full name
+        <input name="full_name" required maxlength="100">
+      </label>
+
+      <label>Phone number
+        <input name="phone" type="tel" required maxlength="30" placeholder="+254...">
+      </label>
+
+      <label>Country
+        <select name="country" id="activationCountry" required>
+          <option value="">Select your country</option>
+          <option value="Kenya">🇰🇪 Kenya</option>
+          <option value="Nigeria">🇳🇬 Nigeria</option>
+          <option value="Ghana">🇬🇭 Ghana</option>
+        </select>
+      </label>
+
+      <label>Membership package
+        <select name="membership_level" id="activationLevel" required>
+          <option value="">Select membership level</option>
+          <option value="1">Level 1</option>
+          <option value="2">Level 2</option>
+          <option value="3">Level 3</option>
+          <option value="4">Level 4</option>
+        </select>
+      </label>
+
+      <div id="packagePricePreview" class="notice">
+        Select your country and membership level to view the package price.
       </div>
-      <div id="adminContent" class="panel"><p class="muted">Checking administrator access…</p></div>
-    </section>
-  </main>
+
+      <button class="btn btn-gold" type="submit">Continue</button>
+    </form>
+
+    <p id="activationMessage" class="form-message" role="status"></p>
+  </div>
+
+  <!-- NIGERIA AND GHANA MINIPAY -->
+  <div id="miniPayWorkspace" class="panel hidden">
+    <h2>Complete your membership payment</h2>
+    <p class="muted">Follow these instructions to submit your private MiniPay payment link.</p>
+
+    <div class="notice">
+      <strong id="miniPayCountryLabel">International payment</strong>
+      <p>Selected package: <strong id="miniPayLevelLabel">—</strong></p>
+      <p>Amount to deposit: <strong id="miniPayAmount">—</strong></p>
+      <p>Payment method: MiniPay</p>
+    </div>
+
+    <h3>Payment instructions</h3>
+    <ol>
+      <li>Install the official MiniPay application.</li>
+      <li>Open MiniPay and deposit the exact amount displayed above.</li>
+      <li>Choose <strong>Send Money</strong>.</li>
+      <li>Generate your shareable payment link.</li>
+      <li>Copy the generated link.</li>
+      <li>Return here and paste the link below.</li>
+    </ol>
+
+    <div class="notice">
+      <strong>Important privacy instruction</strong>
+      <p>This link is for your own SHOPY FONT membership activation payment. Do not publish it or send it to friends. Submit it privately through this form.</p>
+    </div>
+
+    <form id="miniPayForm" class="form-card">
+      <label>Paste your MiniPay shareable payment link
+        <input
+          type="url"
+          name="payment_link"
+          id="miniPayLink"
+          required
+          maxlength="2000"
+          placeholder="Paste your private MiniPay link here">
+      </label>
+
+      <button class="btn btn-gold" type="submit">
+        Submit payment for review
+      </button>
+    </form>
+
+    <p id="miniPayMessage" class="form-message" role="status"></p>
+  </div>
+
+  <!-- KENYA FBK -->
+  <div id="fbkWorkspace" class="panel hidden">
+    <h2>FBK submission</h2>
+    <p class="muted">Enter your four-digit FBK number for administrator review.</p>
+
+    <form id="fbkForm" class="form-card">
+      <label>Four-digit FBK number
+        <input name="fbk_code" inputmode="numeric" pattern="[0-9]{4}"
+          minlength="4" maxlength="4" required placeholder="0000">
+      </label>
+      <button class="btn btn-gold" type="submit">Submit FBK</button>
+    </form>
+
+    <p id="fbkMessage" class="form-message" role="status"></p>
+  </div>
+
+  <!-- SYSTEM REVIEW -->
+  <div id="reviewWorkspace" class="panel hidden">
+    <h2>System review</h2>
+    <p>Your submission has been received successfully.</p>
+    <p>Our administration team will review your membership activation request.</p>
+    <strong class="status-pill">UNDER SYSTEM REVIEW</strong>
+    <p id="reviewDetails" class="muted"></p>
+  </div>
+
+  <!-- REJECTION -->
+  <div id="rejectedWorkspace" class="panel hidden">
+    <h2>Activation not approved</h2>
+    <p id="rejectionDetails">Your submission was not approved. Contact support for assistance.</p>
+  </div>
+
+  <!-- APPROVED MEMBER DASHBOARD -->
+  <div id="approvedDashboard" class="hidden">
+    <div class="stats-grid">
+      <article class="stat-card">
+        <span>Account status</span>
+        <strong id="memberStatus">Member</strong>
+      </article>
+      <article class="stat-card">
+        <span>Referral code</span>
+        <strong id="memberCode">—</strong>
+      </article>
+      <article class="stat-card">
+        <span>Confirmed referrals</span>
+        <strong id="verifiedReferrals">0</strong>
+      </article>
+      <article class="stat-card">
+        <span>Available wallet</span>
+        <strong id="walletBalance">KES 0.00</strong>
+      </article>
+    </div>
+
+    <div class="dashboard-grid">
+      <article class="panel">
+        <div class="panel-heading">
+          <h2>Account overview</h2>
+          <span class="status-pill">Connected</span>
+        </div>
+        <p id="memberEmail" class="muted"></p>
+        <p id="memberCountry" class="muted"></p>
+        <p id="walletReserved" class="muted">Reserved: —</p>
+        <button class="btn btn-outline" data-view="referrals">Open referral centre</button>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <h2>Recent activity</h2>
+        </div>
+        <div id="activityList" class="activity-list">
+          <p class="muted">No recent activity to display.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+    
 
   <footer class="footer"><a class="brand footer-brand" href="#" data-view="home"><span class="brand-mark">SF</span><span>SHOPY <b>FONT</b><small>THE WORLD CONNECTED THROUGH OPPORTUNITY</small></span></a><p>© <span id="year"></span> SHOPY FONT. Use the platform responsibly.</p><div><a href="#" data-view="scholarbridge">ScholarBridge</a><a href="#" data-view="marketplace">Marketplace</a></div></footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
