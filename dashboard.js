@@ -291,6 +291,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const countrySelect = document.getElementById("activationCountry");
   const levelSelect = document.getElementById("activationLevel");
 
+document.querySelectorAll("[data-select-level]").forEach(button => {
+  button.addEventListener("click", () => {
+    levelSelect.value = button.dataset.selectLevel;
+    SF.updatePackagePreview();
+
+    document.getElementById("sfRegistrationDetails")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+  
   countrySelect?.addEventListener("change", SF.updatePackagePreview);
   levelSelect?.addEventListener("change", SF.updatePackagePreview);
 
