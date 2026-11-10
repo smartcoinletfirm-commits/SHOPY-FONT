@@ -224,20 +224,48 @@ SF.populateMiniPayDetails = (request, country) => {
   }
 };
 
-SF.updatePackagePreview = () => {
-  const country = document.getElementById("activationCountry")?.value || "Kenya";
-  const level = document.getElementById("activationLevel")?.value ||
-    document.querySelector('[name="membership_level"]')?.value;
 
+SF.updatePackagePreview = () => {
+  const country = document.getElementById("activationCountry")?.value || "";
+  const levelSelect = document.getElementById("activationLevel");
+  const level = levelSelect?.value || "";
   const price = SF.getPackagePrice(level, country);
+
   const preview = document.getElementById("packagePricePreview");
+  const selectedLevel = document.getElementById("sfSelectedLevel");
+  const selectedPrice = document.getElementById("sfSelectedPrice");
+
+  document.querySelectorAll("[data-select-level]").forEach(button => {
+    const card = button.closest(".sf-level-card");
+    const selected = button.dataset.selectLevel === String(level);
+
+    card?.classList.toggle("sf-selected", selected);
+    button.textContent = selected
+      ? "✓ Selected"
+      : "Choose Level " + button.dataset.selectLevel;
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+  });
+
+  if (selectedLevel) {
+    selectedLevel.textContent = level
+      ? "Level " + level
+      : "No level selected";
+  }
+
+  if (selectedPrice) {
+    selectedPrice.textContent = price
+      ? price.display
+      : "Choose a package and country";
+  }
 
   if (preview) {
     preview.textContent = price
-      ? "Package price: " + price.display
-      : "Select a membership level to see the package price.";
+      ? "Your selected package is Level " + level +
+        ". Your payment amount is " + price.display + "."
+      : "Select a membership level and country to see your exact payment amount.";
   }
 };
+
 
 SF.getLatestFBKSubmission = async () => {
   if (!SF.currentUser) return null;
