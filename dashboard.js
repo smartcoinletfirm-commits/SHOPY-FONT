@@ -801,4 +801,131 @@ document.addEventListener("DOMContentLoaded", () => {
       if (button) button.disabled = false;
     }
   });
+  
+  /* ===================================================
+     COMMUNITY REGISTRATION — KES 200
+     =================================================== */
+
+  const communityStartButton =
+    document.getElementById("communityStartButton");
+
+  const communityEntryCard =
+    document.getElementById("communityEntryCard");
+
+  const communityRequestWorkspace =
+    document.getElementById("communityRequestWorkspace");
+
+  const communityRequestForm =
+    document.getElementById("communityRequestForm");
+
+  communityStartButton?.addEventListener("click", () => {
+    if (!SF.currentUser) {
+      SF.setAuthTab("login");
+      SF.navigate("auth");
+      SF.showAuthMessage(
+        "Please sign in before joining the Community."
+      );
+      return;
+    }
+
+    if (String(SF.profile?.country || "") !== "Kenya") {
+      SF.showToast(
+        "Community membership is currently available in Kenya only."
+      );
+      return;
+    }
+
+    communityEntryCard?.classList.add("hidden");
+    communityRequestWorkspace?.classList.remove("hidden");
+
+    document.getElementById("communityRequestForm")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  communityRequestForm?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const button =
+      communityRequestForm.querySelector('[type="submit"]');
+
+    const message =
+      document.getElementById("communityRequestMessage");
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Submitting...";
+    }
+
+    try {
+      if (!SF.currentUser) {
+        throw new Error("Please sign in again.");
+      }
+
+      if (String(SF.profile?.country || "") !== "Kenya") {
+        throw new Error(
+          "Community membership is currently available in Kenya only."
+        );
+      }
+
+      const fd = new FormData(communityRequestForm);
+
+      const phone = String(fd.get("phone") || "").trim();
+      const fbkCode = String(fd.get("fbk_code") || "").trim();
+
+      if (!phone || !fbkCode) {
+        throw new Error(
+          "Enter your phone number and FBK number."
+        );
+      }
+
+      if (fbkCode.length > 100) {
+        throw new Error("Please check your FBK number.");
+      }
+
+      const { error: requestError } =
+        await SF.getClient().rpc(
+          "sf_submit_community_request",
+          { p_phone: phone }
+        );
+
+      if (requestError) throw requestError;
+
+      const { error: fbkError } =
+        await SF.getClient().rpc(
+          "sf_submit_community_fbk",
+          { p_fbk_code: fbkCode }
+        );
+
+      if (fbkError) throw fbkError;
+
+      communityRequestForm.reset();
+
+      if (message) {
+        message.style.color = "#237a57";
+        message.textContent =
+          "You are about to pay KES 200. Check your device to complete the transaction. Waiting for your payment, please wait. Your payment will be checked manually by our administration team.";
+      }
+
+      const formFields =
+        communityRequestForm.querySelectorAll("label,button");
+
+      formFields.forEach(el => el.classList.add("hidden"));
+
+    } catch (error) {
+      console.error("Community registration:", error);
+
+      if (message) {
+        message.style.color = "#b42318";
+        message.textContent =
+          error.message || "Community registration failed.";
+      }
+
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Submit Community Request";
+      }
+    }
+  });
+  
 });
