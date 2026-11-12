@@ -786,9 +786,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
       fbkForm.reset();
 
+      
       await SF.loadProfile();
       await SF.loadDashboard();
 
     } catch (error) {
       if (message) {
-        message.te
+        message.textContent =
+          error.message || "FBK submission failed.";
+
+        message.style.color = "#b42318";
+      }
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+});
