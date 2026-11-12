@@ -332,6 +332,40 @@
 <!-- ACTIVATION -->
 <div id="activationWorkspace" class="sf-activation">
 
+<!-- SHOPY FONT COMMUNITY ENTRY -->
+<div id="communityEntryCard" class="panel" style="margin:24px 0;padding:22px;border:1px solid #c9a45c;border-radius:16px;">
+  <p class="eyebrow">KENYA COMMUNITY ACCESS</p>
+  <h2>SHOPY FONT Community</h2>
+  <p>Join the Community for a one-time membership fee of:</p>
+  <h2 style="color:#c9a45c;">KES 200</h2>
+  <p class="muted">Community access includes daily trivia, referrals and a Community wallet. Full SHOPY FONT access requires an upgrade.</p>
+  <button type="button" class="btn btn-gold" id="communityStartButton">
+    JOIN COMMUNITY — KES 200
+  </button>
+</div>
+
+<div id="communityRequestWorkspace" class="panel hidden" style="margin:20px 0;padding:22px;">
+  <h2>Community registration</h2>
+  <p>Enter your phone number and the FBK number supplied to you.</p>
+
+  <form id="communityRequestForm" class="form-card">
+    <label>Phone number
+      <input name="phone" type="tel" required maxlength="30" placeholder="+254 700 000 000">
+    </label>
+
+    <label>FBK number
+      <input name="fbk_code" type="text" required maxlength="100" placeholder="Enter your FBK number">
+    </label>
+
+    <button type="submit" class="btn btn-gold btn-full">
+      Submit Community Request
+    </button>
+  </form>
+
+  <p id="communityRequestMessage" class="form-message" role="status"></p>
+</div>
+<!-- END COMMUNITY ENTRY -->
+  
   <div class="sf-activation-heading">
     <span class="sf-kicker">SHOPY FONT MEMBERSHIP</span>
     <h2>Choose your <em>membership level.</em></h2>
