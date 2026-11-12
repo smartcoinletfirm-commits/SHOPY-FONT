@@ -83,6 +83,7 @@ SF.loadAdmin = async (tab = SF.adminTab || "notifications") => {
 
 /* ADMIN NOTIFICATIONS */
 
+
 SF.adminNotifications = async () => {
   const db = SF.getClient();
 
@@ -99,55 +100,326 @@ SF.adminNotifications = async () => {
 
   if (!notifications.length) {
     return `
-      <h2>Notifications</h2>
+      <h2>Member notifications</h2>
       <p class="muted">There are currently no notifications.</p>`;
   }
 
-  const userIds = [...new Set(notifications.map(n => n.user_id).filter(Boolean))];
+  const userIds = [
+    ...new Set(notifications.map(n => n.user_id).filter(Boolean))
+  ];
 
-  let profiles = [];
-  if (userIds.length) {
-    const result = await db.from("profiles")
-      .select("id,full_name,email,phone,country,account_status")
-      .in("id", userIds);
+  const { data: profiles, error: profileError } = await db
+    .from("profiles")
+    .select("id,full_name,email,phone,country,membership_type,account_status")
+    .in("id", userIds);
 
-    if (result.error) throw result.error;
-    profiles = result.data || [];
-  }
+  if (profileError) throw profileError;
 
-  const profileMap = new Map(profiles.map(p => [p.id,p]));
+  const { data: activations, error: activationError } = await db
+    .from("activation_requests")
+    .select("id,user_id,full_name,phone,membership_level,status,created_at")
+    .in("user_id", userIds)
+    .order("created_at", { ascending: false });
 
-  return `
-    <h2>Notifications (${notifications.length})</h2>
-    <p class="muted">${unread} unread notification(s).</p>
+  if (activationError) throw activationError;
 
-    ${notifications.map(n => {
-      const p = profileMap.get(n.user_id) || {};
-      const name = p.full_name || "Member";
-      const event = String(n.event_type || "Notification").replaceAll("_"," ");
+  const profileMap = new Map(
+    (profiles || []).map(p => [p.id, p])
+  );
+
+  const activationMap = new Map();
+
+  (activations || []).forEach(a => {
+    if (!activationMap.has(a.user_id)) {
+      activationMap.set(a.user_id, a);
+    }
+  });
+
+  const grouped = new Map();
+
+  notifications.forEach(n => {
+    if (!grouped.has(n.user_id)) {
+      grouped.set(n.user_id, []);
+    }
+
+    grouped.get(n.user_id).push(n);
+  });
+
+  const isFBK = n =>
+    String(n.event_type || "").toLowerCase().includes("fbk") ||
+    Boolean(n.submitted_fbk_code);
+
+  const isMembership = n =>
+    !isFBK(n);
+
+  const notificationCard = (n, title, details) => `
+    <div style="
+      margin:12px 0;
+      padding:14px;
+      border:1px solid var(--border,#ddd);
+      border-radius:10px;
+      background:var(--surface,transparent);
+    ">
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        flex-wrap:wrap;
+      ">
+        <strong>${title}</strong>
+        <span class="status-pill">
+          ${n.is_read ? "READ" : "UNREAD"}
+        </span>
+      </div>
+
+      ${details}
+
+      <p class="muted">
+        ${SF.adminEscape(
+          new Date(n.created_at).toLocaleString()
+        )}
+      </p>
+
+      <div class="admin-actions">
+        ${
+          !n.is_read
+            ? `<button class="btn btn-gold"
+                data-mark-notification="${n.id}">
+                Acknowledge notification
+              </button>`
+            : ""
+        }
+      </div>
+    </div>
+  `;
+
+  const memberBoxes = [...grouped.entries()].map(
+    ([userId, memberNotifications]) => {
+
+      const p = profileMap.get(userId) || {};
+      const activation = activationMap.get(userId) || {};
+
+      const name =
+        activation.full_name ||
+        p.full_name ||
+        "Member";
+
+      const phone =
+        activation.phone ||
+        p.phone ||
+        memberNotifications.find(n => n.phone)?.phone ||
+        "Not available";
+
+      const country = p.country || "Not available";
+
+      const membership = [...memberNotifications]
+        .filter(isMembership)
+        .sort((a, b) =>
+          new Date(a.created_at) - new Date(b.created_at)
+        );
+
+      const fbk = [...memberNotifications]
+        .filter(isFBK)
+        .sort((a, b) =>
+          new Date(a.created_at) - new Date(b.created_at)
+        );
+
+      const other = memberNotifications.filter(
+        n => !isMembership(n) && !isFBK(n)
+      );
+
+      const level =
+        activation.membership_level ||
+        membership[0]?.membership_level ||
+        "Not stated";
+
+      const priceMap = {
+        1: 580,
+        2: 1000,
+        3: 2000,
+        4: 4500
+      };
+
+      const kesPrice = priceMap[Number(level)];
+
+      const price = kesPrice
+        ? "KES " + kesPrice.toLocaleString("en-KE")
+        : "Not available";
+
+      const unreadMember = memberNotifications.filter(
+        n => !n.is_read
+      ).length;
 
       return `
-        <article class="activity-item" style="margin:12px 0;padding:15px;border:1px solid var(--border,#ddd);border-radius:12px;">
-          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-            <strong>${SF.adminEscape(event.toUpperCase())}</strong>
-            <span class="status-pill">${n.is_read ? "READ" : "UNREAD"}</span>
+        <article style="
+          margin:18px 0;
+          padding:18px;
+          border:1px solid var(--border,#ddd);
+          border-radius:15px;
+        ">
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            gap:10px;
+            flex-wrap:wrap;
+          ">
+            <div>
+              <h3 style="margin:0 0 6px">
+                ${SF.adminEscape(name)}
+              </h3>
+              <p class="muted" style="margin:0">
+                ${SF.adminEscape(country)} ·
+                ${SF.adminEscape(p.email || "")}
+              </p>
+            </div>
+
+            <span class="status-pill">
+              ${unreadMember} unread alert(s)
+            </span>
           </div>
-          <p><strong>Member:</strong> ${SF.adminEscape(name)}</p>
-          <p><strong>Phone:</strong> ${SF.adminEscape(n.phone || p.phone || "Not available")}</p>
-          <p><strong>Email:</strong> ${SF.adminEscape(p.email || "Not available")}</p>
-          <p><strong>Country:</strong> ${SF.adminEscape(p.country || "Not available")}</p>
-          <p><strong>Membership level:</strong> ${SF.adminEscape(n.membership_level || "Not stated")}</p>
-          ${n.submitted_fbk_code ? `<p><strong>FBK code:</strong> ${SF.adminEscape(n.submitted_fbk_code)}</p>` : ""}
-          ${n.message ? `<p>${SF.adminEscape(n.message)}</p>` : ""}
-          <p class="muted">${SF.adminEscape(new Date(n.created_at).toLocaleString())}</p>
-          <div class="admin-actions">
-            ${!n.is_read ? `<button class="btn btn-gold" data-mark-notification="${n.id}">Mark as read</button>` : ""}
-            <button class="btn btn-outline" data-open-member="${n.user_id}">Open member</button>
+
+          <div style="
+            margin-top:15px;
+            padding:14px;
+            border-radius:10px;
+            background:var(--surface,transparent);
+          ">
+            <strong>MEMBERSHIP REQUEST DETAILS</strong>
+
+            <p><strong>Name:</strong>
+              ${SF.adminEscape(name)}
+            </p>
+
+            <p><strong>Phone:</strong>
+              ${SF.adminEscape(phone)}
+            </p>
+
+            <p><strong>Country:</strong>
+              ${SF.adminEscape(country)}
+            </p>
+
+            <p><strong>Membership level:</strong>
+              ${SF.adminEscape(level)}
+            </p>
+
+            <p><strong>Package price:</strong>
+              ${SF.adminEscape(price)}
+            </p>
+
+            ${
+              membership.length
+                ? membership.map(n =>
+                    notificationCard(
+                      n,
+                      "ALARM 1 — NEW MEMBERSHIP REQUEST",
+                      `<p>New membership request received.</p>`
+                    )
+                  ).join("")
+                : `<p class="muted">No membership request notification recorded.</p>`
+            }
           </div>
-        </article>`;
-    }).join("")}
+
+          <div style="
+            margin-top:15px;
+            padding:14px;
+            border:1px solid var(--border,#ddd);
+            border-radius:10px;
+          ">
+            <strong>FBK SUBMISSION DETAILS</strong>
+
+            ${
+              fbk.length
+                ? fbk.map(n => `
+                    <div style="
+                      margin-top:12px;
+                      padding:12px;
+                      border-radius:9px;
+                      background:var(--surface,transparent);
+                    ">
+                      <strong>ALARM 2 — NEW FBK RECEIVED</strong>
+
+                      <p><strong>Member:</strong>
+                        ${SF.adminEscape(name)}
+                      </p>
+
+                      <p><strong>Phone:</strong>
+                        ${SF.adminEscape(phone)}
+                      </p>
+
+                      <p style="font-size:18px">
+                        <strong>FBK NUMBER:</strong>
+                        ${SF.adminEscape(
+                          n.submitted_fbk_code || "Not recorded"
+                        )}
+                      </p>
+
+                      ${n.message
+                        ? `<p>${SF.adminEscape(n.message)}</p>`
+                        : ""}
+
+                      <p class="muted">
+                        ${SF.adminEscape(
+                          new Date(n.created_at).toLocaleString()
+                        )}
+                      </p>
+
+                      <div class="admin-actions">
+                        ${
+                          !n.is_read
+                            ? `<button class="btn btn-gold"
+                                data-mark-notification="${n.id}">
+                                Acknowledge FBK
+                              </button>`
+                            : ""
+                        }
+                      </div>
+                    </div>
+                  `).join("")
+                : `<p class="muted">
+                    FBK has not yet been submitted.
+                  </p>`
+            }
+          </div>
+
+          ${
+            other.length
+              ? `<div style="margin-top:12px">
+                  ${other.map(n =>
+                    notificationCard(
+                      n,
+                      "OTHER NOTIFICATION",
+                      `<p>${SF.adminEscape(n.message || n.event_type)}</p>`
+                    )
+                  ).join("")}
+                </div>`
+              : ""
+          }
+
+          <div class="admin-actions" style="margin-top:15px">
+            <button class="btn btn-outline"
+              data-open-member="${userId}">
+              Open member record
+            </button>
+          </div>
+
+        </article>
+      `;
+    }
+  ).join("");
+
+  return `
+    <h2>Member notification centre</h2>
+    <p class="muted">
+      ${grouped.size} member box(es) ·
+      ${notifications.length} notification(s) ·
+      ${unread} unread alert(s).
+    </p>
+
+    ${memberBoxes}
   `;
 };
+
 
 /* ALL MEMBER DETAILS */
 
