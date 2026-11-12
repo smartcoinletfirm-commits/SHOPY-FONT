@@ -52,27 +52,71 @@ SF.setDashboardMessage = (id, message, success = false) => {
   element.style.color = success ? "#237a57" : "#b42318";
 };
 
+/* =====================================================
+   ADMIN NOTIFICATION HELPER
+   ===================================================== */
+
+SF.createAdminNotification = async (eventType, fbkCode = null) => {
+  if (!SF.currentUser) {
+    throw new Error("Please sign in before submitting.");
+  }
+
+  const { error } = await SF.getClient().rpc(
+    "scholarbrige_create_admin_notification",
+    {
+      p_event_type: eventType,
+      p_submitted_fbk_code: fbkCode
+    }
+  );
+
+  if (error) {
+    console.error("Admin notification error:", error);
+    throw error;
+  }
+
+  return true;
+};
+
+/* =====================================================
+   DASHBOARD LOADING
+   ===================================================== */
+
 SF.loadDashboard = async () => {
-  if (!SF.currentUser) throw new Error("Please sign in to continue.");
+  if (!SF.currentUser) {
+    throw new Error("Please sign in to continue.");
+  }
 
   const db = SF.getClient();
   const profile = SF.profile || await SF.loadProfile();
 
-  if (!profile) throw new Error("Your member profile could not be loaded.");
+  if (!profile) {
+    throw new Error("Your member profile could not be loaded.");
+  }
 
   const put = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value == null || value === "" ? "—" : String(value);
+    const element = document.getElementById(id);
+
+    if (element) {
+      element.textContent =
+        value == null || value === "" ? "—" : String(value);
+    }
   };
 
   const show = (id, visible) => {
-    document.getElementById(id)?.classList.toggle("hidden", !visible);
+    document.getElementById(id)
+      ?.classList.toggle("hidden", !visible);
   };
 
-  const status = String(profile.account_status || "awaiting_activation").toLowerCase();
+  const status = String(
+    profile.account_status || "awaiting_activation"
+  ).toLowerCase();
+
   const country = profile.country || "Kenya";
 
-  const firstName = String(profile.full_name || "Member").trim().split(/\s+/)[0];
+  const firstName = String(profile.full_name || "Member")
+    .trim()
+    .split(/\s+/)[0];
+
   put("welcomeName", "Welcome back, " + firstName + ".");
 
   show("approvedDashboard", status === "approved");
@@ -88,13 +132,18 @@ SF.loadDashboard = async () => {
     put("memberEmail", SF.currentUser.email || profile.email || "");
     put("memberCountry", country);
     put("walletBalance", "Not available");
-    put("walletReserved", "Wallet figures will appear when wallet posting is connected.");
+    put(
+      "walletReserved",
+      "Wallet figures will appear when wallet posting is connected."
+    );
 
     const { count, error } = await db.from("referrals")
       .select("id", { count: "exact", head: true })
       .eq("referrer_id", SF.currentUser.id);
 
-    if (!error) put("verifiedReferrals", count || 0);
+    if (!error) {
+      put("verifiedReferrals", count || 0);
+    }
 
     const activity = document.getElementById("activityList");
 
@@ -106,11 +155,13 @@ SF.loadDashboard = async () => {
         .limit(1);
 
       if (result.error) {
-        activity.textContent = "Account activity is temporarily unavailable.";
+        activity.textContent =
+          "Account activity is temporarily unavailable.";
       } else if (!result.data?.length) {
         activity.textContent = "No activation request found.";
       } else {
         const request = result.data[0];
+
         activity.innerHTML = `<div class="activity-item">
           <strong>Membership activation · Level ${SF.escapeHtml(request.membership_level)}</strong>
           <p class="muted">Status: ${SF.escapeHtml(request.status)}</p>
@@ -127,7 +178,9 @@ SF.loadDashboard = async () => {
     .order("created_at", { ascending: false })
     .limit(1);
 
-  if (latestRequestResult.error) throw latestRequestResult.error;
+  if (latestRequestResult.error) {
+    throw latestRequestResult.error;
+  }
 
   const request = latestRequestResult.data?.[0] || null;
 
@@ -135,7 +188,13 @@ SF.loadDashboard = async () => {
     show("rejectedWorkspace", true);
 
     const latest = await SF.getLatestFBKSubmission();
-    put("rejectionDetails", latest?.admin_note || "Your submission was not approved. Contact support for assistance.");
+
+    put(
+      "rejectionDetails",
+      latest?.admin_note ||
+      "Your submission was not approved. Contact support for assistance."
+    );
+
     return;
   }
 
@@ -146,55 +205,103 @@ SF.loadDashboard = async () => {
   }
 
   const latestPaymentResult = await db.from("payment_submissions")
-    .select("id,status,country,membership_level,currency,amount,submitted_at")
+    .select(
+      "id,status,country,membership_level,currency,amount,submitted_at"
+    )
     .eq("user_id", SF.currentUser.id)
     .order("submitted_at", { ascending: false })
     .limit(1);
 
-  if (latestPaymentResult.error) throw latestPaymentResult.error;
+  if (latestPaymentResult.error) {
+    throw latestPaymentResult.error;
+  }
 
   const payment = latestPaymentResult.data?.[0] || null;
 
-  if (payment && ["submitted", "under_review", "reviewed"].includes(String(payment.status).toLowerCase())) {
+  if (
+    payment &&
+    ["submitted", "under_review", "reviewed"].includes(
+      String(payment.status).toLowerCase()
+    )
+  ) {
     show("reviewWorkspace", true);
-    put("reviewDetails", "Your MiniPay payment link was submitted on " +
+
+    put(
+      "reviewDetails",
+      "Your MiniPay payment link was submitted on " +
       new Date(payment.submitted_at).toLocaleString() +
-      ". Your account is UNDER SYSTEM REVIEW.");
+      ". Your account is UNDER SYSTEM REVIEW."
+    );
+
     return;
   }
 
   if (payment && String(payment.status).toLowerCase() === "rejected") {
     if (country === "Kenya") {
       show("fbkWorkspace", true);
-      put("fbkMessage", "Your previous submission was rejected. Please follow the instructions to resubmit.");
+
+      put(
+        "fbkMessage",
+        "Your previous submission was rejected. Please follow the instructions to resubmit."
+      );
     } else {
       show("miniPayWorkspace", true);
       SF.populateMiniPayDetails(request, country);
-      put("miniPayMessage", "Your previous payment submission was rejected. Please submit a new payment link.");
+
+      put(
+        "miniPayMessage",
+        "Your previous payment submission was rejected. Please submit a new payment link."
+      );
     }
+
     return;
   }
 
-  if (["approved", "accepted"].includes(String(request.status).toLowerCase())) {
+  if (
+    ["approved", "accepted"].includes(
+      String(request.status).toLowerCase()
+    )
+  ) {
     show("reviewWorkspace", true);
-    put("reviewDetails", "Your activation is awaiting final account status confirmation.");
+
+    put(
+      "reviewDetails",
+      "Your activation is awaiting final account status confirmation."
+    );
+
     return;
   }
 
   if (country === "Kenya") {
     const latestFBK = await SF.getLatestFBKSubmission();
 
-    if (latestFBK && ["submitted", "reviewed"].includes(String(latestFBK.status).toLowerCase())) {
+    if (
+      latestFBK &&
+      ["submitted", "reviewed"].includes(
+        String(latestFBK.status).toLowerCase()
+      )
+    ) {
       show("reviewWorkspace", true);
-      put("reviewDetails", "Your FBK submission is under review. Submitted on " +
-        new Date(latestFBK.created_at).toLocaleString());
+
+      put(
+        "reviewDetails",
+        "Your FBK submission is under review. Submitted on " +
+        new Date(latestFBK.created_at).toLocaleString()
+      );
+
       return;
     }
 
     show("fbkWorkspace", true);
 
-    if (latestFBK && String(latestFBK.status).toLowerCase() === "rejected") {
-      put("fbkMessage", "Your previous FBK submission was rejected. Please submit a new code.");
+    if (
+      latestFBK &&
+      String(latestFBK.status).toLowerCase() === "rejected"
+    ) {
+      put(
+        "fbkMessage",
+        "Your previous FBK submission was rejected. Please submit a new code."
+      );
     }
 
     return;
@@ -204,13 +311,20 @@ SF.loadDashboard = async () => {
   SF.populateMiniPayDetails(request, country);
 };
 
+/* =====================================================
+   MINIPAY DETAILS
+   ===================================================== */
+
 SF.populateMiniPayDetails = (request, country) => {
   const level = Number(request.membership_level);
   const price = SF.getPackagePrice(level, country);
 
   const put = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value || "—";
+    const element = document.getElementById(id);
+
+    if (element) {
+      element.textContent = value || "—";
+    }
   };
 
   put("miniPayCountryLabel", country);
@@ -218,17 +332,24 @@ SF.populateMiniPayDetails = (request, country) => {
   put("miniPayAmount", price?.display || "—");
 
   const form = document.getElementById("miniPayForm");
+
   if (form) {
     form.dataset.country = country;
     form.dataset.level = String(level);
   }
 };
 
+/* =====================================================
+   PACKAGE PREVIEW
+   ===================================================== */
 
 SF.updatePackagePreview = () => {
-  const country = document.getElementById("activationCountry")?.value || "";
+  const country =
+    document.getElementById("activationCountry")?.value || "";
+
   const levelSelect = document.getElementById("activationLevel");
   const level = levelSelect?.value || "";
+
   const price = SF.getPackagePrice(level, country);
 
   const preview = document.getElementById("packagePricePreview");
@@ -240,10 +361,15 @@ SF.updatePackagePreview = () => {
     const selected = button.dataset.selectLevel === String(level);
 
     card?.classList.toggle("sf-selected", selected);
+
     button.textContent = selected
       ? "✓ Selected"
       : "Choose Level " + button.dataset.selectLevel;
-    button.setAttribute("aria-pressed", selected ? "true" : "false");
+
+    button.setAttribute(
+      "aria-pressed",
+      selected ? "true" : "false"
+    );
   });
 
   if (selectedLevel) {
@@ -266,6 +392,9 @@ SF.updatePackagePreview = () => {
   }
 };
 
+/* =====================================================
+   LATEST FBK SUBMISSION
+   ===================================================== */
 
 SF.getLatestFBKSubmission = async () => {
   if (!SF.currentUser) return null;
@@ -278,31 +407,82 @@ SF.getLatestFBKSubmission = async () => {
     .limit(1);
 
   if (error) throw error;
+
   return data?.[0] || null;
 };
+
+/* =====================================================
+   FORM HANDLERS
+   ===================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
   const db = SF.getClient();
 
-  const activationForm = document.getElementById("activationForm");
-  const fbkForm = document.getElementById("fbkForm");
-  const miniPayForm = document.getElementById("miniPayForm");
+  const activationForm =
+    document.getElementById("activationForm");
 
-  const countrySelect = document.getElementById("activationCountry");
-  const levelSelect = document.getElementById("activationLevel");
+  const fbkForm =
+    document.getElementById("fbkForm");
 
-document.querySelectorAll("[data-select-level]").forEach(button => {
-  button.addEventListener("click", () => {
-    levelSelect.value = button.dataset.selectLevel;
-    SF.updatePackagePreview();
+  const miniPayForm =
+    document.getElementById("miniPayForm");
 
-    document.getElementById("sfRegistrationDetails")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const countrySelect =
+    document.getElementById("activationCountry");
+
+  const levelSelect =
+    document.getElementById("activationLevel");
+
+  /* Remove the old four-digit-only FBK browser restriction. */
+  const fbkInput = fbkForm?.querySelector('[name="fbk_code"]');
+
+  if (fbkInput) {
+    fbkInput.removeAttribute("pattern");
+    fbkInput.removeAttribute("minlength");
+    fbkInput.removeAttribute("maxlength");
+    fbkInput.setAttribute("inputmode", "text");
+    fbkInput.placeholder = "Enter your FBK number";
+
+    const label = fbkInput.closest("label");
+
+    if (label && label.firstChild?.nodeType === Node.TEXT_NODE) {
+      label.firstChild.textContent = "FBK number";
+    }
+
+    const helper = document.querySelector(
+      "#fbkWorkspace > p.muted"
+    );
+
+    if (helper) {
+      helper.textContent =
+        "Enter the FBK number supplied to you for administrator review.";
+    }
+  }
+
+  document.querySelectorAll("[data-select-level]").forEach(button => {
+    button.addEventListener("click", () => {
+      if (!levelSelect) return;
+
+      levelSelect.value = button.dataset.selectLevel;
+      SF.updatePackagePreview();
+
+      document.getElementById("sfRegistrationDetails")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+    });
   });
-});
-  
-  countrySelect?.addEventListener("change", SF.updatePackagePreview);
-  levelSelect?.addEventListener("change", SF.updatePackagePreview);
+
+  countrySelect?.addEventListener(
+    "change",
+    SF.updatePackagePreview
+  );
+
+  levelSelect?.addEventListener(
+    "change",
+    SF.updatePackagePreview
+  );
 
   if (countrySelect && SF.profile?.country) {
     countrySelect.value = SF.profile.country;
@@ -310,24 +490,44 @@ document.querySelectorAll("[data-select-level]").forEach(button => {
 
   SF.updatePackagePreview();
 
+  /* ===================================================
+     STANDARD MEMBERSHIP REQUEST — ALARM 1
+     =================================================== */
+
   activationForm?.addEventListener("submit", async event => {
     event.preventDefault();
 
-    const button = activationForm.querySelector('[type="submit"]');
-    const message = document.getElementById("activationMessage");
+    const button =
+      activationForm.querySelector('[type="submit"]');
+
+    const message =
+      document.getElementById("activationMessage");
 
     if (button) button.disabled = true;
 
     try {
       const fd = new FormData(activationForm);
 
-      const fullName = String(fd.get("full_name") || "").trim();
-      const phone = String(fd.get("phone") || "").trim();
-      const level = Number(fd.get("membership_level"));
-      const country = String(fd.get("country") || countrySelect?.value || "Kenya");
+      const fullName =
+        String(fd.get("full_name") || "").trim();
 
-      if (!fullName || !phone || ![1, 2, 3, 4].includes(level)) {
-        throw new Error("Enter your name, phone number and a valid membership level.");
+      const phone =
+        String(fd.get("phone") || "").trim();
+
+      const level =
+        Number(fd.get("membership_level"));
+
+      const country =
+        String(fd.get("country") || countrySelect?.value || "Kenya");
+
+      if (
+        !fullName ||
+        !phone ||
+        ![1, 2, 3, 4].includes(level)
+      ) {
+        throw new Error(
+          "Enter your name, phone number and a valid membership level."
+        );
       }
 
       if (!["Kenya", "Nigeria", "Ghana"].includes(country)) {
@@ -344,27 +544,60 @@ document.querySelectorAll("[data-select-level]").forEach(button => {
 
       if (profileError) throw profileError;
 
-      const { error: activationError } = await db.rpc("scf_submit_activation", {
-        p_full_name: fullName,
-        p_phone: phone,
-        p_membership_level: level
-      });
+      const { error: activationError } = await db.rpc(
+        "scf_submit_activation",
+        {
+          p_full_name: fullName,
+          p_phone: phone,
+          p_membership_level: level
+        }
+      );
 
       if (activationError) throw activationError;
+
+      /*
+       * Create Alarm 1 only after the activation request
+       * has been successfully saved.
+       */
+      try {
+        await SF.createAdminNotification(
+          "activation_requested",
+          null
+        );
+      } catch (notificationError) {
+        console.error(
+          "Membership was saved but its notification failed:",
+          notificationError
+        );
+
+        throw new Error(
+          "Your membership request was saved, but the admin notification could not be created. Please contact support before submitting again."
+        );
+      }
 
       await SF.loadProfile();
 
       if (country === "Kenya") {
-        SF.setDashboardMessage("activationMessage", "Activation request saved. Continue with your FBK submission.", true);
+        SF.setDashboardMessage(
+          "activationMessage",
+          "Membership request saved. Alarm 1 notification sent. Continue with your FBK submission.",
+          true
+        );
       } else {
-        SF.setDashboardMessage("activationMessage", "Activation request saved. Continue with your MiniPay payment instructions.", true);
+        SF.setDashboardMessage(
+          "activationMessage",
+          "Membership request saved. Alarm 1 notification sent. Continue with your MiniPay payment instructions.",
+          true
+        );
       }
 
       await SF.loadDashboard();
 
     } catch (error) {
       if (message) {
-        message.textContent = error.message || "Activation request failed.";
+        message.textContent =
+          error.message || "Activation request failed.";
+
         message.style.color = "#b42318";
       }
     } finally {
@@ -372,23 +605,34 @@ document.querySelectorAll("[data-select-level]").forEach(button => {
     }
   });
 
+  /* ===================================================
+     MINIPAY SHAREABLE LINK SUBMISSION
+     =================================================== */
+
   miniPayForm?.addEventListener("submit", async event => {
     event.preventDefault();
 
-    const button = miniPayForm.querySelector('[type="submit"]');
-    const message = document.getElementById("miniPayMessage");
+    const button =
+      miniPayForm.querySelector('[type="submit"]');
+
+    const message =
+      document.getElementById("miniPayMessage");
 
     if (button) button.disabled = true;
 
     try {
       const fd = new FormData(miniPayForm);
-      const paymentLink = String(fd.get("payment_link") || "").trim();
+
+      const paymentLink =
+        String(fd.get("payment_link") || "").trim();
 
       const country = miniPayForm.dataset.country;
       const level = Number(miniPayForm.dataset.level);
 
       if (!paymentLink) {
-        throw new Error("Paste your MiniPay shareable payment link.");
+        throw new Error(
+          "Paste your MiniPay shareable payment link."
+        );
       }
 
       let parsedUrl;
@@ -396,31 +640,42 @@ document.querySelectorAll("[data-select-level]").forEach(button => {
       try {
         parsedUrl = new URL(paymentLink);
       } catch {
-        throw new Error("Enter a valid MiniPay shareable link.");
+        throw new Error(
+          "Enter a valid MiniPay shareable link."
+        );
       }
 
       if (!["https:", "http:"].includes(parsedUrl.protocol)) {
-        throw new Error("The payment link must begin with http:// or https://.");
+        throw new Error(
+          "The payment link must begin with http:// or https://."
+        );
       }
 
       if (!["Nigeria", "Ghana"].includes(country)) {
-        throw new Error("MiniPay submissions are only available for Nigeria and Ghana.");
+        throw new Error(
+          "MiniPay submissions are only available for Nigeria and Ghana."
+        );
       }
 
       const price = SF.getPackagePrice(level, country);
 
-      if (!price) throw new Error("Unable to calculate your package price.");
+      if (!price) {
+        throw new Error(
+          "Unable to calculate your package price."
+        );
+      }
 
-      const { error } = await db.from("payment_submissions").insert({
-        user_id: SF.currentUser.id,
-        country,
-        membership_level: level,
-        payment_provider: "MiniPay",
-        payment_link: paymentLink,
-        currency: price.currency,
-        amount: price.amount,
-        status: "submitted"
-      });
+      const { error } = await db.from("payment_submissions")
+        .insert({
+          user_id: SF.currentUser.id,
+          country,
+          membership_level: level,
+          payment_provider: "MiniPay",
+          payment_link: paymentLink,
+          currency: price.currency,
+          amount: price.amount,
+          status: "submitted"
+        });
 
       if (error) throw error;
 
@@ -437,7 +692,9 @@ document.querySelectorAll("[data-select-level]").forEach(button => {
 
     } catch (error) {
       if (message) {
-        message.textContent = error.message || "MiniPay link submission failed.";
+        message.textContent =
+          error.message || "MiniPay link submission failed.";
+
         message.style.color = "#b42318";
       }
     } finally {
@@ -445,29 +702,52 @@ document.querySelectorAll("[data-select-level]").forEach(button => {
     }
   });
 
+  /* ===================================================
+     FBK SUBMISSION — ALARM 2
+     =================================================== */
+
   fbkForm?.addEventListener("submit", async event => {
     event.preventDefault();
 
-    const button = fbkForm.querySelector('[type="submit"]');
-    const message = document.getElementById("fbkMessage");
+    const button =
+      fbkForm.querySelector('[type="submit"]');
+
+    const message =
+      document.getElementById("fbkMessage");
 
     if (button) button.disabled = true;
 
     try {
       const fd = new FormData(fbkForm);
-      const code = String(fd.get("fbk_code") || "").trim();
 
-      if (!/^[0-9]{4}$/.test(code)) {
-        throw new Error("Enter exactly four numeric digits.");
+      const code =
+        String(fd.get("fbk_code") || "").trim();
+
+      if (
+        !code ||
+        code.length > 100 ||
+        /[\r\n\t]/.test(code)
+      ) {
+        throw new Error(
+          "Enter the FBK number supplied to you. It must be 1 to 100 characters."
+        );
       }
 
       const existing = await SF.getLatestFBKSubmission();
 
-      if (existing && ["submitted", "reviewed"].includes(String(existing.status).toLowerCase())) {
-        throw new Error("You already have an FBK submission awaiting review.");
+      if (
+        existing &&
+        ["submitted", "reviewed"].includes(
+          String(existing.status).toLowerCase()
+        )
+      ) {
+        throw new Error(
+          "You already have an FBK submission awaiting review."
+        );
       }
 
-      const { error: insertError } = await db.from("fbk_code_submissions")
+      const { error: insertError } = await db
+        .from("fbk_code_submissions")
         .insert({
           user_id: SF.currentUser.id,
           submitted_code: code,
@@ -478,21 +758,29 @@ document.querySelectorAll("[data-select-level]").forEach(button => {
 
       if (insertError) throw insertError;
 
-      const { error: notificationError } = await db.rpc(
-        "scholarbrige_create_admin_notification",
-        {
-          p_event_type: "fbk_submitted",
-          p_submitted_fbk_code: code
-        }
-      );
+      /*
+       * Create Alarm 2 only after the FBK record
+       * has been successfully inserted.
+       */
+      try {
+        await SF.createAdminNotification(
+          "fbk_submitted",
+          code
+        );
+      } catch (notificationError) {
+        console.error(
+          "FBK saved but its notification failed:",
+          notificationError
+        );
 
-      if (notificationError) {
-        throw new Error("Your FBK was saved, but the admin alarm failed. Please contact support.");
+        throw new Error(
+          "Your FBK was saved, but the admin notification could not be created. Please contact support."
+        );
       }
 
       SF.setDashboardMessage(
         "fbkMessage",
-        "FBK submitted successfully. Alarm 2 sent. Your account is UNDER REVIEW.",
+        "FBK submitted successfully. Alarm 2 notification sent. Your account is UNDER REVIEW.",
         true
       );
 
@@ -503,11 +791,4 @@ document.querySelectorAll("[data-select-level]").forEach(button => {
 
     } catch (error) {
       if (message) {
-        message.textContent = error.message || "FBK submission failed.";
-        message.style.color = "#b42318";
-      }
-    } finally {
-      if (button) button.disabled = false;
-    }
-  });
-});
+        message.te
