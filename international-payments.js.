@@ -1,0 +1,156 @@
+
+window.SF = window.SF || {};
+
+const SF_NARDOPAY_LINKS = {
+  1: "https://shopyfont.nardopay.com/p/accountactivation",
+  2: "https://shopyfont.nardopay.com/p/accountactivation-7g0fl2",
+  3: "https://shopyfont.nardopay.com/p/accountactivation-ntuyl3",
+  4: "https://shopyfont.nardopay.com/p/accountactivation-fpil"
+};
+
+/* Keep Kenya's existing pricing unchanged.
+   International members are directed to NardoPay. */
+const originalPackagePrice = SF.getPackagePrice;
+
+SF.getPackagePrice = (level, country) => {
+  if (country && country !== "Kenya") {
+    return {
+      amount: null,
+      currency: "NARDO",
+      display: "Local currency through NardoPay"
+    };
+  }
+
+  return originalPackagePrice(level, country);
+};
+
+/* Improve the international price preview. */
+const originalPreview = SF.updatePackagePreview;
+
+SF.updatePackagePreview = () => {
+  originalPreview();
+
+  const country =
+    document.getElementById("activationCountry")?.value;
+
+  if (country && country !== "Kenya") {
+    const preview =
+      document.getElementById("packagePricePreview");
+
+    const selectedPrice =
+      document.getElementById("sfSelectedPrice");
+
+    if (selectedPrice) {
+      selectedPrice.textContent =
+        "Pay in your local currency through NardoPay";
+    }
+
+    if (preview) {
+      preview.textContent =
+        "Your selected package will open through NardoPay. The available payment currency will be shown at checkout.";
+    }
+  }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("activationForm");
+
+  if (!form) return;
+
+  /* Intercept international requests only.
+     Kenya continues using its existing handler. */
+  form.addEventListener("submit", async event => {
+    const fd = new FormData(form);
+
+    const country = String(
+      fd.get("country") || ""
+    ).trim();
+
+    if (!country || country === "Kenya") return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const button = form.querySelector('[type="submit"]');
+    const message = document.getElementById("activationMessage");
+
+    if (button) button.disabled = true;
+
+    try {
+      if (!SF.currentUser) {
+        throw new Error("Please sign in again.");
+      }
+
+      const fullName = String(
+        fd.get("full_name") || ""
+      ).trim();
+
+      const phone = String(
+        fd.get("phone") || ""
+      ).trim();
+
+      const level = Number(
+        fd.get("membership_level")
+      );
+
+      const checkoutLink = SF_NARDOPAY_LINKS[level];
+
+      if (!fullName || !phone || !checkoutLink) {
+        throw new Error(
+          "Enter your details and select a valid package."
+        );
+      }
+
+      const { error: profileError } =
+        await SF.getClient()
+          .from("profiles")
+          .update({
+            country,
+            full_name: fullName,
+            phone
+          })
+          .eq("id", SF.currentUser.id);
+
+      if (profileError) throw profileError;
+
+      const { error: activationError } =
+        await SF.getClient().rpc(
+          "scf_submit_activation",
+          {
+            p_full_name: fullName,
+            p_phone: phone,
+            p_membership_level: level
+          }
+        );
+
+      if (activationError) throw activationError;
+
+      await SF.createAdminNotification(
+        "activation_requested",
+        null
+      );
+
+      if (message) {
+        message.style.color = "#237a57";
+        message.textContent =
+          "Your membership request has been saved. Opening NardoPay checkout...";
+      }
+
+      await SF.loadProfile();
+
+      window.location.assign(checkoutLink);
+
+    } catch (error) {
+      console.error("International activation:", error);
+
+      if (message) {
+        message.style.color = "#b42318";
+        message.textContent =
+          error.message || "Unable to continue to payment.";
+      }
+
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }, true);
+});
