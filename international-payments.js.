@@ -8,47 +8,41 @@ const SF_NARDOPAY_LINKS = {
   4: "https://shopyfont.nardopay.com/p/accountactivation-fpil"
 };
 
-/* Keep Kenya's existing pricing unchanged.
-   International members are directed to NardoPay. */
-const originalPackagePrice = SF.getPackagePrice;
+const SF_LOCAL_PAYMENT_COUNTRIES = [
+  "Kenya",
+  "Nigeria",
+  "Ghana"
+];
 
-SF.getPackagePrice = (level, country) => {
-  if (country && country !== "Kenya") {
-    return {
-      amount: null,
-      currency: "NARDO",
-      display: "Local currency through NardoPay"
-    };
-  }
-
-  return originalPackagePrice(level, country);
-};
-
-/* Improve the international price preview. */
+/* Preserve existing Kenya, Nigeria and Ghana pricing. */
 const originalPreview = SF.updatePackagePreview;
 
 SF.updatePackagePreview = () => {
-  originalPreview();
+  if (typeof originalPreview === "function") {
+    originalPreview();
+  }
 
   const country =
     document.getElementById("activationCountry")?.value;
 
-  if (country && country !== "Kenya") {
-    const preview =
-      document.getElementById("packagePricePreview");
+  if (!country || SF_LOCAL_PAYMENT_COUNTRIES.includes(country)) {
+    return;
+  }
 
-    const selectedPrice =
-      document.getElementById("sfSelectedPrice");
+  const preview =
+    document.getElementById("packagePricePreview");
 
-    if (selectedPrice) {
-      selectedPrice.textContent =
-        "Pay in your local currency through NardoPay";
-    }
+  const selectedPrice =
+    document.getElementById("sfSelectedPrice");
 
-    if (preview) {
-      preview.textContent =
-        "Your selected package will open through NardoPay. The available payment currency will be shown at checkout.";
-    }
+  if (selectedPrice) {
+    selectedPrice.textContent =
+      "Pay in your local currency through NardoPay";
+  }
+
+  if (preview) {
+    preview.textContent =
+      "Your selected package will open through NardoPay. The available payment currency will be shown at checkout.";
   }
 };
 
@@ -57,8 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!form) return;
 
-  /* Intercept international requests only.
-     Kenya continues using its existing handler. */
   form.addEventListener("submit", async event => {
     const fd = new FormData(form);
 
@@ -66,13 +58,20 @@ document.addEventListener("DOMContentLoaded", () => {
       fd.get("country") || ""
     ).trim();
 
-    if (!country || country === "Kenya") return;
+    /* Keep the three existing payment routes unchanged. */
+    if (
+      !country ||
+      SF_LOCAL_PAYMENT_COUNTRIES.includes(country)
+    ) {
+      return;
+    }
 
     event.preventDefault();
     event.stopImmediatePropagation();
 
     const button = form.querySelector('[type="submit"]');
-    const message = document.getElementById("activationMessage");
+    const message =
+      document.getElementById("activationMessage");
 
     if (button) button.disabled = true;
 
@@ -101,27 +100,27 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       }
 
-      const { error: profileError } =
-        await SF.getClient()
-          .from("profiles")
-          .update({
-            country,
-            full_name: fullName,
-            phone
-          })
-          .eq("id", SF.currentUser.id);
+      const db = SF.getClient();
+
+      const { error: profileError } = await db
+        .from("profiles")
+        .update({
+          country,
+          full_name: fullName,
+          phone
+        })
+        .eq("id", SF.currentUser.id);
 
       if (profileError) throw profileError;
 
-      const { error: activationError } =
-        await SF.getClient().rpc(
-          "scf_submit_activation",
-          {
-            p_full_name: fullName,
-            p_phone: phone,
-            p_membership_level: level
-          }
-        );
+      const { error: activationError } = await db.rpc(
+        "scf_submit_activation",
+        {
+          p_full_name: fullName,
+          p_phone: phone,
+          p_membership_level: level
+        }
+      );
 
       if (activationError) throw activationError;
 
@@ -135,8 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
         message.textContent =
           "Your membership request has been saved. Opening NardoPay checkout...";
       }
-
-      await SF.loadProfile();
 
       window.location.assign(checkoutLink);
 
