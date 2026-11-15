@@ -354,20 +354,25 @@
   <h2>Community registration</h2>
   <p>Enter your phone number and the FBK number supplied to you.</p>
 
-  <form id="communityRequestForm" class="form-card">
-    <label>Phone number
-      <input name="phone" type="tel" required maxlength="30" placeholder="+254 700 000 000">
-    </label>
+  
+<div id="communityRequestWorkspace" class="panel hidden" style="margin:20px 0;padding:22px;">
+  <h2>Community registration</h2>
+  <p>Complete your Community membership payment to continue.</p>
 
-    <label>FBK number
-      <input name="fbk_code" type="text" required maxlength="100" placeholder="Enter your FBK number">
-    </label>
-
-    <button type="submit" class="btn btn-gold btn-full">
-      Submit Community Request
+  <div class="package-payment">
+    <h3>SHOPY FONT Community</h3>
+    <p><strong>KES 200</strong></p>
+    <button
+      type="button"
+      class="btn btn-gold btn-full"
+      onclick="window.location.assign('https://pay.lipwa.app/p/14078c173')">
+      PAY KES 200 — LIPWA
     </button>
-  </form>
+  </div>
 
+  <p id="communityRequestMessage" class="form-message" role="status"></p>
+</div>
+  
   <p id="communityRequestMessage" class="form-message" role="status"></p>
 </div>
 <!-- END COMMUNITY ENTRY -->
