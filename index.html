@@ -520,71 +520,7 @@
   <p id="activationMessage" class="form-message" role="status"></p>
 </div>
       
-      <!-- NIGERIA AND GHANA MINIPAY -->
-      <div id="miniPayWorkspace" class="panel hidden">
-        <p class="eyebrow">INTERNATIONAL MEMBERSHIP PAYMENT</p>
-        <h2>Complete your payment</h2>
-        <p class="muted">Follow the steps below and submit your private MiniPay shareable link for review.</p>
-
-        <div class="notice">
-          <strong id="miniPayCountryLabel">International payment</strong>
-          <p>Selected package: <strong id="miniPayLevelLabel">—</strong></p>
-          <p>Amount to deposit: <strong id="miniPayAmount">—</strong></p>
-          <p>Payment method: <strong>MiniPay</strong></p>
-        </div>
-
-        <h3>How to pay using MiniPay</h3>
-        <ol>
-          <li>Install the official MiniPay application.</li>
-          <li>Open MiniPay and deposit the exact amount shown above.</li>
-          <li>Choose <strong>Send Money</strong>.</li>
-          <li>Generate your shareable payment link.</li>
-          <li>Copy the generated link.</li>
-          <li>Return to SHOPY FONT and paste the link in the form below.</li>
-        </ol>
-
-        <div class="notice">
-          <strong>Keep your payment link private.</strong>
-          <p>Submit your own payment link only through this form. Do not publish it or send it to other members.</p>
-        </div>
-
-        <form id="miniPayForm" class="form-card">
-          <label>MiniPay shareable payment link
-            <input type="url" name="payment_link" id="miniPayLink" required maxlength="2000" placeholder="Paste your private MiniPay link here">
-          </label>
-          <button class="btn btn-gold btn-full" type="submit">Submit payment for review</button>
-        </form>
-
-        <p id="miniPayMessage" class="form-message" role="status"></p>
-      </div>
-
-      <!-- KENYA FBK -->
-      <div id="fbkWorkspace" class="panel hidden">
-        <p class="eyebrow">KENYA MEMBERSHIP ACTIVATION</p>
-        <h2>FBK submission</h2>
-        <p class="muted">Enter your four-digit FBK number for administrator review.</p>
-
-        <form id="fbkForm" class="form-card">
-          <label>Four-digit FBK number
-            <input name="fbk_code" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" required placeholder="0000">
-          </label>
-          <button class="btn btn-gold btn-full" type="submit">Submit FBK</button>
-        </form>
-
-        <p id="fbkMessage" class="form-message" role="status"></p>
-      </div>
-
-      <!-- SYSTEM REVIEW -->
-      <div id="reviewWorkspace" class="panel hidden">
-        <p class="eyebrow">MEMBERSHIP STATUS</p>
-        <h2>Submission under review</h2>
-        <p>Your submission has been received successfully.</p>
-        <p>Our administration team will review your membership activation request.</p>
-        <strong class="status-pill">UNDER SYSTEM REVIEW</strong>
-        <p id="reviewDetails" class="muted"></p>
-      </div>
-
-      
+           
       <!-- REJECTION -->
       <div id="rejectedWorkspace" class="panel hidden">
         <h2>Activation not approved</h2>
