@@ -217,4 +217,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, true);
 });
-                                       
+ 
+/* SHOW THE CORRECT PAYMENT PROVIDER */
+const SF_originalPackagePreview = SF.updatePackagePreview;
+
+SF.updatePackagePreview = () => {
+  if (typeof SF_originalPackagePreview === "function") {
+    SF_originalPackagePreview();
+  }
+
+  const country =
+    document.getElementById("activationCountry")?.value || "";
+
+  const level =
+    document.getElementById("activationLevel")?.value || "";
+
+  const preview =
+    document.getElementById("packagePricePreview");
+
+  if (!preview || !country || !level) return;
+
+  const price = SF.getPackagePrice(level, country);
+
+  if (country === "Kenya") {
+    preview.textContent =
+      `Level ${level}: ${price.display}. Payment provider: LIPWA.`;
+  } else {
+    preview.textContent =
+      `Level ${level}: Final local-currency amount will be displayed at NardoPay checkout.`;
+  }
+};
+
