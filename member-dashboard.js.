@@ -106,59 +106,6 @@
           <small>Explore campaigns, services and work.</small>
         </button>
 
-        <button class="sf-quick-card"
-          type="button" data-view="scholarbridge">
-          <span class="sf-quick-icon">✎</span>
-          <strong>ScholarBridge</strong>
-          <small>Open learning and academic support.</small>
-        </button>
-
-        <button class="sf-quick-card"
-          type="button" data-view="referrals">
-          <span class="sf-quick-icon">♧</span>
-          <strong>Referral centre</strong>
-          <small>View and share your referral link.</small>
-        </button>
-
-      </div>
-    `;
-
-    const stats = root.querySelector(".stats-grid");
-
-    if (stats) {
-      stats.insertAdjacentElement("afterend", section);
-    } else {
-      root.prepend(section);
-    }
-  }
-
-  function install() {
-    if (
-      window.SF &&
-      typeof window.SF.loadDashboard === "function" &&
-      !window.SF.__memberOverviewWrapped
-    ) {
-      const original = window.SF.loadDashboard;
-
-      window.SF.loadDashboard = async function () {
-        const result = await original.apply(this, arguments);
-        renderOverview();
-        return result;
-      };
-
-      window.SF.__memberOverviewWrapped = true;
-    }
-
-    renderOverview();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", install);
-  } else {
-    install();
-  }
-})();
-
 /* ==========================================
    SHOPY FONT — GLOBAL CONNECTIVITY
    Continuous International Flag Strip
