@@ -466,15 +466,78 @@
 
   </div>
 
-  <div class="sf-registration-card" id="sfRegistrationDetails">
-    <div class="sf-registration-heading">
-      <span class="sf-registration-icon">✦</span>
-      <div>
-        <span class="sf-kicker">STEP TWO · REGISTRATION</span>
-        <h3>Your membership details</h3>
-        <p>Complete the information below to continue.</p>
+</div>
+
+<!-- PAYMENT PROOF SUBMISSION -->
+<div class="sf-proof-entry" id="sfPaymentProofEntry">
+  <div class="sf-proof-entry-copy">
+    <span class="sf-kicker">ALREADY PAID?</span>
+    <h3>Submit your payment proof</h3>
+    <p>Upload your receipt, enter your transaction reference, or share your payment link for manual verification.</p>
+  </div>
+
+  <button type="button" class="btn btn-gold btn-large btn-full"
+    id="sfOpenPaymentProof">
+    SUBMIT PAYMENT PROOF →
+  </button>
+
+  <div id="sfPaymentProofWorkspace" class="panel hidden">
+    <h3>Payment verification</h3>
+    <p class="muted">Submit the evidence that matches your payment method.</p>
+
+    <form id="sfPaymentProofForm">
+      <label>Payment evidence type
+        <select name="proof_type" id="sfProofType" required>
+          <option value="">Choose evidence type</option>
+          <option value="receipt">Receipt screenshot or PDF</option>
+          <option value="reference">Transaction reference/code</option>
+          <option value="link">Shareable payment link</option>
+        </select>
+      </label>
+
+      <div id="sfReceiptField" class="hidden">
+        <label>Upload payment receipt
+          <input type="file" name="receipt" id="sfPaymentReceipt"
+            accept="image/jpeg,image/png,image/webp,application/pdf">
+        </label>
+        <small class="muted">Maximum file size: 10 MB.</small>
       </div>
-    </div>
+
+      <div id="sfReferenceField" class="hidden">
+        <label>Transaction reference/code
+          <input type="text" name="payment_reference"
+            id="sfPaymentReference" maxlength="150"
+            placeholder="Enter transaction reference">
+        </label>
+      </div>
+
+      <div id="sfLinkField" class="hidden">
+        <label>Shareable payment link
+          <input type="url" name="payment_link"
+            id="sfPaymentLink" maxlength="1000"
+            placeholder="https://...">
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-gold btn-full"
+        id="sfSubmitPaymentProof">
+        SUBMIT FOR VERIFICATION
+      </button>
+
+      <button type="button" class="btn btn-outline btn-full"
+        id="sfCancelPaymentProof">
+        Cancel
+      </button>
+
+      <p id="sfPaymentProofMessage" class="form-message"
+        role="status"></p>
+    </form>
+  </div>
+</div>
+<!-- END PAYMENT PROOF SUBMISSION -->
+
+<div class="sf-registration-card" id="sfRegistrationDetails">
+  
 
     <form id="activationForm" class="sf-registration-form">
 
