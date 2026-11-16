@@ -1,4 +1,3 @@
-
 window.SF = window.SF || {};
 
 SF.adminTab = "notifications";
@@ -82,7 +81,6 @@ SF.loadAdmin = async (tab = SF.adminTab || "notifications") => {
 };
 
 /* ADMIN NOTIFICATIONS */
-
 
 SF.adminNotifications = async () => {
   const db = SF.getClient();
@@ -420,7 +418,6 @@ SF.adminNotifications = async () => {
   `;
 };
 
-
 /* ALL MEMBER DETAILS */
 
 SF.adminMembers = async () => {
@@ -544,7 +541,7 @@ SF.adminPayments = async () => {
 
   const { data, error } = await db
     .from("payment_submissions")
-    .select("id,user_id,country,membership_level,payment_provider,payment_reference,payment_link,currency,amount,status,submitted_at")
+    .select("id,user_id,country,membership_level,payment_provider,payment_reference,payment_link,proof_path,currency,amount,status,submitted_at")
     .order("submitted_at", { ascending: false });
 
   if (error) throw error;
@@ -556,336 +553,77 @@ SF.adminPayments = async () => {
   const ids = [...new Set(data.map(x => x.user_id).filter(Boolean))];
   const result = await db.from("profiles")
     .select("id,full_name,email,phone")
-    .in("id",ids);
+    .in("id", ids);
 
   if (result.error) throw result.error;
 
-  const map = new Map((result.data || []).map(p => [p.id,p]));
+  const map = new Map((result.data || []).map(p => [p.id, p]));
+
+  const rows = await Promise.all(data.map(async x => {
+    const p = map.get(x.user_id) || {};
+    let paymentLink = "";
+    let proof = "";
+
+    try {
+      const u = new URL(x.payment_link || "");
+      if (u.protocol === "https:" || u.protocol === "http:") {
+        paymentLink = `<a href="${SF.adminEscape(u.href)}" target="_blank" rel="noopener noreferrer">Open shareable payment link</a>`;
+      }
+    } catch {}
+
+    if (x.proof_path) {
+      try {
+        const { data: signed, error: signedError } = await db
+          .storage
+          .from("shopy-payment-proofs")
+          .createSignedUrl(x.proof_path, 600);
+
+        if (!signedError && signed?.signedUrl) {
+          const safeUrl = SF.adminEscape(signed.signedUrl);
+          const isPdf = /\.pdf(?:$|[?#])/i.test(x.proof_path);
+          proof = isPdf
+            ? `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">View uploaded receipt (PDF)</a>`
+            : `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer"><img src="${safeUrl}" alt="Payment receipt" style="display:block;max-width:220px;max-height:180px;object-fit:contain;border-radius:8px;margin-top:8px;border:1px solid #ddd;"></a><p><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">Open full receipt</a></p>`;
+        } else {
+          proof = `<span class="muted">Receipt could not be opened: ${SF.adminEscape(signedError?.message || "Storage access error")}</span>`;
+        }
+      } catch (receiptError) {
+        proof = `<span class="muted">Receipt could not be opened: ${SF.adminEscape(receiptError.message || "Unknown error")}</span>`;
+      }
+    } else {
+      proof = `<span class="muted">No receipt file uploaded.</span>`;
+    }
+
+    return `
+      <div class="admin-row" style="display:block;margin:12px 0;padding:15px;">
+        <strong>${SF.adminEscape(p.full_name || "Member")}</strong>
+        <p>${SF.adminEscape(p.email || "")} · ${SF.adminEscape(p.phone || "")}</p>
+        <p>Country: ${SF.adminEscape(x.country || "")}</p>
+        <p>Level: ${SF.adminEscape(x.membership_level ?? "")}</p>
+        <p>Provider: ${SF.adminEscape(x.payment_provider || "")}</p>
+        <p>Amount: ${SF.adminEscape(SF.adminMoney(x.amount, x.currency))}</p>
+        <p>Transaction reference: ${SF.adminEscape(x.payment_reference || "Not provided")}</p>
+        <p>Shareable link: ${paymentLink || '<span class="muted">Not provided</span>'}</p>
+        <div style="margin:10px 0;">
+          <strong>Payment receipt</strong>
+          <p>${proof}</p>
+        </div>
+        <p>Status: ${SF.adminEscape(x.status || "")}</p>
+        <p class="muted">${SF.adminEscape(x.submitted_at ? new Date(x.submitted_at).toLocaleString() : "")}</p>
+        ${["submitted", "under_review"].includes(String(x.status).toLowerCase()) ? `
+          <div class="admin-actions">
+            <button class="btn btn-gold" data-review-payment="${SF.adminEscape(x.id)}" data-action="approve">Approve Account</button>
+            <button class="btn btn-outline" data-review-payment="${SF.adminEscape(x.id)}" data-action="reject">Reject Payment</button>
+          </div>` : ""}
+      </div>`;
+  }));
 
   return `
     <h2>Payment submissions (${data.length})</h2>
-    ${data.map(x => {
-      const p = map.get(x.user_id) || {};
-      let link = "";
-
-      try {
-        const u = new URL(x.payment_link || "");
-        if (u.protocol === "https:" || u.protocol === "http:") {
-          link = `<a href="${SF.adminEscape(u.href)}" target="_blank" rel="noopener noreferrer">Open private payment link</a>`;
-        }
-      } catch {}
-
-      return `
-        <div class="admin-row" style="display:block;margin:12px 0;padding:15px;">
-          <strong>${SF.adminEscape(p.full_name || "Member")}</strong>
-          <p>${SF.adminEscape(p.email || "")} · ${SF.adminEscape(p.phone || "")}</p>
-          <p>Country: ${SF.adminEscape(x.country)}</p>
-          <p>Level: ${SF.adminEscape(x.membership_level)}</p>
-          <p>Amount: ${SF.adminEscape(SF.adminMoney(x.amount,x.currency))}</p>
-          <p>Status: ${SF.adminEscape(x.status)}</p>
-          <p>${link}</p>
-          <p class="muted">${SF.adminEscape(new Date(x.submitted_at).toLocaleString())}</p>
-          ${["submitted","under_review"].includes(String(x.status).toLowerCase()) ? `
-            <div class="admin-actions">
-              <button class="btn btn-gold" data-review-minipay="${x.id}" data-action="approve">Approve payment</button>
-              <button class="btn btn-outline" data-review-minipay="${x.id}" data-action="reject">Reject payment</button>
-            </div>` : ""}
-        </div>`;
-    }).join("")}
+    ${rows.join("")}
   `;
 };
 
-SF.reviewMiniPay = async (id, action) => {
-  const db = SF.getClient();
-  const approve = action === "approve";
-  let reason = null;
+/* APPROVE OR REJECT PAYMENT */
 
-  if (!approve) {
-    reason = prompt("Enter the reason for rejecting this payment:");
-    if (reason === null) return;
-    reason = reason.trim();
-    if (!reason) return SF.showToast("A rejection reason is required.");
-  }
-
-  if (!confirm(approve
-    ? "Have you manually confirmed this payment?"
-    : "Reject this payment submission?")) return;
-
-  try {
-    const { data: payment, error } = await db
-      .from("payment_submissions")
-      .select("id,user_id,status")
-      .eq("id",id)
-      .single();
-
-    if (error) throw error;
-
-    if (!["submitted","under_review"].includes(String(payment.status).toLowerCase())) {
-      throw new Error("This payment has already been reviewed.");
-    }
-
-    const status = approve ? "approved" : "rejected";
-
-    const update = await db.from("payment_submissions").update({
-      status,
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: SF.currentUser.id,
-      review_reason: reason
-    }).eq("id",id);
-
-    if (update.error) throw update.error;
-
-    const profileUpdate = await db.from("profiles")
-      .update({account_status: status})
-      .eq("id",payment.user_id);
-
-    if (profileUpdate.error) throw profileUpdate.error;
-
-    await db.from("activation_requests")
-      .update({status,updated_at:new Date().toISOString()})
-      .eq("user_id",payment.user_id);
-
-    SF.showToast(approve ? "Payment approved and member activated." : "Payment rejected.");
-    await SF.loadAdmin("payments");
-
-  } catch (error) {
-    SF.showToast(error.message);
-  }
-};
-
-/* FBK SUBMISSIONS */
-
-SF.adminFBK = async () => {
-  const db = SF.getClient();
-
-  const { data, error } = await db
-    .from("fbk_code_submissions")
-    .select("id,user_id,submitted_code,status,admin_note,created_at")
-    .in("status",["submitted","reviewed"])
-    .order("created_at",{ascending:false});
-
-  if (error) throw error;
-
-  if (!data?.length) {
-    return `<h2>FBK review</h2><p class="muted">No FBK submissions awaiting review.</p>`;
-  }
-
-  const ids = [...new Set(data.map(x => x.user_id).filter(Boolean))];
-  const result = await db.from("profiles")
-    .select("id,full_name,email,phone,country")
-    .in("id",ids);
-
-  if (result.error) throw result.error;
-
-  const map = new Map((result.data || []).map(p => [p.id,p]));
-
-  return `
-    <h2>FBK submissions (${data.length})</h2>
-    ${data.map(x => {
-      const p = map.get(x.user_id) || {};
-      return `
-        <div class="admin-row" style="display:block;margin:12px 0;padding:15px;">
-          <strong>${SF.adminEscape(p.full_name || "Member")}</strong>
-          <p>Phone: ${SF.adminEscape(p.phone || "Not available")}</p>
-          <p>Email: ${SF.adminEscape(p.email || "Not available")}</p>
-          <p>Country: ${SF.adminEscape(p.country || "Not available")}</p>
-          <p>FBK code: <strong>${SF.adminEscape(x.submitted_code)}</strong></p>
-          <p>Status: ${SF.adminEscape(x.status)}</p>
-          <p class="muted">${SF.adminEscape(new Date(x.created_at).toLocaleString())}</p>
-          <div class="admin-actions">
-            <button class="btn btn-gold" data-review-fbk="${x.id}" data-action="approve">Approve member</button>
-            <button class="btn btn-outline" data-review-fbk="${x.id}" data-action="reject">Reject</button>
-          </div>
-        </div>`;
-    }).join("")}
-  `;
-};
-
-SF.reviewFBK = async (id, action) => {
-  const approve = action === "approve";
-  let reason = null;
-
-  if (!approve) {
-    reason = prompt("Enter the reason for rejecting this FBK submission:");
-    if (reason === null) return;
-    reason = reason.trim();
-    if (!reason) return SF.showToast("A rejection reason is required.");
-  }
-
-  if (!confirm(approve ? "Approve this member?" : "Reject this FBK submission?")) return;
-
-  try {
-    const { data, error } = await SF.getClient().rpc("scf_review_fbk_activation",{
-      p_submission_id:id,
-      p_approve:approve,
-      p_admin_note:reason
-    });
-
-    if (error) throw error;
-    if (data?.success === false) throw new Error(data.message || "Review failed.");
-
-    SF.showToast(approve ? "Member approved." : "FBK submission rejected.");
-    await SF.loadAdmin("fbk");
-  } catch (error) {
-    SF.showToast(error.message);
-  }
-};
-
-/* PRODUCT REVIEW */
-
-SF.adminProducts = async () => {
-  const { data,error } = await SF.getClient()
-    .from("sf_products")
-    .select("id,title,category,price_usd,status,created_at,supplier_reference,source_type")
-    .eq("status","pending")
-    .order("created_at",{ascending:true});
-
-  if (error) throw error;
-
-  return `
-    <h2>Pending products (${data.length})</h2>
-    ${data.length ? data.map(p => `
-      <div class="admin-row">
-        <div>
-          <strong>${SF.adminEscape(p.title)}</strong>
-          <p>${SF.adminEscape(p.category)} · ${SF.formatUsd(p.price_usd)}</p>
-        </div>
-        <div class="admin-actions">
-          <button class="btn btn-gold" data-review-product="${p.id}" data-status="approved">Approve</button>
-          <button class="btn btn-outline" data-review-product="${p.id}" data-status="rejected">Reject</button>
-        </div>
-      </div>`).join("") : `<p class="muted">No pending products.</p>`}
-  `;
-};
-
-SF.reviewProduct = async (id,status) => {
-  const { error } = await SF.getClient().from("sf_products").update({
-    status,
-    reviewed_at:new Date().toISOString(),
-    reviewed_by:SF.currentUser.id
-  }).eq("id",id);
-
-  if (error) return SF.showToast(error.message);
-
-  SF.showToast("Product " + status + ".");
-  SF.loadAdmin("products");
-};
-
-/* SALES REVIEW */
-
-SF.adminSales = async () => {
-  const { data,error } = await SF.getClient()
-    .from("sf_product_sales")
-    .select("id,product_id,referrer_id,order_reference,sale_amount_usd,status,created_at")
-    .eq("status","pending")
-    .order("created_at",{ascending:true});
-
-  if (error) throw error;
-
-  return `
-    <h2>Pending sales (${data.length})</h2>
-    ${data.length ? data.map(s => `
-      <div class="admin-row">
-        <div>
-          <strong>${SF.adminEscape(s.order_reference)}</strong>
-          <p>${SF.formatUsd(s.sale_amount_usd)}</p>
-        </div>
-        <div class="admin-actions">
-          <button class="btn btn-gold" data-review-sale="${s.id}" data-status="verified">Verify</button>
-          <button class="btn btn-outline" data-review-sale="${s.id}" data-status="rejected">Reject</button>
-        </div>
-      </div>`).join("") : `<p class="muted">No pending sales.</p>`}
-  `;
-};
-
-SF.reviewSale = async (id,status) => {
-  const { error } = await SF.getClient().from("sf_product_sales").update({
-    status,
-    verified_by:SF.currentUser.id,
-    verified_at:status === "verified" ? new Date().toISOString() : null
-  }).eq("id",id);
-
-  if (error) return SF.showToast(error.message);
-
-  SF.showToast("Sale " + status + ".");
-  SF.loadAdmin("sales");
-};
-
-/* ADMIN BUTTON ACTIONS */
-
-SF.adminBindActions = box => {
-  box.querySelectorAll("[data-admin-tab]").forEach(button => {
-    button.addEventListener("click",() => SF.loadAdmin(button.dataset.adminTab));
-  });
-
-  box.querySelectorAll("[data-mark-notification]").forEach(button => {
-    button.addEventListener("click",async () => {
-      const { error } = await SF.getClient()
-        .from("admin_notifications")
-        .update({is_read:true})
-        .eq("id",button.dataset.markNotification);
-
-      if (error) return SF.showToast(error.message);
-
-      SF.showToast("Notification marked as read.");
-      SF.loadAdmin("notifications");
-    });
-  });
-
-  box.querySelectorAll("[data-open-member]").forEach(button => {
-    button.addEventListener("click",() => SF.loadAdmin("members"));
-  });
-
-  box.querySelectorAll("[data-edit-member]").forEach(form => {
-    form.addEventListener("submit",async event => {
-      event.preventDefault();
-      try {
-        await SF.adminSaveMember(form);
-      } catch (error) {
-        SF.showToast(error.message);
-      }
-    });
-  });
-
-  
-  box.querySelectorAll("[data-review-minipay]").forEach(button => {
-    button.addEventListener("click", () =>
-      SF.reviewMiniPay(
-        button.dataset.reviewMinipay,
-        button.dataset.action
-      )
-    );
-  });
-
-  box.querySelectorAll("[data-review-fbk]").forEach(button => {
-    button.addEventListener("click", () =>
-      SF.reviewFBK(
-        button.dataset.reviewFbk,
-        button.dataset.action
-      )
-    );
-  });
-
-  box.querySelectorAll("[data-review-product]").forEach(button => {
-    button.addEventListener("click", () =>
-      SF.reviewProduct(
-        button.dataset.reviewProduct,
-        button.dataset.status
-      )
-    );
-  });
-
-  box.querySelectorAll("[data-review-sale]").forEach(button => {
-    button.addEventListener("click", () =>
-      SF.reviewSale(
-        button.dataset.reviewSale,
-        button.dataset.status
-      )
-    );
-  });
-};
-
-document.addEventListener("DOMContentLoaded", () => {
-  // Admin navigation is generated inside adminContent.
-});
-
+SF.revi
