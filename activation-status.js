@@ -1,4 +1,3 @@
-
 window.SF = window.SF || {};
 
 /* Preserve the original approved-member dashboard loader. */
@@ -17,10 +16,21 @@ SF.loadDashboard = async () => {
 
   const status = String(profile.account_status || "").toLowerCase();
 
-  /* Approved members retain the original dashboard features. */
-  if (status === "approved" &&
-      typeof SF_originalLoadDashboard === "function") {
-    return await SF_originalLoadDashboard();
+  /* Approved members retain the original dashboard and load their wallet. */
+  if (
+    status === "approved" &&
+    typeof SF_originalLoadDashboard === "function"
+  ) {
+    const result = await SF_originalLoadDashboard();
+
+    SF.wallet?.addStyles?.();
+    SF.wallet?.mount?.();
+
+    if (typeof SF.wallet?.render === "function") {
+      await SF.wallet.render();
+    }
+
+    return result;
   }
 
   const db = SF.getClient();
@@ -36,7 +46,6 @@ SF.loadDashboard = async () => {
     }
   };
 
-  /* Remove obsolete FBK and MiniPay workspaces. */
   ["fbkWorkspace", "miniPayWorkspace"].forEach(id => {
     document.getElementById(id)?.remove();
   });
@@ -86,3 +95,4 @@ SF.loadDashboard = async () => {
     `Your Level ${level} membership request for ${country} was received on ${submitted}. Complete your payment through the checkout link. Your account will remain under review until an administrator verifies the payment and approves your membership.`
   );
 };
+
