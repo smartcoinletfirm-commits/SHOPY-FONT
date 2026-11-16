@@ -7,10 +7,10 @@ window.SF = window.SF || {};
 
 SF.PAYMENT_LINKS = {
   Kenya: {
-    1: "https://pay.lipwa.app/p/55fa76e1al1",
-    2: "https://pay.lipwa.app/p/72bdffab3l2",
-    3: "https://pay.lipwa.app/p/0b41e0e5bl3",
-    4: "https://pay.lipwa.app/p/40cb75768level4"
+    1: "https://pay.lipwa.app/p/55fa76e1a",
+    2: "https://pay.lipwa.app/p/72bdffab3",
+    3: "https://pay.lipwa.app/p/0b41e0e5b",
+    4: "https://pay.lipwa.app/p/40cb75768"
   },
 
   International: {
@@ -66,8 +66,11 @@ SF.getPackagePrice = (level, country) => {
   };
 };
 
+/* =========================================
+   PACKAGE CARDS AND ACTIVATION ROUTING
+========================================= */
+
 document.addEventListener("DOMContentLoaded", () => {
-  /* Correct the four package cards. */
   const packageNames = [
     "STARTER",
     "GROWTH",
@@ -98,12 +101,9 @@ document.addEventListener("DOMContentLoaded", () => {
         " membership package";
     }
 
-    card.querySelectorAll(".sf-currency-row").forEach(row => {
-      row.remove();
-    });
+    card.querySelectorAll(".sf-currency-row").forEach(row => row.remove());
   });
 
-  /* Hide obsolete FBK and MiniPay workspaces. */
   [
     "fbkWorkspace",
     "miniPayWorkspace",
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById(id)?.classList.add("hidden");
   });
 
-  /* Community has its own LIPWA payment link. */
+  /* Community KES 200 checkout remains unchanged. */
   document.getElementById("communityStartButton")
     ?.addEventListener("click", () => {
       window.location.assign(SF.PAYMENT_LINKS.Community);
@@ -122,10 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!form) return;
 
-  /*
-    Capture the submission before the old FBK/MiniPay
-    form handlers can process it.
-  */
   form.addEventListener("submit", async event => {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -217,8 +213,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, true);
 });
- 
-/* SHOW THE CORRECT PAYMENT PROVIDER */
+
+/* =========================================
+   PAYMENT PROVIDER PREVIEW
+========================================= */
+
 const SF_originalPackagePreview = SF.updatePackagePreview;
 
 SF.updatePackagePreview = () => {
@@ -247,4 +246,4 @@ SF.updatePackagePreview = () => {
       `Level ${level}: Final local-currency amount will be displayed at NardoPay checkout.`;
   }
 };
-
+       
