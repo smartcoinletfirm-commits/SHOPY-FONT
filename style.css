@@ -657,3 +657,264 @@
     text-align: left;
   }
                    }
+/* ==========================================
+   SHOPY FONT — PREMIUM MEMBER DASHBOARD
+   Emerald • Ivory • Champagne Gold
+========================================== */
+
+#approvedDashboard {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 22px 65px;
+  color: #173b2e;
+}
+
+#approvedDashboard .stats-grid {
+  gap: 16px;
+  margin: 20px 0 25px;
+}
+
+#approvedDashboard .stat-card {
+  border: 1px solid #e4ebe5;
+  border-radius: 16px;
+  padding: 22px;
+  background: linear-gradient(145deg, #ffffff, #f8fbf8);
+  box-shadow: 0 8px 25px rgba(20, 58, 42, .055);
+  transition: .2s ease;
+}
+
+#approvedDashboard .stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 13px 30px rgba(20, 58, 42, .09);
+}
+
+#approvedDashboard .stat-card span {
+  color: #77877d;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#approvedDashboard .stat-card strong {
+  color: #174b37;
+  font-family: Manrope, sans-serif;
+  font-size: 23px;
+}
+
+#sfMemberOverview {
+  margin: 25px 0 35px !important;
+}
+
+#sfMemberOverview .sf-dash-welcome {
+  min-height: 165px;
+  padding: 30px;
+  border: 1px solid #c6a363;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 90% 15%, rgba(226, 195, 129, .20), transparent 30%),
+    linear-gradient(120deg, #0c3528, #15583e 65%, #1b6949);
+  box-shadow: 0 16px 36px rgba(13, 59, 41, .16);
+}
+
+#sfMemberOverview .sf-dash-welcome h2 {
+  font-family: Manrope, sans-serif;
+  font-size: clamp(25px, 4vw, 34px);
+  letter-spacing: -.8px;
+}
+
+#sfMemberOverview .sf-dash-status {
+  background: rgba(255,255,255,.08);
+  border-color: #d8bd82;
+  color: #f4dfad;
+  padding: 10px 15px;
+}
+
+#sfMemberOverview .sf-dash-referral {
+  padding: 25px;
+  border: 1px solid #e5dfd0;
+  border-radius: 19px;
+  background: linear-gradient(145deg, #fffefa, #f5f9f5);
+  box-shadow: 0 10px 28px rgba(20, 58, 42, .055);
+}
+
+#sfMemberOverview .sf-dash-referral h3,
+#sfMemberOverview .sf-dash-workspace h3 {
+  font-family: Manrope, sans-serif;
+  font-size: 21px;
+  letter-spacing: -.4px;
+}
+
+#sfMemberOverview .sf-dash-linkrow input {
+  min-height: 47px;
+  border: 1px solid #dce6dc;
+  border-radius: 10px;
+  background: #fff;
+  color: #244d39;
+  font-size: 12px;
+}
+
+#sfMemberOverview .sf-dash-btn {
+  min-height: 47px;
+  padding: 12px 19px;
+  border-radius: 10px;
+  background: #174b37;
+  box-shadow: 0 5px 12px rgba(23, 75, 55, .12);
+  transition: .2s ease;
+}
+
+#sfMemberOverview .sf-dash-btn:hover {
+  background: #236748;
+  transform: translateY(-2px);
+}
+
+#sfMemberOverview .sf-dash-btn.gold {
+  background: linear-gradient(120deg, #f1d99f, #c49a50);
+  color: #173b2e;
+}
+
+#sfMemberOverview .sf-dash-ref-stats article {
+  padding: 17px;
+  border: 1px solid #e7ece6;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(20, 58, 42, .035);
+}
+
+#sfMemberOverview .sf-dash-ref-stats strong {
+  font-family: Manrope, sans-serif;
+  font-size: 25px;
+}
+
+#sfMemberOverview .sf-dash-workspace {
+  margin-top: 30px;
+}
+
+#sfMemberOverview .sf-quick-grid {
+  gap: 15px;
+}
+
+#sfMemberOverview .sf-quick-card {
+  min-height: 140px;
+  padding: 19px;
+  border: 1px solid #e4ebe4;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fff, #f9fbf9);
+  box-shadow: 0 7px 20px rgba(20, 58, 42, .045);
+  transition: transform .2s ease, box-shadow .2s ease,
+              border-color .2s ease;
+}
+
+#sfMemberOverview .sf-quick-card:hover {
+  transform: translateY(-4px);
+  border-color: #b8cdbb;
+  box-shadow: 0 13px 27px rgba(20, 58, 42, .09);
+}
+
+#sfMemberOverview .sf-quick-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: #eaf3eb;
+  color: #17583d;
+  font-size: 20px;
+}
+
+#sfMemberOverview .sf-quick-card strong {
+  color: #173b2e;
+  font-family: Manrope, sans-serif;
+  font-size: 14px;
+}
+
+#sfMemberOverview .sf-quick-card small {
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+#sfMemberOverview .sf-dash-account {
+  padding: 22px;
+  border: 1px solid #e3e9e1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 7px 20px rgba(20, 58, 42, .04);
+}
+
+#sfMemberOverview .sf-dash-account h3 {
+  color: #174b37;
+  font-family: Manrope, sans-serif;
+}
+
+/* Tablet */
+@media (max-width: 760px) {
+  #approvedDashboard {
+    padding: 24px 16px 50px;
+  }
+
+  #sfMemberOverview .sf-dash-welcome {
+    padding: 24px 20px;
+  }
+
+  #sfMemberOverview .sf-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  #approvedDashboard {
+    padding: 19px 13px 40px;
+  }
+
+  #approvedDashboard .stat-card {
+    padding: 15px 12px;
+    border-radius: 13px;
+  }
+
+  #approvedDashboard .stat-card strong {
+    font-size: 18px;
+  }
+
+  #sfMemberOverview .sf-dash-welcome {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+
+  #sfMemberOverview .sf-dash-referral {
+    padding: 17px;
+  }
+
+  #sfMemberOverview .sf-dash-linkrow {
+    flex-direction: column;
+  }
+
+  #sfMemberOverview .sf-dash-linkrow input {
+    width: 100%;
+  }
+
+  #sfMemberOverview .sf-dash-linkrow button {
+    width: 100%;
+  }
+
+  #sfMemberOverview .sf-dash-ref-stats {
+    gap: 7px;
+  }
+
+  #sfMemberOverview .sf-dash-ref-stats article {
+    padding: 12px 9px;
+  }
+
+  #sfMemberOverview .sf-dash-ref-stats span {
+    font-size: 9px;
+  }
+
+  #sfMemberOverview .sf-dash-ref-stats strong {
+    font-size: 20px;
+  }
+
+  #sfMemberOverview .sf-quick-grid {
+    gap: 9px;
+  }
+
+  #sfMemberOverview .sf-quick-card {
+    min-height: 125px;
+    padding: 13px;
+  }
+}
