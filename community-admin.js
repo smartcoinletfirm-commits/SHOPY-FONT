@@ -1,9 +1,9 @@
-/* SHOPY FONT — COMMUNITY ADMIN EXTENSION */
+
+/* SHOPY FONT — DIRECT COMMUNITY ADMIN */
 (() => {
   "use strict";
 
   window.SF = window.SF || {};
-
   const SF = window.SF;
 
   if (!SF.adminTabs || !SF.loadAdmin || !SF.adminBindActions) {
@@ -11,12 +11,10 @@
     return;
   }
 
-  /* ADD COMMUNITY TAB */
   const originalTabs = SF.adminTabs;
 
   SF.adminTabs = () => {
     const html = originalTabs();
-
     const button = `
       <button class="btn ${
         SF.adminTab === "community" ? "btn-gold" : "btn-outline"
@@ -24,140 +22,112 @@
         Community
       </button>
     `;
-
     return html.replace("</div>", button + "</div>");
   };
 
-  /* COMMUNITY ADMIN PAGE */
   SF.adminCommunity = async () => {
     const db = SF.getClient();
 
-    const [requestsResult, fbkResult] = await Promise.all([
-      db.from("sf_community_requests")
-        .select("*")
-        .order("created_at", { ascending: false }),
+    const { data, error } = await db
+      .from("sf_community_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      db.from("sf_community_fbk_submissions")
-        .select("*")
-        .order("created_at", { ascending: false })
-    ]);
+    if (error) throw error;
 
-    if (requestsResult.error) throw requestsResult.error;
-    if (fbkResult.error) throw fbkResult.error;
+    const requests = data || [];
+    const escape = value =>
+      SF.adminEscape(value ?? "Not available");
 
-    const requests = requestsResult.data || [];
-    const submissions = fbkResult.data || [];
-
-    const escape = value => SF.adminEscape(value ?? "Not available");
-
-    const details = record => {
-      return Object.entries(record)
-        .filter(([key]) => ![
-          "id",
-          "user_id"
-        ].includes(key))
+    const details = request =>
+      Object.entries(request)
+        .filter(([key]) => !["id", "user_id"].includes(key))
         .map(([key, value]) => `
           <p style="margin:5px 0;">
             <strong>${escape(key.replaceAll("_", " "))}:</strong>
             ${escape(
-              typeof value === "object" && value !== null
+              value && typeof value === "object"
                 ? JSON.stringify(value)
                 : value
             )}
           </p>
         `).join("");
-    };
 
-    const reviewed = status =>
-      ["approved", "rejected", "reviewed", "complete", "completed"]
-        .includes(String(status || "").toLowerCase());
+    const pending = requests.filter(
+      r => r.status === "under_review"
+    ).length;
 
     return `
       <h2>Community management</h2>
 
       <p class="muted">
         Community entry fee: KES 200.
-        Confirm receipt of payment manually before approving a member.
+        Confirm receipt of payment manually before approving.
+        No FBK submission is required.
       </p>
 
-      <h3>Community membership requests (${requests.length})</h3>
+      <h3>Community requests (${requests.length})</h3>
+      <p class="muted">Awaiting review: ${pending}</p>
 
       ${
         requests.length
-          ? requests.map(request => `
-              <article class="admin-row"
-                style="display:block;margin:12px 0;padding:16px;">
+          ? requests.map(request => {
+              const status = String(
+                request.status || ""
+              ).toLowerCase();
 
-                <strong>Membership request</strong>
-
-                <p>
-                  Member ID:
-                  ${escape(request.user_id)}
-                </p>
-
-                ${details(request)}
-
-              </article>
-            `).join("")
-          : `<p class="muted">No Community requests found.</p>`
-      }
-
-      <hr style="margin:24px 0;">
-
-      <h3>Community FBK submissions (${submissions.length})</h3>
-
-      ${
-        submissions.length
-          ? submissions.map(item => {
-              const status = String(item.status || "").toLowerCase();
-              const alreadyReviewed = reviewed(status);
+              const canReview = status === "under_review";
 
               return `
                 <article class="admin-row"
                   style="display:block;margin:12px 0;padding:16px;">
 
-                  <strong>New Community FBK</strong>
+                  <strong>Community membership request</strong>
 
                   <p>
-                    Member ID:
-                    ${escape(item.user_id)}
+                    <strong>Member ID:</strong>
+                    ${escape(request.user_id)}
                   </p>
 
-                  ${details(item)}
+                  ${details(request)}
+
+                  <p>
+                    <strong>Review status:</strong>
+                    ${escape(status)}
+                  </p>
 
                   ${
-                    alreadyReviewed
-                      ? `<p><strong>Review status:</strong> ${escape(status)}</p>`
-                      : `
+                    canReview
+                      ? `
                         <div class="admin-actions">
-                          <button
-                            class="btn btn-gold"
-                            data-review-community-fbk="${escape(item.id)}"
-                            data-action="approve">
-                            Approve after payment confirmation
+                          <button class="btn btn-gold"
+                            data-review-community-request="${escape(request.id)}"
+                            data-decision="approved">
+                            Approve Community
                           </button>
 
-                          <button
-                            class="btn btn-outline"
-                            data-review-community-fbk="${escape(item.id)}"
-                            data-action="reject">
-                            Reject FBK
+                          <button class="btn btn-outline"
+                            data-review-community-request="${escape(request.id)}"
+                            data-decision="rejected">
+                            Reject request
                           </button>
                         </div>
                       `
+                      : ""
                   }
                 </article>
               `;
             }).join("")
-          : `<p class="muted">No Community FBK submissions found.</p>`
+          : `<p class="muted">No Community requests found.</p>`
       }
     `;
   };
 
-  /* PRESERVE EXISTING ADMIN TABS */
   const originalLoadAdmin = SF.loadAdmin;
 
-  SF.loadAdmin = async (tab = SF.adminTab || "notifications") => {
+  SF.loadAdmin = async (
+    tab = SF.adminTab || "notifications"
+  ) => {
     if (tab !== "community") {
       return originalLoadAdmin(tab);
     }
@@ -166,12 +136,14 @@
     if (!box) return;
 
     if (!SF.currentUser || !(await SF.checkAdmin())) {
-      box.innerHTML = "<p>Administrator access is required.</p>";
+      box.innerHTML =
+        "<p>Administrator access is required.</p>";
       return;
     }
 
     SF.adminTab = "community";
-    box.innerHTML = '<p class="muted">Loading Community records…</p>';
+    box.innerHTML =
+      '<p class="muted">Loading Community requests…</p>';
 
     try {
       const content = await SF.adminCommunity();
@@ -185,69 +157,81 @@
     }
   };
 
-  /* ADD COMMUNITY REVIEW BUTTONS */
   const originalBindActions = SF.adminBindActions;
 
   SF.adminBindActions = box => {
     originalBindActions(box);
 
-    box.querySelectorAll("[data-review-community-fbk]")
-      .forEach(button => {
-        button.addEventListener("click", async () => {
-          const id = button.dataset.reviewCommunityFbk;
-          const approve = button.dataset.action === "approve";
+    box.querySelectorAll(
+      "[data-review-community-request]"
+    ).forEach(button => {
+      button.addEventListener("click", async () => {
+        const requestId =
+          button.dataset.reviewCommunityRequest;
 
-          let note = null;
+        const decision = button.dataset.decision;
+        let note = null;
 
-          if (approve) {
-            if (!confirm(
-              "Have you personally confirmed that this member paid KES 200? Approve Community access?"
-            )) return;
-          } else {
-            note = prompt("Enter the reason for rejecting this FBK:");
+        if (decision === "approved") {
+          if (!confirm(
+            "Have you personally confirmed receipt of KES 200? Approve this Community member?"
+          )) return;
 
-            if (note === null) return;
+        } else {
+          note = prompt(
+            "Enter the reason for rejecting this Community request:"
+          );
 
-            note = note.trim();
+          if (note === null) return;
 
-            if (!note) {
-              SF.showToast("Please enter a rejection reason.");
-              return;
-            }
+          note = note.trim();
+
+          if (note.length < 3) {
+            SF.showToast(
+              "Please enter a rejection reason of at least 3 characters."
+            );
+            return;
           }
+        }
 
-          button.disabled = true;
+        button.disabled = true;
 
-          try {
-            const { data, error } = await SF.getClient().rpc(
-              "sf_review_community_fbk",
+        try {
+          const { data, error } =
+            await SF.getClient().rpc(
+              "sf_admin_review_community_request",
               {
-                p_submission_id: id,
-                p_approve: approve,
+                p_request_id: requestId,
+                p_decision: decision,
                 p_admin_note: note
               }
             );
 
-            if (error) throw error;
+          if (error) throw error;
 
-            if (data?.success === false) {
-              throw new Error(data.message || "Community review failed.");
-            }
-
-            SF.showToast(
-              approve
-                ? "Community member approved."
-                : "Community FBK rejected."
+          if (data?.success !== true) {
+            throw new Error(
+              data?.message || "Community review failed."
             );
-
-            await SF.loadAdmin("community");
-
-          } catch (error) {
-            button.disabled = false;
-            SF.showToast(error.message);
           }
-        });
+
+          SF.showToast(
+            decision === "approved"
+              ? "Community member approved. Referral reward processed if eligible."
+              : "Community request rejected."
+          );
+
+          await SF.loadAdmin("community");
+
+        } catch (error) {
+          button.disabled = false;
+          SF.showToast(
+            error.message || "Community review failed."
+          );
+        }
       });
+    });
   };
 
 })();
+                             
