@@ -1,3 +1,4 @@
+
 window.SF = window.SF || {};
 
 /* Preserve the original approved-member dashboard loader. */
@@ -14,6 +15,24 @@ SF.loadDashboard = async () => {
     throw new Error("Your member profile could not be loaded.");
   }
 
+  /* Always use the currently signed-in member's name. */
+  const updateWelcomeName = () => {
+    const displayName = String(
+      profile.full_name ||
+      SF.currentUser.user_metadata?.full_name ||
+      "Member"
+    ).trim();
+
+    const firstName = displayName.split(/\s+/)[0] || "Member";
+    const welcomeElement = document.getElementById("welcomeName");
+
+    if (welcomeElement) {
+      welcomeElement.textContent = `Welcome back, ${firstName}.`;
+    }
+  };
+
+  updateWelcomeName();
+
   const status = String(profile.account_status || "").toLowerCase();
 
   /* Approved members retain the original dashboard and load their wallet. */
@@ -22,6 +41,8 @@ SF.loadDashboard = async () => {
     typeof SF_originalLoadDashboard === "function"
   ) {
     const result = await SF_originalLoadDashboard();
+
+    updateWelcomeName();
 
     SF.wallet?.addStyles?.();
     SF.wallet?.mount?.();
@@ -95,4 +116,3 @@ SF.loadDashboard = async () => {
     `Your Level ${level} membership request for ${country} was received on ${submitted}. Complete your payment through the checkout link. Your account will remain under review until an administrator verifies the payment and approves your membership.`
   );
 };
-
