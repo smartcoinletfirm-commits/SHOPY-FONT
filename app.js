@@ -16,9 +16,7 @@ SF.escapeHtml = value =>
 
 SF.escapeAttr = SF.escapeHtml;
 
-/* =====================================================
-   NOTIFICATIONS
-   ===================================================== */
+/* NOTIFICATIONS */
 
 SF.showToast = message => {
   const el = document.getElementById("toast");
@@ -35,9 +33,7 @@ SF.showToast = message => {
   );
 };
 
-/* =====================================================
-   MEMBERSHIP CLASSIFICATION
-   ===================================================== */
+/* MEMBERSHIP CLASSIFICATION */
 
 SF.getMembershipAccess = async () => {
   if (!SF.currentUser) {
@@ -79,9 +75,7 @@ SF.getMembershipAccess = async () => {
   };
 };
 
-/* =====================================================
-   ACCESS RULES
-   ===================================================== */
+/* ACCESS RULES */
 
 SF.canAccessView = async view => {
   const loginRequired = [
@@ -97,6 +91,9 @@ SF.canAccessView = async view => {
   ];
 
   if (loginRequired.includes(view) && !SF.currentUser) {
+    // Remember the requested page before opening login.
+    sessionStorage.setItem("sf_pending_view", view);
+
     SF.setAuthTab("login");
     await SF.navigate("auth");
     return false;
@@ -154,9 +151,7 @@ SF.canAccessView = async view => {
   return true;
 };
 
-/* =====================================================
-   NAVIGATION
-   ===================================================== */
+/* NAVIGATION */
 
 SF.navigate = async view => {
   if (!view) return;
@@ -186,8 +181,6 @@ SF.navigate = async view => {
   document.getElementById("mainNav")
     ?.classList.remove("open");
 
-  /* Load the selected workspace */
-
   if (view === "dashboard") {
     await SF.loadDashboard();
   }
@@ -216,9 +209,7 @@ SF.navigate = async view => {
   });
 };
 
-/* =====================================================
-   TOP NAVIGATION VISIBILITY
-   ===================================================== */
+/* TOP NAVIGATION VISIBILITY */
 
 SF.updateNavigation = () => {
   document.querySelectorAll(".signed-only").forEach(el => {
@@ -247,9 +238,7 @@ SF.updateNavigation = () => {
   );
 };
 
-/* =====================================================
-   GLOBAL NAVIGATION EVENTS
-   ===================================================== */
+/* GLOBAL NAVIGATION EVENTS */
 
 document.addEventListener("DOMContentLoaded", async () => {
   const year = document.getElementById("year");
@@ -357,9 +346,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  /* ===================================================
-     INITIAL SESSION
-     =================================================== */
+  /* INITIAL SESSION */
 
   try {
     if (!window.sfSupabase) {
@@ -402,4 +389,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
   }
 });
-                          
+                     
