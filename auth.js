@@ -161,7 +161,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       SF.showToast("Welcome back.");
       SF.updateNavigation();
-      SF.navigate("dashboard");
+
+      // Return to the page requested before login.
+      const destination =
+        sessionStorage.getItem("sf_pending_view") || "dashboard";
+
+      sessionStorage.removeItem("sf_pending_view");
+
+      await SF.navigate(destination);
 
     } catch (err) {
       SF.showAuthMessage(
@@ -234,3 +241,4 @@ SF.setAuthTab = which => {
 
   SF.showAuthMessage("");
 };
+  
