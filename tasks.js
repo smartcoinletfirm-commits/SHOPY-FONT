@@ -1,374 +1,148 @@
 
-/* SHOPY FONT — Live Tasks Centre */
-(function () {
-  "use strict";
+function installTaskStyles() {
+  if (document.getElementById("sfTaskStyles")) return;
 
-  window.SF = window.SF || {};
+  const style = document.createElement("style");
+  style.id = "sfTaskStyles";
 
-  const $ = (id) => document.getElementById(id);
-
-  const escape = (value) =>
-    SF.escapeHtml
-      ? SF.escapeHtml(String(value ?? ""))
-      : String(value ?? "").replace(/[&<>"']/g, c => ({
-          "&": "&amp;", "<": "&lt;", ">": "&gt;",
-          '"': "&quot;", "'": "&#39;"
-        }[c]));
-
-  function client() {
-    return SF.getClient();
-  }
-
-  function moneyKES(value) {
-    return "KES " + Number(value || 0).toLocaleString("en-KE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
-  function createPage() {
-    if ($("tasksView")) return;
-
-    const main = document.querySelector("main");
-    if (!main) return;
-
-    const section = document.createElement("section");
-    section.id = "tasksView";
-    section.className = "view page-view";
-
-    section.innerHTML = `
-      <div class="page-heading">
-        <p class="eyebrow">LEARN · COMPLETE · EARN</p>
-        <h1>Tasks Centre</h1>
-        <p>Explore available tasks, submit your work and track your rewards.</p>
-      </div>
-
-      <div class="sf-task-summary">
-        <article class="sf-task-stat">
-          <span>Available tasks</span>
-          <strong id="sfTaskAvailable">—</strong>
-        </article>
-        <article class="sf-task-stat">
-          <span>My submissions</span>
-          <strong id="sfTaskSubmissions">—</strong>
-        </article>
-        <article class="sf-task-stat">
-          <span>Approved rewards</span>
-          <strong id="sfTaskRewards">KES —</strong>
-        </article>
-      </div>
-
-      <div class="sf-task-tabs">
-        <button class="sf-task-tab active" data-task-tab="available">
-          Available tasks
-        </button>
-        <button class="sf-task-tab" data-task-tab="submissions">
-          My submissions
-        </button>
-      </div>
-
-      <div id="sfAvailableTasks" class="sf-task-list">
-        <p>Loading available tasks...</p>
-      </div>
-
-      <div id="sfMyTaskSubmissions" class="sf-task-list hidden">
-        <p>Loading your submissions...</p>
-      </div>
-
-      <p class="notice">
-        Task rewards are subject to review. Starting or submitting a task
-        does not automatically create earnings.
-      </p>
-    `;
-
-    main.appendChild(section);
-  }
-
-  function addDashboardShortcut() {
-    const dashboard = $("approvedDashboard");
-    if (!dashboard || dashboard.classList.contains("hidden")) return;
-    if (dashboard.querySelector('[data-view="tasks"]')) return;
-
-    const container =
-      dashboard.querySelector(".sf-quick-grid") ||
-      dashboard.querySelector(".dashboard-grid") ||
-      dashboard;
-
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "sf-quick-card";
-    button.dataset.view = "tasks";
-    button.innerHTML = `
-      <span class="sf-quick-icon">✓</span>
-      <strong>Tasks Centre</strong>
-      <small>Explore tasks and track rewards.</small>
-    `;
-
-    container.appendChild(button);
-  }
-
-  function showError(container, message) {
-    container.innerHTML = `<p class="sf-task-empty">${escape(message)}</p>`;
-  }
-
-  async function loadTasks() {
-    const container = $("sfAvailableTasks");
-    if (!container) return;
-
-    container.innerHTML = "<p>Loading available tasks...</p>";
-
-    const { data, error } = await client()
-      .from("tasks")
-      .select("id,title,description,task_type,reward_points,reward_kes,requires_review")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      showError(container, "Unable to load tasks. Please try again.");
-      console.error("Tasks loading error:", error);
-      return;
+  style.textContent = `
+    #tasksView .sf-task-summary {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+      margin:18px 0;
     }
-
-    const tasks = data || [];
-    $("sfTaskAvailable").textContent = tasks.length;
-
-    if (!tasks.length) {
-      container.innerHTML = `
-        <div class="sf-task-empty">
-          <h2>No tasks available yet</h2>
-          <p>New tasks will appear here when administrators publish them.</p>
-        </div>`;
-      return;
+    #tasksView .sf-task-stat {
+      padding:16px;
+      border:1px solid #e3ebe4;
+      border-radius:16px;
+      background:linear-gradient(145deg,#fff,#f4f8f4);
+      box-shadow:0 8px 22px rgba(16,58,39,.06);
     }
-
-    container.innerHTML = tasks.map(task => `
-      <article class="sf-task-card">
-        <div class="sf-task-card-top">
-          <span class="sf-task-type">${escape(task.task_type)}</span>
-          <span class="sf-task-reward">${moneyKES(task.reward_kes)}</span>
-        </div>
-        <h2>${escape(task.title)}</h2>
-        <p>${escape(task.description)}</p>
-        <p class="sf-task-points">
-          ${Number(task.reward_points || 0).toLocaleString()} reward points
-        </p>
-        <button
-          type="button"
-          class="btn btn-primary sf-task-submit"
-          data-task-id="${escape(task.id)}"
-          data-task-title="${escape(task.title)}">
-          Submit completed work
-        </button>
-        <form class="sf-task-form hidden" data-form-task="${escape(task.id)}">
-          <label>Describe your completed work</label>
-          <textarea name="submission_text" required
-            placeholder="Explain what you completed..." rows="4"></textarea>
-          <label>Evidence or proof (optional)</label>
-          <textarea name="evidence"
-            placeholder="Paste a link or provide evidence..." rows="3"></textarea>
-          <button type="submit" class="btn btn-primary">Send submission</button>
-        </form>
-      </article>
-    `).join("");
-  }
-
-  async function loadSubmissions() {
-    const container = $("sfMyTaskSubmissions");
-    if (!container) return;
-
-    container.innerHTML = "<p>Loading your submissions...</p>";
-
-    const { data, error } = await client()
-      .from("task_submissions")
-      .select(`
-        id,task_id,submission_text,evidence,status,
-        submitted_at,reviewed_at,review_reason,
-        tasks(title,reward_kes,reward_points)
-      `)
-      .order("submitted_at", { ascending: false });
-
-    if (error) {
-      showError(container, "Unable to load your submissions.");
-      console.error("Submission loading error:", error);
-      return;
+    #tasksView .sf-task-stat span {
+      display:block;
+      color:#718176;
+      font-size:10px;
+      font-weight:800;
+      text-transform:uppercase;
     }
-
-    const submissions = data || [];
-    $("sfTaskSubmissions").textContent = submissions.length;
-
-    const approved = submissions.filter(
-      item => item.status === "approved"
-    );
-
-    const rewardTotal = approved.reduce(
-      (total, item) => total + Number(item.tasks?.reward_kes || 0), 0
-    );
-
-    $("sfTaskRewards").textContent = moneyKES(rewardTotal);
-
-    if (!submissions.length) {
-      container.innerHTML = `
-        <div class="sf-task-empty">
-          <h2>No submissions yet</h2>
-          <p>Your submitted work and review decisions will appear here.</p>
-        </div>`;
-      return;
+    #tasksView .sf-task-stat strong {
+      display:block;
+      margin-top:8px;
+      color:#164b34;
+      font-size:22px;
     }
-
-    container.innerHTML = submissions.map(item => {
-      const status = String(item.status || "submitted").toLowerCase();
-      const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
-
-      return `
-        <article class="sf-task-card">
-          <h2>${escape(item.tasks?.title || "Task")}</h2>
-          <p>Status: <strong>${escape(statusLabel)}</strong></p>
-          <p>Submitted: ${escape(
-            new Date(item.submitted_at).toLocaleString()
-          )}</p>
-          ${status === "approved"
-            ? `<p>Approved reward: ${moneyKES(item.tasks?.reward_kes)}</p>`
-            : ""}
-          ${item.review_reason
-            ? `<p>Review note: ${escape(item.review_reason)}</p>`
-            : ""}
-        </article>`;
-    }).join("");
-  }
-
-  async function submitTask(form) {
-    const taskId = form.dataset.formTask;
-    const submitButton = form.querySelector('[type="submit"]');
-    const submissionText = form.elements.submission_text.value.trim();
-    const evidence = form.elements.evidence.value.trim();
-
-    if (!submissionText) {
-      SF.showToast("Please describe the work you completed.");
-      return;
+    #tasksView .sf-task-tabs {
+      display:flex;
+      gap:8px;
+      margin:20px 0;
+      padding:6px;
+      border-radius:14px;
+      background:#edf3ee;
     }
-
-    submitButton.disabled = true;
-    submitButton.textContent = "Submitting...";
-
-    const { error } = await client()
-      .from("task_submissions")
-      .insert({
-        task_id: taskId,
-        user_id: SF.currentUser.id,
-        submission_text: submissionText,
-        evidence: evidence || null,
-        status: "submitted"
-      });
-
-    submitButton.disabled = false;
-    submitButton.textContent = "Send submission";
-
-    if (error) {
-      console.error("Task submission error:", error);
-      SF.showToast("Submission failed. Please try again.");
-      return;
+    #tasksView .sf-task-tab {
+      flex:1;
+      padding:12px;
+      border:0;
+      border-radius:10px;
+      background:transparent;
+      color:#50675a;
+      font-weight:800;
+      cursor:pointer;
     }
-
-    SF.showToast("Your task has been submitted for review.");
-    form.reset();
-    form.classList.add("hidden");
-
-    await loadSubmissions();
-  }
-
-  function openPage() {
-    createPage();
-
-    document.querySelectorAll(".view").forEach(view => {
-      view.classList.toggle("active", view.id === "tasksView");
-    });
-
-    history.replaceState(null, "", "#tasks");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-
-    loadTasks();
-    loadSubmissions();
-  }
-
-  document.addEventListener("click", async function (event) {
-    const trigger = event.target.closest('[data-view="tasks"]');
-    if (trigger) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-
-      if (!SF.currentUser) {
-        SF.navigate("auth");
-        SF.setAuthTab("login");
-        return;
+    #tasksView .sf-task-tab.active {
+      background:#176b45;
+      color:white;
+    }
+    #tasksView .sf-task-list {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+    }
+    #tasksView .sf-task-card {
+      padding:19px;
+      border:1px solid #e3ebe4;
+      border-radius:17px;
+      background:white;
+      box-shadow:0 9px 24px rgba(17,57,39,.06);
+      transition:.2s;
+    }
+    #tasksView .sf-task-card:hover {
+      transform:translateY(-2px);
+      box-shadow:0 13px 28px rgba(17,57,39,.10);
+    }
+    #tasksView .sf-task-card-top {
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    #tasksView .sf-task-type {
+      padding:6px 10px;
+      border-radius:30px;
+      background:#edf6ef;
+      color:#17633f;
+      font-size:10px;
+      font-weight:900;
+    }
+    #tasksView .sf-task-reward {
+      padding:7px 10px;
+      border-radius:30px;
+      background:#fff5e4;
+      color:#986b1d;
+      font-weight:900;
+    }
+    #tasksView .sf-task-submit,
+    #tasksView .sf-task-form button[type="submit"] {
+      width:100%;
+      padding:13px;
+      border:0;
+      border-radius:11px;
+      background:linear-gradient(135deg,#16804f,#0d5737);
+      color:white;
+      font-weight:900;
+      cursor:pointer;
+    }
+    #tasksView .sf-task-status {
+      display:inline-flex;
+      padding:6px 10px;
+      border-radius:30px;
+      font-size:10px;
+      font-weight:900;
+    }
+    #tasksView .sf-task-status.approved {
+      background:#e7f7ed;
+      color:#147342;
+    }
+    #tasksView .sf-task-status.rejected {
+      background:#fff0f0;
+      color:#b8323b;
+    }
+    #tasksView .sf-task-status.pending,
+    #tasksView .sf-task-status.submitted {
+      background:#fff5df;
+      color:#946414;
+    }
+    #tasksView .sf-task-empty {
+      grid-column:1/-1;
+      padding:28px;
+      border:1px dashed #cbd9cd;
+      border-radius:16px;
+      background:#f8fbf8;
+      text-align:center;
+    }
+    @media(max-width:650px) {
+      #tasksView .sf-task-list {
+        grid-template-columns:1fr;
       }
-
-      try {
-        const profile = SF.profile || await SF.loadProfile();
-
-        if (String(profile?.account_status).toLowerCase() !== "approved") {
-          SF.showToast("Membership approval is required to access tasks.");
-          SF.navigate("dashboard");
-          return;
-        }
-
-        openPage();
-      } catch (error) {
-        SF.showToast("Unable to verify membership.");
+      #tasksView .sf-task-stat {
+        padding:11px;
       }
-      return;
+      #tasksView .sf-task-stat strong {
+        font-size:17px;
+      }
     }
+  `;
 
-    const taskButton = event.target.closest(".sf-task-submit");
-    if (taskButton) {
-      const form = document.querySelector(
-        `[data-form-task="${taskButton.dataset.taskId}"]`
-      );
-      form?.classList.toggle("hidden");
-      return;
-    }
-
-    const tab = event.target.closest("[data-task-tab]");
-    if (tab) {
-      const selected = tab.dataset.taskTab;
-
-      document.querySelectorAll("[data-task-tab]").forEach(button => {
-        button.classList.toggle("active", button === tab);
-      });
-
-      $("sfAvailableTasks")?.classList.toggle("hidden", selected !== "available");
-      $("sfMyTaskSubmissions")?.classList.toggle("hidden", selected !== "submissions");
-    }
-  }, true);
-
-  document.addEventListener("submit", function (event) {
-    const form = event.target.closest(".sf-task-form");
-    if (!form) return;
-
-    event.preventDefault();
-    submitTask(form);
-  });
-
-  function install() {
-    createPage();
-    addDashboardShortcut();
-
-    if (SF.loadDashboard && !SF.tasksDashboardWrapped) {
-      const original = SF.loadDashboard;
-
-      SF.loadDashboard = async function () {
-        const result = await original.apply(this, arguments);
-        addDashboardShortcut();
-        return result;
-      };
-
-      SF.tasksDashboardWrapped = true;
-    }
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", install);
-  } else {
-    install();
-  }
-})();
-      
+  document.head.appendChild(style);
+}
