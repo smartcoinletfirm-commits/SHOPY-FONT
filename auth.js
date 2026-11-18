@@ -6,7 +6,7 @@ SF.profile = null;
 
 /* =====================================================
    SUPABASE CLIENT
-   ===================================================== */
+===================================================== */
 
 SF.getClient = () => {
   if (!window.sfSupabase) {
@@ -18,7 +18,7 @@ SF.getClient = () => {
 
 /* =====================================================
    REFERRAL CODE
-   ===================================================== */
+===================================================== */
 
 SF.getReferralCodeFromUrl = () =>
   (
@@ -29,7 +29,7 @@ SF.getReferralCodeFromUrl = () =>
 
 /* =====================================================
    AUTH MESSAGES
-   ===================================================== */
+===================================================== */
 
 SF.showAuthMessage = (message, isError = false) => {
   const el = document.getElementById("authMessage");
@@ -42,7 +42,7 @@ SF.showAuthMessage = (message, isError = false) => {
 
 /* =====================================================
    LOAD MEMBER PROFILE
-   ===================================================== */
+===================================================== */
 
 SF.loadProfile = async () => {
   if (!SF.currentUser) return null;
@@ -61,7 +61,7 @@ SF.loadProfile = async () => {
 
 /* =====================================================
    APPLY REFERRAL
-   ===================================================== */
+===================================================== */
 
 SF.applyPendingReferral = async () => {
   const code = SF.getReferralCodeFromUrl();
@@ -88,7 +88,7 @@ SF.applyPendingReferral = async () => {
 
 /* =====================================================
    REFRESH SESSION
-   ===================================================== */
+===================================================== */
 
 SF.refreshSession = async () => {
   const { data, error } = await SF.getClient().auth.getSession();
@@ -109,13 +109,13 @@ SF.refreshSession = async () => {
 
 /* =====================================================
    LOGIN
-   ===================================================== */
+===================================================== */
 
 SF.login = async form => {
   const fd = new FormData(form);
 
   const { data, error } = await SF.getClient().auth.signInWithPassword({
-    email: fd.get("email"),
+    email: String(fd.get("email") || "").trim(),
     password: fd.get("password")
   });
 
@@ -132,10 +132,31 @@ SF.login = async form => {
 
 /* =====================================================
    REGISTRATION
-   ===================================================== */
+   Captures full name, email, password,
+   phone number and country.
+===================================================== */
 
 SF.register = async form => {
   const fd = new FormData(form);
+
+  const fullName = String(fd.get("full_name") || "").trim();
+  const email = String(fd.get("email") || "").trim();
+  const password = String(fd.get("password") || "");
+  const phone = String(fd.get("phone") || "").trim();
+  const country = String(fd.get("country") || "").trim();
+
+  if (!fullName || !email || !password || !phone || !country) {
+    throw new Error("Please complete all registration fields.");
+  }
+
+  if (phone.length < 7) {
+    throw new Error("Please enter a valid phone number.");
+  }
+
+  if (password.length < 6) {
+    throw new Error("Your password must contain at least 6 characters.");
+  }
+
   const referralCode = SF.getReferralCodeFromUrl();
 
   if (referralCode) {
@@ -143,13 +164,14 @@ SF.register = async form => {
   }
 
   const { data, error } = await SF.getClient().auth.signUp({
-    email: fd.get("email"),
-    password: fd.get("password"),
+    email,
+    password,
 
     options: {
       data: {
-        full_name: fd.get("full_name"),
-        country: fd.get("country")
+        full_name: fullName,
+        phone: phone,
+        country: country
       }
     }
   });
@@ -169,7 +191,7 @@ SF.register = async form => {
 
 /* =====================================================
    LOGOUT
-   ===================================================== */
+===================================================== */
 
 SF.logout = async () => {
   const { error } = await SF.getClient().auth.signOut();
@@ -183,12 +205,7 @@ SF.logout = async () => {
 
 /* =====================================================
    ADMINISTRATOR DESTINATION
-   Uses the existing Supabase RPC:
-   scf_is_admin
-
-   Administrators go to Admin Control Panel.
-   Ordinary users go to their normal dashboard.
-   ===================================================== */
+===================================================== */
 
 SF.getLoginDestination = async () => {
   try {
@@ -197,14 +214,10 @@ SF.getLoginDestination = async () => {
       await SF.checkAdmin()
     ) {
       console.log("Administrator verified. Opening Admin Control Panel.");
-
       return "admin";
     }
   } catch (error) {
-    console.error(
-      "Administrator verification failed:",
-      error
-    );
+    console.error("Administrator verification failed:", error);
   }
 
   return "dashboard";
@@ -212,16 +225,14 @@ SF.getLoginDestination = async () => {
 
 /* =====================================================
    AUTHENTICATION EVENTS
-   ===================================================== */
+===================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
 
   const login = document.getElementById("loginForm");
   const register = document.getElementById("registerForm");
 
-  /* =================================================
-     LOGIN FORM
-     ================================================= */
+  /* LOGIN FORM */
 
   login?.addEventListener("submit", async e => {
     e.preventDefault();
@@ -237,18 +248,13 @@ document.addEventListener("DOMContentLoaded", () => {
       await SF.login(login);
 
       SF.showToast("Welcome back.");
-
       SF.updateNavigation();
 
-      // Check administrator privileges before choosing destination.
       const destination = await SF.getLoginDestination();
 
-      // Administrator access takes priority over saved page requests.
       if (destination === "admin") {
         sessionStorage.removeItem("sf_pending_view");
-
         await SF.navigate("admin");
-
       } else {
         const requestedDestination =
           sessionStorage.getItem("sf_pending_view") || "dashboard";
@@ -274,9 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  /* =================================================
-     REGISTRATION FORM
-     ================================================= */
+  /* REGISTRATION FORM */
 
   register?.addEventListener("submit", async e => {
     e.preventDefault();
@@ -293,7 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!data.session) {
         SF.showAuthMessage(
-          "Account created. Confirm your email, then log in. Your referral code will be applied after login."
+          "Account created successfully. Please confirm your email, then log in to continue."
         );
 
       } else {
@@ -301,6 +305,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         SF.updateNavigation();
 
+        // Continue to the existing membership activation workflow.
         await SF.navigate("dashboard");
       }
 
@@ -320,30 +325,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  /* =================================================
-     LOGIN / REGISTER TABS
-     ================================================= */
+  /* LOGIN / REGISTER TABS */
 
   document.querySelectorAll("[data-auth-tab]").forEach(tab => {
-
     tab.addEventListener("click", () => {
       SF.setAuthTab(tab.dataset.authTab);
     });
-
   });
 
 });
 
 /* =====================================================
    SWITCH AUTHENTICATION TAB
-   ===================================================== */
+===================================================== */
 
 SF.setAuthTab = which => {
 
-  document.querySelectorAll("[data-auth-tab]").forEach(t => {
-    t.classList.toggle(
+  document.querySelectorAll("[data-auth-tab]").forEach(tab => {
+    tab.classList.toggle(
       "active",
-      t.dataset.authTab === which
+      tab.dataset.authTab === which
     );
   });
 
@@ -355,4 +356,4 @@ SF.setAuthTab = which => {
 
   SF.showAuthMessage("");
 };
-  
+                                       
