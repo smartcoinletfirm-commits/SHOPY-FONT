@@ -1,148 +1,439 @@
 
-function installTaskStyles() {
-  if (document.getElementById("sfTaskStyles")) return;
+/* =========================================================
+   SHOPY FONT — TASK CENTRE
+   Restored task loading, submission and status display.
+   ========================================================= */
 
-  const style = document.createElement("style");
-  style.id = "sfTaskStyles";
+(function () {
+  "use strict";
 
-  style.textContent = `
-    #tasksView .sf-task-summary {
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:12px;
-      margin:18px 0;
+  const SF = window.SF = window.SF || {};
+
+  const styles = `
+    #tasksView {
+      padding: 18px;
+      color: #173b2c;
     }
-    #tasksView .sf-task-stat {
-      padding:16px;
-      border:1px solid #e3ebe4;
-      border-radius:16px;
-      background:linear-gradient(145deg,#fff,#f4f8f4);
-      box-shadow:0 8px 22px rgba(16,58,39,.06);
+
+    .sf-task-header {
+      background: linear-gradient(135deg, #075b3b, #108653);
+      color: #fff;
+      padding: 24px;
+      border-radius: 18px;
+      margin-bottom: 20px;
     }
-    #tasksView .sf-task-stat span {
-      display:block;
-      color:#718176;
-      font-size:10px;
-      font-weight:800;
-      text-transform:uppercase;
+
+    .sf-task-header h2 {
+      margin: 0 0 8px;
+      font-size: 23px;
     }
-    #tasksView .sf-task-stat strong {
-      display:block;
-      margin-top:8px;
-      color:#164b34;
-      font-size:22px;
+
+    .sf-task-header p {
+      margin: 0;
+      opacity: .9;
+      line-height: 1.5;
     }
-    #tasksView .sf-task-tabs {
-      display:flex;
-      gap:8px;
-      margin:20px 0;
-      padding:6px;
-      border-radius:14px;
-      background:#edf3ee;
+
+    .sf-task-card {
+      background: #fff;
+      border: 1px solid #e2eee7;
+      border-radius: 15px;
+      padding: 17px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,.04);
     }
-    #tasksView .sf-task-tab {
-      flex:1;
-      padding:12px;
-      border:0;
-      border-radius:10px;
-      background:transparent;
-      color:#50675a;
-      font-weight:800;
-      cursor:pointer;
+
+    .sf-task-card h3 {
+      margin: 0 0 8px;
+      color: #075b3b;
+      font-size: 17px;
     }
-    #tasksView .sf-task-tab.active {
-      background:#176b45;
-      color:white;
+
+    .sf-task-card p {
+      color: #607267;
+      line-height: 1.5;
+      font-size: 14px;
     }
-    #tasksView .sf-task-list {
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:14px;
+
+    .sf-task-reward {
+      color: #087b4b;
+      font-weight: 800;
+      margin: 10px 0;
     }
-    #tasksView .sf-task-card {
-      padding:19px;
-      border:1px solid #e3ebe4;
-      border-radius:17px;
-      background:white;
-      box-shadow:0 9px 24px rgba(17,57,39,.06);
-      transition:.2s;
+
+    .sf-task-button {
+      background: #087b4b;
+      color: #fff;
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 17px;
+      font-weight: 700;
+      cursor: pointer;
     }
-    #tasksView .sf-task-card:hover {
-      transform:translateY(-2px);
-      box-shadow:0 13px 28px rgba(17,57,39,.10);
+
+    .sf-task-button:disabled {
+      background: #9aaba1;
+      cursor: not-allowed;
     }
-    #tasksView .sf-task-card-top {
-      display:flex;
-      justify-content:space-between;
-      gap:8px;
-      flex-wrap:wrap;
+
+    .sf-task-input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d5e3da;
+      border-radius: 9px;
+      padding: 12px;
+      margin: 8px 0 12px;
+      font: inherit;
     }
-    #tasksView .sf-task-type {
-      padding:6px 10px;
-      border-radius:30px;
-      background:#edf6ef;
-      color:#17633f;
-      font-size:10px;
-      font-weight:900;
+
+    .sf-task-status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fff0df;
+      color: #a44d00;
     }
-    #tasksView .sf-task-reward {
-      padding:7px 10px;
-      border-radius:30px;
-      background:#fff5e4;
-      color:#986b1d;
-      font-weight:900;
+
+    .sf-task-status.approved {
+      background: #e2f7e9;
+      color: #087b4b;
     }
-    #tasksView .sf-task-submit,
-    #tasksView .sf-task-form button[type="submit"] {
-      width:100%;
-      padding:13px;
-      border:0;
-      border-radius:11px;
-      background:linear-gradient(135deg,#16804f,#0d5737);
-      color:white;
-      font-weight:900;
-      cursor:pointer;
+
+    .sf-task-status.rejected {
+      background: #ffe5e5;
+      color: #b42318;
     }
-    #tasksView .sf-task-status {
-      display:inline-flex;
-      padding:6px 10px;
-      border-radius:30px;
-      font-size:10px;
-      font-weight:900;
+
+    .sf-task-empty {
+      background: #f5faf7;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      color: #607267;
     }
-    #tasksView .sf-task-status.approved {
-      background:#e7f7ed;
-      color:#147342;
-    }
-    #tasksView .sf-task-status.rejected {
-      background:#fff0f0;
-      color:#b8323b;
-    }
-    #tasksView .sf-task-status.pending,
-    #tasksView .sf-task-status.submitted {
-      background:#fff5df;
-      color:#946414;
-    }
-    #tasksView .sf-task-empty {
-      grid-column:1/-1;
-      padding:28px;
-      border:1px dashed #cbd9cd;
-      border-radius:16px;
-      background:#f8fbf8;
-      text-align:center;
-    }
-    @media(max-width:650px) {
-      #tasksView .sf-task-list {
-        grid-template-columns:1fr;
-      }
-      #tasksView .sf-task-stat {
-        padding:11px;
-      }
-      #tasksView .sf-task-stat strong {
-        font-size:17px;
-      }
+
+    .sf-task-section-title {
+      margin: 24px 0 12px;
+      color: #075b3b;
+      font-size: 18px;
     }
   `;
 
-  document.head.appendChild(style);
-}
+  function addStyles() {
+    if (document.getElementById("sfTasksStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "sfTasksStyles";
+    style.textContent = styles;
+    document.head.appendChild(style);
+  }
+
+  function getClient() {
+    return SF.supabase || window.supabaseClient || window.sb;
+  }
+
+  function getUser() {
+    return SF.user || SF.currentUser || null;
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]);
+  }
+
+  function money(value) {
+    return "$" + Number(value || 0).toFixed(2);
+  }
+
+  function notify(message) {
+    if (typeof SF.toast === "function") {
+      SF.toast(message);
+    } else {
+      alert(message);
+    }
+  }
+
+  function createTasksView() {
+    let view = document.getElementById("tasksView");
+
+    if (!view) {
+      const main = document.querySelector("main") ||
+                   document.querySelector("#app") ||
+                   document.body;
+
+      view = document.createElement("section");
+      view.id = "tasksView";
+      view.hidden = true;
+      main.appendChild(view);
+    }
+
+    return view;
+  }
+
+  function showView() {
+    const view = createTasksView();
+
+    document.querySelectorAll("main > section").forEach(section => {
+      if (section.id !== "tasksView") {
+        section.hidden = true;
+      }
+    });
+
+    view.hidden = false;
+    loadTasks();
+  }
+
+  async function loadTasks() {
+    const view = createTasksView();
+    const client = getClient();
+    const user = getUser();
+
+    addStyles();
+
+    view.innerHTML = `
+      <div class="sf-task-header">
+        <h2>Task Centre</h2>
+        <p>Complete available activities and submit your work for review.</p>
+      </div>
+      <div class="sf-task-empty">Loading available tasks...</div>
+    `;
+
+    if (!client || !user) {
+      view.innerHTML += `
+        <div class="sf-task-empty">
+          Please sign in to access the Task Centre.
+        </div>
+      `;
+      return;
+    }
+
+    try {
+      const [tasksResult, submissionsResult] = await Promise.all([
+        client
+          .from("tasks")
+          .select("id,title,description,task_type,reward_points,reward_kes,requires_review")
+          .eq("status", "active")
+          .order("created_at", { ascending: false }),
+
+        client
+          .from("task_submissions")
+          .select("id,task_id,status,created_at,review_note,tasks(title,reward_points,reward_kes)")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+      ]);
+
+      if (tasksResult.error) throw tasksResult.error;
+      if (submissionsResult.error) throw submissionsResult.error;
+
+      renderTasks(
+        tasksResult.data || [],
+        submissionsResult.data || []
+      );
+
+    } catch (error) {
+      console.error("SHOPY FONT task loading error:", error);
+
+      view.innerHTML = `
+        <div class="sf-task-header">
+          <h2>Task Centre</h2>
+          <p>Complete available activities and submit your work.</p>
+        </div>
+        <div class="sf-task-empty">
+          We could not load tasks right now.
+          Please refresh and try again.
+          <p>${escapeHTML(error.message)}</p>
+        </div>
+      `;
+    }
+  }
+
+  function renderTasks(tasks, submissions) {
+    const view = createTasksView();
+
+    const submissionByTask = new Map();
+
+    submissions.forEach(submission => {
+      if (!submissionByTask.has(submission.task_id)) {
+        submissionByTask.set(submission.task_id, submission);
+      }
+    });
+
+    let html = `
+      <div class="sf-task-header">
+        <h2>Task Centre</h2>
+        <p>Complete available activities and submit your work for review.</p>
+      </div>
+
+      <h3 class="sf-task-section-title">Available Tasks</h3>
+    `;
+
+    if (!tasks.length) {
+      html += `
+        <div class="sf-task-empty">
+          No tasks are available at the moment.
+          Please check again later.
+        </div>
+      `;
+    }
+
+    tasks.forEach(task => {
+      const submission = submissionByTask.get(task.id);
+      const status = submission?.status;
+
+      let button = "";
+
+      if (status === "approved") {
+        button = `<span class="sf-task-status approved">Completed</span>`;
+      } else if (status === "submitted" || status === "pending") {
+        button = `<span class="sf-task-status">Under review</span>`;
+      } else if (status === "rejected") {
+        button = `
+          <span class="sf-task-status rejected">Rejected</span>
+          <button class="sf-task-button"
+            data-task-submit="${escapeHTML(task.id)}">
+            Submit Again
+          </button>
+        `;
+      } else {
+        button = `
+          <button class="sf-task-button"
+            data-task-submit="${escapeHTML(task.id)}">
+            Start Task
+          </button>
+        `;
+      }
+
+      html += `
+        <article class="sf-task-card">
+          <h3>${escapeHTML(task.title)}</h3>
+          <p>${escapeHTML(task.description || "Complete this activity and submit your work.")}</p>
+          <div class="sf-task-reward">
+            Reward: ${money(task.reward_kes)}
+          </div>
+          ${button}
+        </article>
+      `;
+    });
+
+    html += `
+      <h3 class="sf-task-section-title">My Submissions</h3>
+    `;
+
+    if (!submissions.length) {
+      html += `
+        <div class="sf-task-empty">
+          You have not submitted any tasks yet.
+        </div>
+      `;
+    } else {
+      submissions.forEach(submission => {
+        const taskTitle = submission.tasks?.title || "Task submission";
+        const status = submission.status || "submitted";
+
+        html += `
+          <article class="sf-task-card">
+            <h3>${escapeHTML(taskTitle)}</h3>
+            <span class="sf-task-status ${escapeHTML(status)}">
+              ${escapeHTML(status.toUpperCase())}
+            </span>
+            ${
+              submission.review_note
+                ? `<p>${escapeHTML(submission.review_note)}</p>`
+                : ""
+            }
+          </article>
+        `;
+      });
+    }
+
+    view.innerHTML = html;
+  }
+
+  async function submitTask(taskId) {
+    const client = getClient();
+    const user = getUser();
+
+    if (!client || !user) {
+      notify("Please sign in first.");
+      return;
+    }
+
+    const task = await client
+      .from("tasks")
+      .select("id,title")
+      .eq("id", taskId)
+      .eq("status", "active")
+      .single();
+
+    if (task.error || !task.data) {
+      notify("This task is no longer available.");
+      return;
+    }
+
+    const submissionText = prompt(
+      "Describe how you completed this task:"
+    );
+
+    if (!submissionText || !submissionText.trim()) {
+      notify("Please enter your task description.");
+      return;
+    }
+
+    const evidence = prompt(
+      "Enter an evidence link if required. Otherwise leave blank:"
+    );
+
+    const result = await client
+      .from("task_submissions")
+      .insert({
+        task_id: taskId,
+        user_id: user.id,
+        submission_text: submissionText.trim(),
+        evidence: evidence ? evidence.trim() : null,
+        status: "submitted"
+      });
+
+    if (result.error) {
+      console.error("Task submission error:", result.error);
+      notify("Submission failed: " + result.error.message);
+      return;
+    }
+
+    notify("Your task has been submitted for review.");
+    loadTasks();
+  }
+
+  document.addEventListener("click", function (event) {
+    const submitButton = event.target.closest("[data-task-submit]");
+
+    if (submitButton) {
+      submitTask(submitButton.dataset.taskSubmit);
+    }
+  });
+
+  // Open Task Centre when a dashboard task button is clicked.
+  document.addEventListener("click", function (event) {
+    const taskLink = event.target.closest('[data-view="tasks"]');
+
+    if (!taskLink) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    showView();
+  }, true);
+
+  SF.openTasks = showView;
+  SF.loadTasks = loadTasks;
+
+  addStyles();
+
+})();
+        
