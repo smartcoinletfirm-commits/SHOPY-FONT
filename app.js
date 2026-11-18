@@ -1,8 +1,7 @@
-
 window.SF = window.SF || {};
 
 /* =====================================================
-   SHOPY FONT — CENTRAL NAVIGATION & ACCESS CONTROL
+   SHOPY FONT — CENTRAL NAVIGATION
    ===================================================== */
 
 SF.escapeHtml = value =>
@@ -16,7 +15,7 @@ SF.escapeHtml = value =>
 
 SF.escapeAttr = SF.escapeHtml;
 
-/* NOTIFICATIONS */
+/* TOAST NOTIFICATIONS */
 
 SF.showToast = message => {
   const el = document.getElementById("toast");
@@ -27,13 +26,14 @@ SF.showToast = message => {
 
   clearTimeout(SF.toastTimer);
 
-  SF.toastTimer = setTimeout(
-    () => el.classList.remove("show"),
-    2800
-  );
+  SF.toastTimer = setTimeout(() => {
+    el.classList.remove("show");
+  }, 2800);
 };
 
-/* MEMBERSHIP CLASSIFICATION */
+/* =====================================================
+   MEMBERSHIP ACCESS
+   ===================================================== */
 
 SF.getMembershipAccess = async () => {
   if (!SF.currentUser) {
@@ -52,30 +52,30 @@ SF.getMembershipAccess = async () => {
     throw new Error("Your member profile could not be loaded.");
   }
 
-  const status = String(
-    profile.account_status || ""
-  ).trim().toLowerCase();
+  const status = String(profile.account_status || "")
+    .trim().toLowerCase();
 
-  const membershipType = String(
-    profile.membership_type || ""
-  ).trim().toLowerCase();
+  const membershipType = String(profile.membership_type || "")
+    .trim().toLowerCase();
 
-  const isApproved = status === "approved";
+  const approved = status === "approved";
 
-  const isCommunity =
+  const community =
     membershipType === "community" ||
     membershipType === "build_community";
 
   return {
     loggedIn: true,
-    approved: isApproved,
-    community: isApproved && isCommunity,
-    fullMember: isApproved && !isCommunity,
+    approved,
+    community: approved && community,
+    fullMember: approved && !community,
     status
   };
 };
 
-/* ACCESS RULES */
+/* =====================================================
+   VIEW ACCESS CONTROL
+   ===================================================== */
 
 SF.canAccessView = async view => {
   const loginRequired = [
@@ -91,11 +91,11 @@ SF.canAccessView = async view => {
   ];
 
   if (loginRequired.includes(view) && !SF.currentUser) {
-    // Remember the requested page before opening login.
     sessionStorage.setItem("sf_pending_view", view);
 
     SF.setAuthTab("login");
     await SF.navigate("auth");
+
     return false;
   }
 
@@ -117,10 +117,16 @@ SF.canAccessView = async view => {
     let access;
 
     try {
-      await SF.loadProfile();
+      const profile = await SF.loadProfile();
+
+      if (!profile) {
+        throw new Error("Member profile unavailable.");
+      }
+
       access = await SF.getMembershipAccess();
-    } catch (err) {
-      console.error("Membership verification failed:", err);
+
+    } catch (error) {
+      console.error("Membership verification failed:", error);
 
       SF.showToast(
         "Unable to verify your membership. Please try again."
@@ -138,7 +144,10 @@ SF.canAccessView = async view => {
       return false;
     }
 
-    if (access.community && fullMemberViews.includes(view)) {
+    if (
+      access.community &&
+      fullMemberViews.includes(view)
+    ) {
       SF.showToast(
         "This section requires full SHOPY FONT membership. Upgrade your Community account first."
       );
@@ -151,10 +160,14 @@ SF.canAccessView = async view => {
   return true;
 };
 
-/* NAVIGATION */
+/* =====================================================
+   CENTRAL NAVIGATION
+   ===================================================== */
 
 SF.navigate = async view => {
   if (!view) return;
+
+  view = String(view).trim();
 
   const allowed = await SF.canAccessView(view);
 
@@ -168,6 +181,7 @@ SF.navigate = async view => {
 
   if (!target) {
     console.warn("SHOPY FONT view not found:", id);
+    SF.showToast("This section is currently unavailable.");
     return;
   }
 
@@ -181,20 +195,28 @@ SF.navigate = async view => {
   document.getElementById("mainNav")
     ?.classList.remove("open");
 
-  if (view === "dashboard") {
-    await SF.loadDashboard();
-  }
+  try {
+    if (view === "dashboard") {
+      await SF.loadDashboard();
+    }
 
-  if (view === "referrals") {
-    await SF.loadReferralStats();
-  }
+    if (view === "referrals") {
+      await SF.loadReferralStats();
+    }
 
-  if (view === "marketplace") {
-    await SF.loadProducts();
-  }
+    if (view === "marketplace") {
+      await SF.loadProducts();
+    }
 
-  if (view === "admin") {
-    await SF.loadAdmin();
+    if (view === "admin") {
+      await SF.loadAdmin();
+    }
+
+  } catch (error) {
+    console.error("View loading failed:", error);
+    SF.showToast(
+      error.message || "Unable to load this section."
+    );
   }
 
   history.replaceState(
@@ -209,7 +231,9 @@ SF.navigate = async view => {
   });
 };
 
-/* TOP NAVIGATION VISIBILITY */
+/* =====================================================
+   NAVIGATION VISIBILITY
+   ===================================================== */
 
 SF.updateNavigation = () => {
   document.querySelectorAll(".signed-only").forEach(el => {
@@ -238,9 +262,130 @@ SF.updateNavigation = () => {
   );
 };
 
-/* GLOBAL NAVIGATION EVENTS */
+/* =====================================================
+   GLOBAL BUTTON ACTIONS
+   ===================================================== */
 
-document.addEventListener("DOMContentLoaded", async () => {
+SF.handleAction = async action => {
+  if (!action) return;
+
+  if (action === "login" || action === "register") {
+    SF.setAuthTab(action);
+    await SF.navigate("auth");
+    return;
+  }
+
+  if (action === "logout") {
+    await SF.logout();
+
+    SF.updateNavigation();
+    SF.showToast("You have logged out.");
+
+    await SF.navigate("home");
+    return;
+  }
+
+  if (action === "sell-product") {
+    if (!SF.currentUser) {
+      SF.setAuthTab("login");
+      await SF.navigate("auth");
+
+      SF.showAuthMessage(
+        "Log in before submitting a product."
+      );
+
+      return;
+    }
+
+    const access = await SF.getMembershipAccess();
+
+    if (!access.fullMember) {
+      SF.showToast(
+        "Approved full membership is required to submit products."
+      );
+      return;
+    }
+
+    document.getElementById("productForm")
+      ?.classList.remove("hidden");
+
+    return;
+  }
+
+  if (action === "cancel-product") {
+    document.getElementById("productForm")
+      ?.classList.add("hidden");
+
+    return;
+  }
+
+  if (action === "copy-referral") {
+    if (!SF.currentUser) {
+      SF.showToast("Please log in first.");
+      return;
+    }
+
+    await SF.copyReferralLink();
+    return;
+  }
+
+  if (action === "show-coming") {
+    SF.showToast(
+      "This section is being prepared. Check back soon."
+    );
+  }
+};
+
+/* =====================================================
+   GLOBAL EVENT LISTENERS
+   ===================================================== */
+
+if (!SF.appEventsInstalled) {
+  SF.appEventsInstalled = true;
+
+  document.addEventListener("click", async event => {
+    const target = event.target;
+
+    if (!(target instanceof Element)) return;
+
+    const viewElement = target.closest("[data-view]");
+
+    if (viewElement) {
+      event.preventDefault();
+
+      try {
+        await SF.navigate(viewElement.dataset.view);
+      } catch (error) {
+        console.error("Navigation failed:", error);
+        SF.showToast("Unable to open this section.");
+      }
+
+      return;
+    }
+
+    const actionElement = target.closest("[data-action]");
+
+    if (!actionElement) return;
+
+    const action = actionElement.dataset.action;
+
+    try {
+      await SF.handleAction(action);
+    } catch (error) {
+      console.error("Button action failed:", error);
+
+      SF.showToast(
+        error.message || "Something went wrong."
+      );
+    }
+  });
+}
+
+/* =====================================================
+   APPLICATION INITIALIZATION
+   ===================================================== */
+
+const initializeShopyFont = async () => {
   const year = document.getElementById("year");
 
   if (year) {
@@ -252,101 +397,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("mainNav")
         ?.classList.toggle("open");
     });
-
-  document.addEventListener("click", async event => {
-    const viewElement = event.target.closest("[data-view]");
-
-    if (viewElement) {
-      event.preventDefault();
-
-      await SF.navigate(viewElement.dataset.view);
-      return;
-    }
-
-    const actionElement = event.target.closest("[data-action]");
-    const action = actionElement?.dataset.action;
-
-    if (!action) return;
-
-    try {
-      if (action === "login" || action === "register") {
-        SF.setAuthTab(action);
-        await SF.navigate("auth");
-        return;
-      }
-
-      if (action === "logout") {
-        await SF.logout();
-
-        SF.updateNavigation();
-
-        SF.showToast("You have logged out.");
-
-        await SF.navigate("home");
-        return;
-      }
-
-      if (action === "sell-product") {
-        if (!SF.currentUser) {
-          SF.setAuthTab("login");
-          await SF.navigate("auth");
-
-          SF.showAuthMessage(
-            "Log in before submitting a product."
-          );
-
-          return;
-        }
-
-        const access = await SF.getMembershipAccess();
-
-        if (!access.fullMember) {
-          SF.showToast(
-            "Approved full membership is required to submit products."
-          );
-          return;
-        }
-
-        document.getElementById("productForm")
-          ?.classList.remove("hidden");
-
-        return;
-      }
-
-      if (action === "cancel-product") {
-        document.getElementById("productForm")
-          ?.classList.add("hidden");
-
-        return;
-      }
-
-      if (action === "copy-referral") {
-        if (!SF.currentUser) {
-          SF.showToast("Please log in first.");
-          return;
-        }
-
-        await SF.copyReferralLink();
-        return;
-      }
-
-      if (action === "show-coming") {
-        SF.showToast(
-          "This section is being prepared. Check back soon."
-        );
-        return;
-      }
-
-    } catch (err) {
-      console.error("Navigation action failed:", err);
-
-      SF.showToast(
-        err.message || "Something went wrong."
-      );
-    }
-  });
-
-  /* INITIAL SESSION */
 
   try {
     if (!window.sfSupabase) {
@@ -381,12 +431,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       await SF.navigate(hash);
     }
 
-  } catch (err) {
-    console.error("SHOPY FONT initialization error:", err);
+  } catch (error) {
+    console.error(
+      "SHOPY FONT initialization error:",
+      error
+    );
 
     SF.showToast(
       "Connection issue. Check your Supabase setup and reload."
     );
   }
-});
-                     
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener(
+    "DOMContentLoaded",
+    initializeShopyFont,
+    { once: true }
+  );
+} else {
+  initializeShopyFont();
+    }
+   
