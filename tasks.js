@@ -834,4 +834,19 @@
 
     if (!taskLink) return;
 
-    event.preventDefau
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    currentTab = "available";
+    showView();
+
+  }, true);
+
+  /* Public functions used by the dashboard */
+  SF.openTasks = showView;
+  SF.loadTasks = loadTasks;
+
+  addStyles();
+
+})();
+
