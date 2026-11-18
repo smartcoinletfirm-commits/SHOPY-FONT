@@ -1,8 +1,10 @@
+
 window.SF = window.SF || {};
 
 /* =====================================================
-   SHOPY FONT — CENTRAL NAVIGATION
-   ===================================================== */
+   SHOPY FONT — CENTRAL APPLICATION CONTROLLER
+   Updated public homepage routing
+===================================================== */
 
 SF.escapeHtml = value =>
   String(value ?? "").replace(/[&<>"']/g, c => ({
@@ -15,7 +17,9 @@ SF.escapeHtml = value =>
 
 SF.escapeAttr = SF.escapeHtml;
 
-/* TOAST NOTIFICATIONS */
+/* =====================================================
+   TOAST NOTIFICATIONS
+===================================================== */
 
 SF.showToast = message => {
   const el = document.getElementById("toast");
@@ -33,7 +37,7 @@ SF.showToast = message => {
 
 /* =====================================================
    MEMBERSHIP ACCESS
-   ===================================================== */
+===================================================== */
 
 SF.getMembershipAccess = async () => {
   if (!SF.currentUser) {
@@ -75,7 +79,7 @@ SF.getMembershipAccess = async () => {
 
 /* =====================================================
    VIEW ACCESS CONTROL
-   ===================================================== */
+===================================================== */
 
 SF.canAccessView = async view => {
   const loginRequired = [
@@ -162,7 +166,7 @@ SF.canAccessView = async view => {
 
 /* =====================================================
    CENTRAL NAVIGATION
-   ===================================================== */
+===================================================== */
 
 SF.navigate = async view => {
   if (!view) return;
@@ -214,6 +218,7 @@ SF.navigate = async view => {
 
   } catch (error) {
     console.error("View loading failed:", error);
+
     SF.showToast(
       error.message || "Unable to load this section."
     );
@@ -233,7 +238,7 @@ SF.navigate = async view => {
 
 /* =====================================================
    NAVIGATION VISIBILITY
-   ===================================================== */
+===================================================== */
 
 SF.updateNavigation = () => {
   document.querySelectorAll(".signed-only").forEach(el => {
@@ -264,7 +269,7 @@ SF.updateNavigation = () => {
 
 /* =====================================================
    GLOBAL BUTTON ACTIONS
-   ===================================================== */
+===================================================== */
 
 SF.handleAction = async action => {
   if (!action) return;
@@ -338,7 +343,7 @@ SF.handleAction = async action => {
 
 /* =====================================================
    GLOBAL EVENT LISTENERS
-   ===================================================== */
+===================================================== */
 
 if (!SF.appEventsInstalled) {
   SF.appEventsInstalled = true;
@@ -383,7 +388,7 @@ if (!SF.appEventsInstalled) {
 
 /* =====================================================
    APPLICATION INITIALIZATION
-   ===================================================== */
+===================================================== */
 
 const initializeShopyFont = async () => {
   const year = document.getElementById("year");
@@ -411,25 +416,75 @@ const initializeShopyFont = async () => {
 
     await SF.trackProductVisit();
 
-    const hash = location.hash.replace("#", "");
+    const hash = location.hash
+      .replace("#", "")
+      .trim()
+      .toLowerCase();
+
+    const hasProductLink =
+      new URLSearchParams(location.search).has("product");
+
+    const isMainEntry =
+      location.pathname === "/" ||
+      location.pathname.endsWith("/index.html");
+
+    /* PRODUCT LINKS */
+    if (hasProductLink) {
+      await SF.navigate("marketplace");
+      return;
+    }
+
+    /*
+      PUBLIC HOMEPAGE RULE
+
+      Opening shopyfont.xyz directly must show
+      the public homepage, not the member dashboard.
+
+      Old dashboard bookmarks are also redirected
+      to the public homepage on the main entry URL.
+    */
 
     if (
-      new URLSearchParams(location.search).has("product")
+      isMainEntry &&
+      (
+        !hash ||
+        hash === "dashboard" ||
+        hash === "home"
+      )
     ) {
-      await SF.navigate("marketplace");
+      history.replaceState(
+        null,
+        "",
+        location.pathname + location.search + "#"
+      );
 
-    } else if (
-      [
-        "dashboard",
-        "marketplace",
-        "scholarbridge",
-        "opportunities",
-        "admin",
-        "referrals"
-      ].includes(hash)
-    ) {
-      await SF.navigate(hash);
+      document.body.classList.remove(
+        "sf-dashboard-mode"
+      );
+
+      await SF.navigate("home");
+      return;
     }
+
+    /* EXPLICIT NAVIGATION LINKS */
+    const validViews = [
+      "dashboard",
+      "marketplace",
+      "scholarbridge",
+      "opportunities",
+      "admin",
+      "referrals",
+      "auth",
+      "home"
+    ];
+
+    if (validViews.includes(hash)) {
+      await SF.navigate(hash);
+      return;
+    }
+
+    /* FALLBACK: PUBLIC HOMEPAGE */
+    await SF.navigate("home");
 
   } catch (error) {
     console.error(
@@ -451,5 +506,5 @@ if (document.readyState === "loading") {
   );
 } else {
   initializeShopyFont();
-    }
-   
+  }
+         
