@@ -1,42 +1,110 @@
-
-/* SHOPY FONT — PUBLIC LANDING ROUTE FIX */
+/* =========================================================
+   SHOPY FONT — DEFINITIVE PUBLIC ENTRY ROUTE
+   Prevents automatic startup from exposing member dashboard.
+========================================================= */
 (() => {
   "use strict";
 
-  function openPublicLanding() {
-    const SF = window.SF;
+  const isPublicEntry =
+    location.pathname === "/" ||
+    location.pathname.endsWith("/index.html");
 
-    if (!SF || typeof SF.navigate !== "function") {
-      console.error("SHOPY FONT navigation is not ready.");
-      return;
+  const hasDeepLink = Boolean(
+    location.hash &&
+    location.hash !== "#" &&
+    location.hash !== "#home"
+  );
+
+  if (!isPublicEntry || hasDeepLink) return;
+
+  // Mark this as a public first-entry session.
+  document.documentElement.classList.add("sf-public-entry");
+
+  const style = document.createElement("style");
+  style.id = "sf-public-entry-guard";
+  style.textContent = `
+    html.sf-public-entry #dashboardView,
+    html.sf-public-entry #approvedDashboard,
+    html.sf-public-entry #activationWorkspace,
+    html.sf-public-entry #reviewWorkspace,
+    html.sf-public-entry #rejectedWorkspace,
+    html.sf-public-entry #welcomeView {
+      display: none !important;
     }
 
-    const isMainPage =
-      location.pathname === "/" ||
-      location.pathname.endsWith("/index.html");
+    html.sf-public-entry #homeView {
+      display: block !important;
+    }
 
-    const isProductLink =
-      new URLSearchParams(location.search).has("product");
+    html.sf-public-entry body.sf-dashboard-mode .topbar,
+    html.sf-public-entry body.sf-dashboard-mode .announcement {
+      display: flex !important;
+    }
 
-    if (!isMainPage || isProductLink) return;
+    html.sf-public-entry body.sf-dashboard-mode #dashboardView {
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(style);
 
-    // Do not restore an old member dashboard on the public URL.
-    history.replaceState(null, "", location.pathname + location.search);
+  let userHasInteracted = false;
 
-    // Remove any dashboard visual mode left by startup scripts.
-    document.body.classList.remove("sf-dashboard-mode");
+  // Only a real user interaction ends the public-entry guard.
+  document.addEventListener("click", event => {
+    if (event.isTrusted) userHasInteracted = true;
+  }, true);
 
-    // Always display the public homepage on the main URL.
-    SF.navigate("home").catch(error => {
-      console.error("Public homepage navigation failed:", error);
+  function forcePublicHome() {
+    const SF = window.SF;
+
+    if (!SF || typeof SF.navigate !== "function") return;
+
+    const currentNavigate = SF.navigate;
+
+    if (SF.publicEntryGuardInstalled) return;
+
+    SF.publicEntryGuardInstalled = true;
+
+    SF.navigate = async function (view, ...args) {
+      if (!userHasInteracted && view !== "home") {
+        history.replaceState(
+          null,
+          "",
+          location.pathname + location.search
+        );
+
+        return currentNavigate.call(this, "home", ...args);
+      }
+
+      if (view === "home") {
+        document.documentElement.classList.add("sf-public-entry");
+      } else {
+        document.documentElement.classList.remove("sf-public-entry");
+      }
+
+      return currentNavigate.call(this, view, ...args);
+    };
+
+    // Clear an old dashboard hash and force the public home.
+    history.replaceState(
+      null,
+      "",
+      location.pathname + location.search
+    );
+
+    currentNavigate.call(SF, "home").catch(error => {
+      console.error("SHOPY FONT public homepage error:", error);
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", openPublicLanding, {
-      once: true
-    });
-  } else {
-    openPublicLanding();
-  }
+  // Wait until all deferred scripts have loaded.
+  window.addEventListener("load", () => {
+    forcePublicHome();
+
+    // Recheck after startup authentication/navigation callbacks.
+    setTimeout(forcePublicHome, 700);
+    setTimeout(forcePublicHome, 1800);
+  }, { once: true });
+
 })();
+
