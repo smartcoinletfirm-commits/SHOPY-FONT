@@ -801,6 +801,8 @@
     }
   }, false);
 
+    }
+
   function watchTasks() {
     const observer = new MutationObserver(() => {
       installPanel();
@@ -814,4 +816,22 @@
     installPanel();
   }
 
-  i
+  installStyles();
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", watchTasks);
+  } else {
+    watchTasks();
+  }
+
+  SF.openTrivia = function () {
+    if (!installPanel()) return;
+
+    const tab = document.querySelector(
+      '#tasksView [data-task-tab="trivia"]'
+    );
+
+    tab?.click();
+  };
+
+})();
