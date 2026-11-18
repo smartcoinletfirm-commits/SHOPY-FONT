@@ -15,10 +15,12 @@ SF.setDashboardMessage = (id, message, success = false) => {
 
 /* =====================================================
    ADMIN NOTIFICATION HELPER
-   Keep this for payment-routing.js.
    ===================================================== */
 
-SF.createAdminNotification = async (eventType, fbkCode = null) => {
+SF.createAdminNotification = async (
+  eventType,
+  fbkCode = null
+) => {
   if (!SF.currentUser) {
     throw new Error("Please sign in before continuing.");
   }
@@ -49,6 +51,7 @@ SF.loadDashboard = async () => {
   }
 
   const db = SF.getClient();
+
   const profile = SF.profile || await SF.loadProfile();
 
   if (!profile) {
@@ -60,7 +63,9 @@ SF.loadDashboard = async () => {
 
     if (element) {
       element.textContent =
-        value == null || value === "" ? "—" : String(value);
+        value == null || value === ""
+          ? "—"
+          : String(value);
     }
   };
 
@@ -71,19 +76,17 @@ SF.loadDashboard = async () => {
 
   const status = String(
     profile.account_status || ""
-  ).toLowerCase();
+  ).trim().toLowerCase();
 
   const isApproved = status === "approved";
 
   show("approvedDashboard", isApproved);
 
-  if (!isApproved) {
-    return;
-  }
+  if (!isApproved) return;
 
-  const firstName = String(profile.full_name || "Member")
-    .trim()
-    .split(/\s+/)[0];
+  const firstName = String(
+    profile.full_name || "Member"
+  ).trim().split(/\s+/)[0];
 
   put("welcomeName", "Welcome back, " + firstName + ".");
   put("memberStatus", "Approved");
@@ -91,7 +94,7 @@ SF.loadDashboard = async () => {
   put("memberEmail", SF.currentUser.email || profile.email || "");
   put("memberCountry", profile.country || "—");
 
-  /* Referral count */
+  /* REFERRAL COUNT */
 
   const referralResult = await db
     .from("referrals")
@@ -110,58 +113,63 @@ SF.loadDashboard = async () => {
     );
   }
 
-  /* Recent membership activity */
+  /* RECENT MEMBERSHIP ACTIVITY */
 
   const activity = document.getElementById("activityList");
 
-  if (activity) {
-    const result = await db
-      .from("activation_requests")
-      .select("id,membership_level,status,created_at")
-      .eq("user_id", SF.currentUser.id)
-      .order("created_at", { ascending: false })
-      .limit(1);
+  if (!activity) return;
 
-    activity.replaceChildren();
+  const result = await db
+    .from("activation_requests")
+    .select("id,membership_level,status,created_at")
+    .eq("user_id", SF.currentUser.id)
+    .order("created_at", { ascending: false })
+    .limit(1);
 
-    if (result.error) {
-      const paragraph = document.createElement("p");
-      paragraph.className = "muted";
-      paragraph.textContent =
-        "Account activity is temporarily unavailable.";
-      activity.appendChild(paragraph);
+  activity.replaceChildren();
 
-    } else if (!result.data?.length) {
-      const paragraph = document.createElement("p");
-      paragraph.className = "muted";
-      paragraph.textContent = "No recent activity to display.";
-      activity.appendChild(paragraph);
+  const paragraph = document.createElement("p");
+  paragraph.className = "muted";
 
-    } else {
-      const request = result.data[0];
+  if (result.error) {
+    paragraph.textContent =
+      "Account activity is temporarily unavailable.";
 
-      const item = document.createElement("div");
-      item.className = "activity-item";
-
-      const heading = document.createElement("strong");
-      heading.textContent =
-        "Membership activation · Level " +
-        request.membership_level;
-
-      const detail = document.createElement("p");
-      detail.className = "muted";
-      detail.textContent =
-        "Status: " + (request.status || "Submitted");
-
-      item.append(heading, detail);
-      activity.appendChild(item);
-    }
+    activity.appendChild(paragraph);
+    return;
   }
+
+  if (!result.data?.length) {
+    paragraph.textContent =
+      "No recent activity to display.";
+
+    activity.appendChild(paragraph);
+    return;
+  }
+
+  const request = result.data[0];
+
+  const item = document.createElement("div");
+  item.className = "activity-item";
+
+  const heading = document.createElement("strong");
+
+  heading.textContent =
+    "Membership activation · Level " +
+    (request.membership_level || "—");
+
+  const detail = document.createElement("p");
+  detail.className = "muted";
+
+  detail.textContent =
+    "Status: " + (request.status || "Submitted");
+
+  item.append(heading, detail);
+  activity.appendChild(item);
 };
 
 /* =====================================================
    PACKAGE PREVIEW
-   Payment routing is handled by payment-routing.js.
    ===================================================== */
 
 SF.updatePackagePreview = () => {
@@ -189,12 +197,11 @@ SF.updatePackagePreview = () => {
 
   document.querySelectorAll("[data-select-level]")
     .forEach(button => {
-      const card = button.closest(".sf-level-card");
-
       const selected =
         button.dataset.selectLevel === String(level);
 
-      card?.classList.toggle("sf-selected", selected);
+      button.closest(".sf-level-card")
+        ?.classList.toggle("sf-selected", selected);
 
       button.textContent = selected
         ? "✓ Selected"
@@ -230,55 +237,56 @@ SF.updatePackagePreview = () => {
    PACKAGE SELECTION EVENTS
    ===================================================== */
 
-document.addEventListener("DOMContentLoaded", () => {
-  const countrySelect =
-    document.getElementById("activationCountry");
+if (!SF.packageEventsInstalled) {
+  SF.packageEventsInstalled = true;
 
-  const levelSelect =
-    document.getElementById("activationLevel");
+  document.addEventListener("click", event => {
+    const target = event.target;
 
-  /* Select a membership package */
+    if (!(target instanceof Element)) return;
 
-  document.querySelectorAll("[data-select-level]")
-    .forEach(button => {
-      button.addEventListener("click", () => {
-        if (!levelSelect) return;
+    const button = target.closest("[data-select-level]");
 
-        levelSelect.value = button.dataset.selectLevel;
+    if (!button) return;
 
-        SF.updatePackagePreview();
+    event.preventDefault();
 
-        document.getElementById("sfRegistrationDetails")
-          ?.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-          });
+    const levelSelect =
+      document.getElementById("activationLevel");
+
+    if (!levelSelect) return;
+
+    levelSelect.value = button.dataset.selectLevel;
+
+    SF.updatePackagePreview();
+
+    document.getElementById("sfRegistrationDetails")
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
       });
-    });
+  });
 
-  /* Refresh preview when country changes */
+  document.addEventListener("change", event => {
+    const target = event.target;
 
-  countrySelect?.addEventListener(
-    "change",
-    SF.updatePackagePreview
-  );
+    if (
+      target?.id === "activationCountry" ||
+      target?.id === "activationLevel"
+    ) {
+      SF.updatePackagePreview();
+    }
+  });
 
-  /* Refresh preview when level changes */
+  document.addEventListener("DOMContentLoaded", () => {
+    const countrySelect =
+      document.getElementById("activationCountry");
 
-  levelSelect?.addEventListener(
-    "change",
-    SF.updatePackagePreview
-  );
+    if (countrySelect && SF.profile?.country) {
+      countrySelect.value = SF.profile.country;
+    }
 
-  /* Use the member's saved country when available */
-
-  if (
-    countrySelect &&
-    SF.profile?.country
-  ) {
-    countrySelect.value = SF.profile.country;
-  }
-
-  SF.updatePackagePreview();
-});
-    
+    SF.updatePackagePreview();
+  });
+}
+   
