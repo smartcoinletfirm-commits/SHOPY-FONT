@@ -22,14 +22,20 @@
       display: none !important;
     }
 
-    #dashboardView.sf-dashboard-view {
-      display: block;
-      max-width: none;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-      background: #f7f8fc;
-    }
+    /* Keep the member dashboard hidden on public pages. */
+#dashboardView.sf-dashboard-view {
+  display: none;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: #f7f8fc;
+}
+
+/* Display the dashboard only when it is the active page. */
+#dashboardView.sf-dashboard-view.active {
+  display: block;
+}
 
     .sf-app-header {
       min-height: 88px;
