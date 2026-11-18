@@ -508,3 +508,30 @@ if (document.readyState === "loading") {
   initializeShopyFont();
   }
          
+/* SHOPY FONT HEADER AUTH BUTTON FIX */
+document.addEventListener("click", function (event) {
+  const button = event.target.closest('[data-action="login"], [data-action="register"]');
+
+  if (!button) return;
+
+  event.preventDefault();
+
+  const action = button.dataset.action;
+
+  if (action === "login") {
+    if (window.SF && typeof window.SF.navigate === "function") {
+      window.SF.navigate("auth");
+    }
+
+    const loginTab = document.querySelector('[data-auth-tab="login"], #loginTab, [data-tab="login"]');
+    if (loginTab) loginTab.click();
+
+  } else if (action === "register") {
+    if (window.SF && typeof window.SF.navigate === "function") {
+      window.SF.navigate("auth");
+    }
+
+    const registerTab = document.querySelector('[data-auth-tab="register"], #registerTab, [data-tab="register"]');
+    if (registerTab) registerTab.click();
+  }
+});
