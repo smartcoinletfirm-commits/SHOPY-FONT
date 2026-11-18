@@ -4,12 +4,21 @@ window.SF = window.SF || {};
 SF.currentUser = null;
 SF.profile = null;
 
+/* =====================================================
+   SUPABASE CLIENT
+   ===================================================== */
+
 SF.getClient = () => {
   if (!window.sfSupabase) {
     throw new Error("Connection is not ready. Check config.js and reload.");
   }
+
   return window.sfSupabase;
 };
+
+/* =====================================================
+   REFERRAL CODE
+   ===================================================== */
 
 SF.getReferralCodeFromUrl = () =>
   (
@@ -17,6 +26,10 @@ SF.getReferralCodeFromUrl = () =>
     sessionStorage.getItem("sf_pending_ref") ||
     ""
   ).trim().toUpperCase();
+
+/* =====================================================
+   AUTH MESSAGES
+   ===================================================== */
 
 SF.showAuthMessage = (message, isError = false) => {
   const el = document.getElementById("authMessage");
@@ -26,6 +39,10 @@ SF.showAuthMessage = (message, isError = false) => {
     el.style.color = isError ? "#b42318" : "#237a57";
   }
 };
+
+/* =====================================================
+   LOAD MEMBER PROFILE
+   ===================================================== */
 
 SF.loadProfile = async () => {
   if (!SF.currentUser) return null;
@@ -41,6 +58,10 @@ SF.loadProfile = async () => {
   SF.profile = data;
   return data;
 };
+
+/* =====================================================
+   APPLY REFERRAL
+   ===================================================== */
 
 SF.applyPendingReferral = async () => {
   const code = SF.getReferralCodeFromUrl();
@@ -65,6 +86,10 @@ SF.applyPendingReferral = async () => {
   }
 };
 
+/* =====================================================
+   REFRESH SESSION
+   ===================================================== */
+
 SF.refreshSession = async () => {
   const { data, error } = await SF.getClient().auth.getSession();
 
@@ -81,6 +106,10 @@ SF.refreshSession = async () => {
 
   return SF.currentUser;
 };
+
+/* =====================================================
+   LOGIN
+   ===================================================== */
 
 SF.login = async form => {
   const fd = new FormData(form);
@@ -101,6 +130,10 @@ SF.login = async form => {
   return data;
 };
 
+/* =====================================================
+   REGISTRATION
+   ===================================================== */
+
 SF.register = async form => {
   const fd = new FormData(form);
   const referralCode = SF.getReferralCodeFromUrl();
@@ -112,6 +145,7 @@ SF.register = async form => {
   const { data, error } = await SF.getClient().auth.signUp({
     email: fd.get("email"),
     password: fd.get("password"),
+
     options: {
       data: {
         full_name: fd.get("full_name"),
@@ -133,6 +167,10 @@ SF.register = async form => {
   return data;
 };
 
+/* =====================================================
+   LOGOUT
+   ===================================================== */
+
 SF.logout = async () => {
   const { error } = await SF.getClient().auth.signOut();
 
@@ -140,11 +178,50 @@ SF.logout = async () => {
 
   SF.currentUser = null;
   SF.profile = null;
+  SF.adminAuthorized = false;
 };
 
+/* =====================================================
+   ADMINISTRATOR DESTINATION
+   Uses the existing Supabase RPC:
+   scf_is_admin
+
+   Administrators go to Admin Control Panel.
+   Ordinary users go to their normal dashboard.
+   ===================================================== */
+
+SF.getLoginDestination = async () => {
+  try {
+    if (
+      typeof SF.checkAdmin === "function" &&
+      await SF.checkAdmin()
+    ) {
+      console.log("Administrator verified. Opening Admin Control Panel.");
+
+      return "admin";
+    }
+  } catch (error) {
+    console.error(
+      "Administrator verification failed:",
+      error
+    );
+  }
+
+  return "dashboard";
+};
+
+/* =====================================================
+   AUTHENTICATION EVENTS
+   ===================================================== */
+
 document.addEventListener("DOMContentLoaded", () => {
+
   const login = document.getElementById("loginForm");
   const register = document.getElementById("registerForm");
+
+  /* =================================================
+     LOGIN FORM
+     ================================================= */
 
   login?.addEventListener("submit", async e => {
     e.preventDefault();
@@ -160,17 +237,30 @@ document.addEventListener("DOMContentLoaded", () => {
       await SF.login(login);
 
       SF.showToast("Welcome back.");
+
       SF.updateNavigation();
 
-      // Return to the page requested before login.
-      const destination =
-        sessionStorage.getItem("sf_pending_view") || "dashboard";
+      // Check administrator privileges before choosing destination.
+      const destination = await SF.getLoginDestination();
 
-      sessionStorage.removeItem("sf_pending_view");
+      // Administrator access takes priority over saved page requests.
+      if (destination === "admin") {
+        sessionStorage.removeItem("sf_pending_view");
 
-      await SF.navigate(destination);
+        await SF.navigate("admin");
+
+      } else {
+        const requestedDestination =
+          sessionStorage.getItem("sf_pending_view") || "dashboard";
+
+        sessionStorage.removeItem("sf_pending_view");
+
+        await SF.navigate(requestedDestination);
+      }
 
     } catch (err) {
+      console.error("Login error:", err);
+
       SF.showAuthMessage(
         err.message || "Login failed.",
         true
@@ -183,6 +273,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  /* =================================================
+     REGISTRATION FORM
+     ================================================= */
 
   register?.addEventListener("submit", async e => {
     e.preventDefault();
@@ -201,13 +295,18 @@ document.addEventListener("DOMContentLoaded", () => {
         SF.showAuthMessage(
           "Account created. Confirm your email, then log in. Your referral code will be applied after login."
         );
+
       } else {
         SF.showToast("Account created.");
+
         SF.updateNavigation();
-        SF.navigate("dashboard");
+
+        await SF.navigate("dashboard");
       }
 
     } catch (err) {
+      console.error("Registration error:", err);
+
       SF.showAuthMessage(
         err.message || "Registration failed.",
         true
@@ -221,16 +320,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  /* =================================================
+     LOGIN / REGISTER TABS
+     ================================================= */
+
   document.querySelectorAll("[data-auth-tab]").forEach(tab => {
+
     tab.addEventListener("click", () => {
       SF.setAuthTab(tab.dataset.authTab);
     });
+
   });
+
 });
 
+/* =====================================================
+   SWITCH AUTHENTICATION TAB
+   ===================================================== */
+
 SF.setAuthTab = which => {
+
   document.querySelectorAll("[data-auth-tab]").forEach(t => {
-    t.classList.toggle("active", t.dataset.authTab === which);
+    t.classList.toggle(
+      "active",
+      t.dataset.authTab === which
+    );
   });
 
   document.getElementById("loginForm")
