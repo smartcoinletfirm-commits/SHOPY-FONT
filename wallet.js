@@ -1,10 +1,11 @@
 
 /* =====================================================
    SHOPY FONT — USD MEMBER WALLET
-   Updated wallet with reliable button handling
+   Updated wallet with reliable withdrawal handling
    ===================================================== */
 
 window.SF = window.SF || {};
+const SF = window.SF;
 
 SF.wallet = SF.wallet || { loading: false };
 
@@ -16,10 +17,28 @@ SF.wallet.money = value =>
 
 SF.wallet.showMessage = (message, success = false) => {
   const el = document.getElementById("sfWalletMessage");
-  if (!el) return;
+  if (!el) {
+    if (typeof SF.showToast === "function") SF.showToast(message);
+    return;
+  }
 
   el.textContent = message;
   el.style.color = success ? "#237a57" : "#b42318";
+};
+
+/* COMMUNITY ACCOUNT CHECK */
+
+SF.wallet.isCommunity = () => {
+  const profile = SF.profile || {};
+  const type = String(
+    profile.membership_type || profile.account_type || ""
+  ).toLowerCase();
+
+  return (
+    type === "community" ||
+    type === "build_community" ||
+    profile.is_community === true
+  );
 };
 
 /* LOAD WALLET */
@@ -102,10 +121,7 @@ SF.wallet.render = async () => {
         }).join("")
       : `<p class="sf-wallet-muted">No wallet transactions yet.</p>`;
 
-    const isCommunity = [
-      "community",
-      "build_community"
-    ].includes(String(profile.membership_type || "").toLowerCase());
+    const isCommunity = SF.wallet.isCommunity();
 
     panel.innerHTML = `
       <div class="sf-wallet-heading">
@@ -171,7 +187,7 @@ SF.wallet.render = async () => {
         ` : ""}
       </div>
 
-      <div id="sfWalletWithdrawArea" class="hidden">
+      <div id="sfWalletWithdrawArea" class="hidden" hidden>
         <h3>Request a withdrawal</h3>
         <p class="sf-wallet-muted">
           Minimum withdrawal: KES 1,000 equivalent. Your request will be reviewed by an administrator.
@@ -230,7 +246,7 @@ SF.wallet.render = async () => {
         "Reserved: " + SF.wallet.money(wallet.reserved_usd);
     }
 
-    SF.wallet.bindButtons(isCommunity);
+    SF.wallet.bindButtons();
 
   } catch (error) {
     console.error("Wallet loading error:", error);
@@ -240,17 +256,14 @@ SF.wallet.render = async () => {
 
 /* DELEGATED WALLET BUTTON EVENTS */
 
-SF.wallet.bindButtons = isCommunity => {
+SF.wallet.bindButtons = () => {
   const panel = document.getElementById("sfWalletPanel");
-  if (!panel) return;
-
-  // One listener survives wallet content refreshes.
-  if (panel.dataset.walletEventsInstalled === "true") return;
+  if (!panel || panel.dataset.walletEventsInstalled === "true") return;
 
   panel.dataset.walletEventsInstalled = "true";
 
   panel.addEventListener("click", async event => {
-    const button = event.target.closest("button");
+    const button = event.target.closest?.("button");
     if (!button || !panel.contains(button)) return;
 
     if (button.id === "sfClaimWelcomeBonus") {
@@ -262,23 +275,42 @@ SF.wallet.bindButtons = isCommunity => {
     if (button.id === "sfOpenWithdraw") {
       event.preventDefault();
 
-      if (isCommunity) {
+      if (SF.wallet.isCommunity()) {
         SF.wallet.showMessage(
           "Community accounts must upgrade before accessing full withdrawal services."
         );
         return;
       }
 
-      document.getElementById("sfWalletWithdrawArea")
-        ?.classList.remove("hidden");
+      const area = document.getElementById("sfWalletWithdrawArea");
+
+      if (!area) {
+        SF.wallet.showMessage(
+          "Withdrawal form is unavailable. Please refresh your dashboard."
+        );
+        return;
+      }
+
+      area.hidden = false;
+      area.classList.remove("hidden");
+
+      area.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+
       return;
     }
 
     if (button.id === "sfCancelWithdraw") {
       event.preventDefault();
 
-      document.getElementById("sfWalletWithdrawArea")
-        ?.classList.add("hidden");
+      const area = document.getElementById("sfWalletWithdrawArea");
+      if (area) {
+        area.hidden = true;
+        area.classList.add("hidden");
+      }
+
       return;
     }
 
@@ -387,8 +419,11 @@ SF.wallet.requestWithdrawal = async event => {
 
     form.reset();
 
-    document.getElementById("sfWalletWithdrawArea")
-      ?.classList.add("hidden");
+    const area = document.getElementById("sfWalletWithdrawArea");
+    if (area) {
+      area.hidden = true;
+      area.classList.add("hidden");
+    }
 
     await SF.wallet.render();
 
@@ -584,6 +619,10 @@ SF.wallet.addStyles = () => {
       background:white;
     }
 
+    #sfWalletWithdrawArea[hidden] {
+      display:none !important;
+    }
+
     #sfWalletWithdrawArea label {
       display:block;
       margin:13px 0;
@@ -650,10 +689,12 @@ SF.wallet.addStyles = () => {
 
     @media(max-width:600px) {
       .sf-wallet-panel { padding:17px; }
+
       .sf-wallet-bonus {
         align-items:flex-start;
         flex-direction:column;
       }
+
       .sf-wallet-stats { gap:6px; }
       .sf-wallet-stats div { padding:11px 7px; }
       .sf-wallet-stats strong { font-size:12px; }
