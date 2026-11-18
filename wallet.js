@@ -1,14 +1,12 @@
 
 /* =====================================================
    SHOPY FONT — USD MEMBER WALLET
-   Welcome bonus, balance and transaction history
+   Updated wallet with reliable button handling
    ===================================================== */
 
 window.SF = window.SF || {};
 
-SF.wallet = SF.wallet || {
-  loading: false
-};
+SF.wallet = SF.wallet || { loading: false };
 
 SF.wallet.escape = value =>
   SF.escapeHtml ? SF.escapeHtml(value) : String(value ?? "");
@@ -24,8 +22,10 @@ SF.wallet.showMessage = (message, success = false) => {
   el.style.color = success ? "#237a57" : "#b42318";
 };
 
+/* LOAD WALLET */
+
 SF.wallet.render = async () => {
-  if (!SF.currentUser || !SF.profile) return;
+  if (!SF.currentUser || !SF.profile || !SF.getClient) return;
 
   const profile = SF.profile;
 
@@ -34,18 +34,16 @@ SF.wallet.render = async () => {
     profile.account_status !== "approved"
   ) return;
 
-  const db = SF.getClient();
-
   const panel = document.getElementById("sfWalletPanel");
   if (!panel) return;
 
   try {
+    const db = SF.getClient();
+
     const [walletResult, claimResult, historyResult] =
       await Promise.all([
         db.from("sf_usd_wallets")
-          .select(
-            "available_usd,reserved_usd,total_earned_usd,total_withdrawn_usd"
-          )
+          .select("available_usd,reserved_usd,total_earned_usd,total_withdrawn_usd")
           .eq("user_id", SF.currentUser.id)
           .maybeSingle(),
 
@@ -55,9 +53,7 @@ SF.wallet.render = async () => {
           .maybeSingle(),
 
         db.from("sf_usd_wallet_transactions")
-          .select(
-            "id,transaction_type,amount_usd,description,created_at"
-          )
+          .select("id,transaction_type,amount_usd,description,created_at")
           .eq("user_id", SF.currentUser.id)
           .order("created_at", { ascending: false })
           .limit(10)
@@ -84,10 +80,11 @@ SF.wallet.render = async () => {
 
     const historyHTML = transactions.length
       ? transactions.map(item => {
-          const positive =
-            ["earning", "deposit", "credit"].includes(
-              String(item.transaction_type).toLowerCase()
-            );
+          const positive = [
+            "earning",
+            "deposit",
+            "credit"
+          ].includes(String(item.transaction_type).toLowerCase());
 
           return `
             <div class="sf-wallet-transaction">
@@ -105,8 +102,10 @@ SF.wallet.render = async () => {
         }).join("")
       : `<p class="sf-wallet-muted">No wallet transactions yet.</p>`;
 
-    const isCommunity =
-      String(profile.membership_type).toLowerCase() === "community";
+    const isCommunity = [
+      "community",
+      "build_community"
+    ].includes(String(profile.membership_type || "").toLowerCase());
 
     panel.innerHTML = `
       <div class="sf-wallet-heading">
@@ -149,6 +148,7 @@ SF.wallet.render = async () => {
               : "Claim your one-time $0.60 bonus and receive it directly in your USD wallet."}
           </p>
         </div>
+
         <button
           type="button"
           class="sf-wallet-claim"
@@ -180,14 +180,9 @@ SF.wallet.render = async () => {
         <form id="sfWalletWithdrawForm">
           <label>
             Amount in USD
-            <input
-              name="amount_usd"
-              type="number"
-              min="0.01"
-              step="0.01"
-              required
-              placeholder="Example: 10.00"
-            >
+            <input name="amount_usd" type="number"
+              min="0.01" step="0.01" required
+              placeholder="Example: 10.00">
           </label>
 
           <label>
@@ -201,18 +196,15 @@ SF.wallet.render = async () => {
 
           <label>
             Payment details
-            <textarea
-              name="destination_details"
-              minlength="5"
-              maxlength="300"
-              required
-              placeholder="Enter your account name, number and payment details"
-            ></textarea>
+            <textarea name="destination_details"
+              minlength="5" maxlength="300" required
+              placeholder="Enter your account name, number and payment details"></textarea>
           </label>
 
           <button type="submit" class="sf-wallet-withdraw">
             Submit withdrawal request
           </button>
+
           <button type="button" class="sf-wallet-cancel" id="sfCancelWithdraw">
             Cancel
           </button>
@@ -227,7 +219,6 @@ SF.wallet.render = async () => {
       <p id="sfWalletMessage" role="status"></p>
     `;
 
-    // Update the existing dashboard balance summary.
     const balance = document.getElementById("walletBalance");
     if (balance) {
       balance.textContent = SF.wallet.money(wallet.available_usd);
@@ -243,49 +234,88 @@ SF.wallet.render = async () => {
 
   } catch (error) {
     console.error("Wallet loading error:", error);
-    SF.showToast(
-      error.message || "Unable to load your USD wallet."
-    );
+    SF.showToast(error.message || "Unable to load your USD wallet.");
   }
 };
 
-SF.wallet.bindButtons = isCommunity => {
-  document.getElementById("sfClaimWelcomeBonus")
-    ?.addEventListener("click", SF.wallet.claim);
+/* DELEGATED WALLET BUTTON EVENTS */
 
-  document.getElementById("sfOpenWithdraw")
-    ?.addEventListener("click", () => {
+SF.wallet.bindButtons = isCommunity => {
+  const panel = document.getElementById("sfWalletPanel");
+  if (!panel) return;
+
+  // One listener survives wallet content refreshes.
+  if (panel.dataset.walletEventsInstalled === "true") return;
+
+  panel.dataset.walletEventsInstalled = "true";
+
+  panel.addEventListener("click", async event => {
+    const button = event.target.closest("button");
+    if (!button || !panel.contains(button)) return;
+
+    if (button.id === "sfClaimWelcomeBonus") {
+      event.preventDefault();
+      await SF.wallet.claim({ currentTarget: button });
+      return;
+    }
+
+    if (button.id === "sfOpenWithdraw") {
+      event.preventDefault();
+
       if (isCommunity) {
         SF.wallet.showMessage(
-          "Community withdrawal access needs a database update before requests can be accepted."
+          "Community accounts must upgrade before accessing full withdrawal services."
         );
         return;
       }
 
       document.getElementById("sfWalletWithdrawArea")
         ?.classList.remove("hidden");
-    });
+      return;
+    }
 
-  document.getElementById("sfCancelWithdraw")
-    ?.addEventListener("click", () => {
+    if (button.id === "sfCancelWithdraw") {
+      event.preventDefault();
+
       document.getElementById("sfWalletWithdrawArea")
         ?.classList.add("hidden");
-    });
+      return;
+    }
 
-  document.getElementById("sfWalletWithdrawForm")
-    ?.addEventListener("submit", SF.wallet.requestWithdrawal);
+    if (button.id === "sfCommunityUpgrade") {
+      event.preventDefault();
 
-  document.getElementById("sfCommunityUpgrade")
-    ?.addEventListener("click", () => {
-      SF.showToast(
-        "Community upgrade checkout is being connected. Your current Community access remains active."
-      );
-    });
+      const workspace = document.getElementById("activationWorkspace");
+      const details = document.getElementById("sfRegistrationDetails");
+
+      if (workspace && details) {
+        workspace.style.display = "";
+        details.style.display = "";
+        details.classList.remove("hidden");
+
+        details.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      } else {
+        SF.showToast("Please contact support to upgrade your account.");
+      }
+    }
+  });
+
+  panel.addEventListener("submit", event => {
+    if (event.target.id !== "sfWalletWithdrawForm") return;
+
+    event.preventDefault();
+    SF.wallet.requestWithdrawal(event);
+  });
 };
+
+/* CLAIM WELCOME BONUS */
 
 SF.wallet.claim = async event => {
   const button = event.currentTarget;
-  if (button.disabled) return;
+  if (!button || button.disabled) return;
 
   button.disabled = true;
   button.textContent = "Claiming...";
@@ -297,7 +327,7 @@ SF.wallet.claim = async event => {
     if (error) throw error;
 
     SF.showToast(
-      data?.message || "Your $0.60 bonus has been credited."
+      data?.message || "Your welcome bonus request was processed."
     );
 
     await SF.wallet.render();
@@ -311,6 +341,8 @@ SF.wallet.claim = async event => {
     button.textContent = "Claim $0.60";
   }
 };
+
+/* REQUEST WITHDRAWAL */
 
 SF.wallet.requestWithdrawal = async event => {
   event.preventDefault();
@@ -327,15 +359,17 @@ SF.wallet.requestWithdrawal = async event => {
     const fd = new FormData(form);
 
     const amount = Number(fd.get("amount_usd"));
-    const destinationType = String(
-      fd.get("destination_type") || ""
-    );
+    const destinationType = String(fd.get("destination_type") || "");
     const destinationDetails = String(
       fd.get("destination_details") || ""
     ).trim();
 
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new Error("Enter a valid USD withdrawal amount.");
+    }
+
+    if (!destinationType || destinationDetails.length < 5) {
+      throw new Error("Complete all payment destination details.");
     }
 
     const { error } = await SF.getClient().rpc(
@@ -371,9 +405,7 @@ SF.wallet.requestWithdrawal = async event => {
   }
 };
 
-/* =====================================================
-   PREMIUM WALLET DESIGN
-   ===================================================== */
+/* WALLET DESIGN */
 
 SF.wallet.addStyles = () => {
   if (document.getElementById("sfWalletStyles")) return;
@@ -383,12 +415,12 @@ SF.wallet.addStyles = () => {
 
   style.textContent = `
     .sf-wallet-panel {
-      margin: 24px 0;
-      padding: 26px;
-      border: 1px solid #d8c69d;
-      border-radius: 18px;
-      background: linear-gradient(145deg,#fffefa,#f5f8f4);
-      box-shadow: 0 15px 38px rgba(18,45,34,.08);
+      margin:24px 0;
+      padding:26px;
+      border:1px solid #d8c69d;
+      border-radius:18px;
+      background:linear-gradient(145deg,#fffefa,#f5f8f4);
+      box-shadow:0 15px 38px rgba(18,45,34,.08);
     }
 
     .sf-wallet-heading {
@@ -618,7 +650,10 @@ SF.wallet.addStyles = () => {
 
     @media(max-width:600px) {
       .sf-wallet-panel { padding:17px; }
-      .sf-wallet-bonus { align-items:flex-start; flex-direction:column; }
+      .sf-wallet-bonus {
+        align-items:flex-start;
+        flex-direction:column;
+      }
       .sf-wallet-stats { gap:6px; }
       .sf-wallet-stats div { padding:11px 7px; }
       .sf-wallet-stats strong { font-size:12px; }
@@ -629,9 +664,7 @@ SF.wallet.addStyles = () => {
   document.head.appendChild(style);
 };
 
-/* =====================================================
-   INSERT WALLET INTO APPROVED DASHBOARD
-   ===================================================== */
+/* INSERT WALLET INTO DASHBOARD */
 
 SF.wallet.mount = () => {
   const dashboard = document.getElementById("approvedDashboard");
@@ -654,24 +687,31 @@ SF.wallet.mount = () => {
   }
 };
 
-/* Refresh wallet whenever dashboard loads. */
-SF.wallet.originalLoadDashboard = SF.loadDashboard;
+/* WRAP DASHBOARD LOADER SAFELY */
 
-SF.loadDashboard = async (...args) => {
-  const result = await SF.wallet.originalLoadDashboard.apply(SF, args);
+if (!SF.wallet.dashboardWrapperInstalled) {
+  const previousLoadDashboard = SF.loadDashboard;
 
-  SF.wallet.addStyles();
-  SF.wallet.mount();
+  SF.loadDashboard = async function (...args) {
+    const result = typeof previousLoadDashboard === "function"
+      ? await previousLoadDashboard.apply(this, args)
+      : undefined;
 
-  if (SF.profile?.account_status === "approved") {
-    await SF.wallet.render();
-  }
+    SF.wallet.addStyles();
+    SF.wallet.mount();
 
-  return result;
-};
+    if (SF.profile?.account_status === "approved") {
+      await SF.wallet.render();
+    }
+
+    return result;
+  };
+
+  SF.wallet.dashboardWrapperInstalled = true;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   SF.wallet.addStyles();
   SF.wallet.mount();
 });
-                  
+       
