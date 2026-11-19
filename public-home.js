@@ -1,8 +1,7 @@
-
 /* =========================================================
    SHOPY FONT — CLASSIC INTERNATIONAL WELCOME PAGE
    Emerald green identity, trust-led content and image slider.
-   Preserves existing navigation and authentication actions.
+   Uses the central navigation controller in app.js.
 ========================================================= */
 
 (() => {
@@ -799,58 +798,10 @@
       }, 5500);
     };
 
-        slider.querySelector("[data-slider-prev]")
+    slider.querySelector("[data-slider-prev]")
       ?.addEventListener("click", () => {
         showSlide(current - 1);
         start();
       });
 
-    slider.querySelector("[data-slider-next]")
-      ?.addEventListener("click", () => {
-        showSlide(current + 1);
-        start();
-      });
-
-    dots.forEach(dot => {
-      dot.addEventListener("click", () => {
-        showSlide(Number(dot.dataset.slide));
-        start();
-      });
-    });
-
-    slider.addEventListener("mouseenter", stop);
-    slider.addEventListener("mouseleave", start);
-
-    showSlide(0);
-    start();
-  }
-
-  /*
-   * Preserve existing navigation behaviour.
-   * A first direct dashboard URL should show the public homepage.
-   */
-
-  const originalNavigate = SF.navigate;
-  let firstNavigation = true;
-
-  if (typeof originalNavigate === "function") {
-    SF.navigate = async function(view) {
-      if (firstNavigation) {
-        firstNavigation = false;
-
-        const isMainSite =
-          location.pathname === "/" ||
-          location.pathname.endsWith("/index.html");
-
-        if (isMainSite && view === "dashboard") {
-          history.replaceState(null, "", location.pathname);
-          return originalNavigate("home");
-        }
-      }
-
-      firstNavigation = false;
-      return originalNavigate(view);
-    };
-  }
-
-})();
+    slider.queryS
