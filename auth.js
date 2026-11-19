@@ -225,7 +225,40 @@ SF.login = async function (form) {
     email,
     password
   });
+document.getElementById("registerForm")?.addEventListener("submit", async event => {
+  event.preventDefault();
 
+  const form = event.currentTarget;
+  const button = form.querySelector('[type="submit"]');
+
+  if (button) button.disabled = true;
+
+  SF.showAuthMessage("Creating your account...");
+
+  try {
+    await SF.register(form);
+
+    if (typeof SF.updateNavigation === "function") {
+      SF.updateNavigation();
+    }
+
+    const navigate = window.SF?.navigate;
+
+    if (typeof navigate !== "function") {
+      throw new Error(
+        "Account created, but page navigation is unavailable. Please contact support."
+      );
+    }
+
+    await navigate("dashboard");
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    SF.showAuthMessage(error.message || "Unable to create your account.");
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
   if (error) throw error;
 
   SF.currentUser = data.user;
