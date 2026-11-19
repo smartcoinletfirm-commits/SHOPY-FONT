@@ -966,3 +966,158 @@
   border:1px solid #f0c2c2;
   color:#a52e2e;
 }
+/* =========================================
+   SHOPY FONT — TASK CENTRE FRONTEND REFRESH
+   Emerald / white / clean mobile layout
+========================================= */
+
+#tasksView {
+  background: #f5f8f6 !important;
+  color: #183b2d !important;
+  padding: 22px !important;
+}
+
+#tasksView .sf-task-hero {
+  background: linear-gradient(125deg, #104b35, #176b49) !important;
+  border: 1px solid #236f50 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 12px 28px rgba(17, 73, 49, .12) !important;
+  padding: 30px !important;
+}
+
+#tasksView .sf-task-brand {
+  letter-spacing: 1.7px !important;
+  color: #d8eee1 !important;
+}
+
+#tasksView .sf-task-hero h2 {
+  font-size: clamp(25px, 5vw, 34px) !important;
+  letter-spacing: -.7px !important;
+}
+
+#tasksView .sf-task-hero p {
+  color: #e0eee5 !important;
+  line-height: 1.75 !important;
+}
+
+#tasksView .sf-task-stat,
+#tasksView .sf-task-card {
+  background: #fff !important;
+  border: 1px solid #e1ebe4 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 5px 18px rgba(24, 65, 44, .045) !important;
+}
+
+#tasksView .sf-task-stat-label,
+#tasksView .sf-task-reward-label {
+  color: #788b7e !important;
+}
+
+#tasksView .sf-task-stat-value,
+#tasksView .sf-task-section-heading h3 {
+  color: #15583b !important;
+}
+
+#tasksView .sf-task-tab {
+  background: #fff !important;
+  color: #456453 !important;
+  border: 1px solid #dce8df !important;
+  border-radius: 10px !important;
+}
+
+#tasksView .sf-task-tab.active {
+  background: #176b46 !important;
+  color: #fff !important;
+  border-color: #176b46 !important;
+  box-shadow: 0 5px 13px rgba(23, 107, 70, .15) !important;
+}
+
+#tasksView .sf-task-symbol {
+  background: #eaf4ed !important;
+  color: #176b46 !important;
+  border-radius: 12px !important;
+}
+
+#tasksView .sf-task-card h4 {
+  color: #183e2d !important;
+}
+
+#tasksView .sf-task-card p {
+  color: #687c70 !important;
+  line-height: 1.7 !important;
+}
+
+#tasksView .sf-task-reward {
+  color: #176b46 !important;
+}
+
+#tasksView .sf-task-button {
+  background: #176b46 !important;
+  border-radius: 10px !important;
+  font-weight: 800 !important;
+  transition: background .2s ease, transform .2s ease !important;
+}
+
+#tasksView .sf-task-button:hover {
+  background: #105336 !important;
+}
+
+#tasksView .sf-task-status.approved {
+  background: #e7f5eb !important;
+  color: #176b46 !important;
+}
+
+#tasksView .sf-task-status.pending,
+#tasksView .sf-task-status.submitted {
+  background: #fff5df !important;
+  color: #93620b !important;
+}
+
+#tasksView .sf-task-status.rejected {
+  background: #fff0ef !important;
+  color: #b33c35 !important;
+}
+
+#tasksView .sf-task-empty {
+  background: #fff !important;
+  border: 1px dashed #cbdccf !important;
+  border-radius: 16px !important;
+  color: #65796c !important;
+}
+
+#tasksView .sf-task-review-note {
+  background: #f0f6f1 !important;
+  color: #315c43 !important;
+}
+
+@media (max-width: 650px) {
+  #tasksView {
+    padding: 13px !important;
+  }
+
+  #tasksView .sf-task-hero {
+    padding: 23px 19px !important;
+    border-radius: 16px !important;
+  }
+
+  #tasksView .sf-task-stats {
+    gap: 8px !important;
+  }
+
+  #tasksView .sf-task-stat {
+    padding: 13px 10px !important;
+  }
+
+  #tasksView .sf-task-stat-value {
+    font-size: 20px !important;
+  }
+
+  #tasksView .sf-task-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  #tasksView .sf-task-card {
+    padding: 16px !important;
+  }
+}
