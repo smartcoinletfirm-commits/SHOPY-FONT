@@ -1,4 +1,3 @@
-
 window.SF = window.SF || {};
 
 /* =====================================================
@@ -22,7 +21,10 @@ SF.escapeAttr = SF.escapeHtml;
 
 SF.showToast = message => {
   const el = document.getElementById("toast");
-  if (!el) return;
+  if (!el) {
+    console.warn("SHOPY FONT:", message);
+    return;
+  }
 
   el.textContent = message;
   el.classList.add("show");
@@ -31,7 +33,7 @@ SF.showToast = message => {
 
   SF.toastTimer = setTimeout(() => {
     el.classList.remove("show");
-  }, 2800);
+  }, 4000);
 };
 
 /* =====================================================
@@ -133,7 +135,7 @@ SF.canAccessView = async view => {
       console.error("Membership verification failed:", error);
 
       SF.showToast(
-        "Unable to verify your membership. Please try again."
+        error.message || "Unable to verify your membership."
       );
 
       return false;
@@ -365,7 +367,7 @@ if (!SF.appEventsInstalled) {
         await SF.navigate(viewElement.dataset.view);
       } catch (error) {
         console.error("Navigation failed:", error);
-        SF.showToast("Unable to open this section.");
+        SF.showToast(error.message || "Unable to open this section.");
       }
 
       return;
@@ -409,7 +411,13 @@ const initializeShopyFont = async () => {
   try {
     if (!window.sfSupabase) {
       throw new Error(
-        "Supabase client did not initialize."
+        "Supabase client is missing. Check config.js and the Supabase library."
+      );
+    }
+
+    if (typeof SF.refreshSession !== "function") {
+      throw new Error(
+        "Authentication did not load. Check auth.js."
       );
     }
 
@@ -417,7 +425,18 @@ const initializeShopyFont = async () => {
 
     SF.updateNavigation();
 
-    await SF.trackProductVisit();
+    /* Product click tracking is optional.
+       A tracking error must never block the application. */
+    if (typeof SF.trackProductVisit === "function") {
+      try {
+        await SF.trackProductVisit();
+      } catch (trackingError) {
+        console.warn(
+          "Product visit tracking failed:",
+          trackingError
+        );
+      }
+    }
 
     const hash = location.hash
       .replace("#", "")
@@ -431,14 +450,10 @@ const initializeShopyFont = async () => {
       location.pathname === "/" ||
       location.pathname.endsWith("/index.html");
 
-    /* PRODUCT LINKS */
-
     if (hasProductLink) {
       await SF.navigate("marketplace");
       return;
     }
-
-    /* PUBLIC HOMEPAGE RULE */
 
     if (
       isMainEntry &&
@@ -462,8 +477,6 @@ const initializeShopyFont = async () => {
       return;
     }
 
-    /* EXPLICIT NAVIGATION LINKS */
-
     const validViews = [
       "dashboard",
       "marketplace",
@@ -480,8 +493,6 @@ const initializeShopyFont = async () => {
       return;
     }
 
-    /* FALLBACK: PUBLIC HOMEPAGE */
-
     await SF.navigate("home");
 
   } catch (error) {
@@ -491,7 +502,8 @@ const initializeShopyFont = async () => {
     );
 
     SF.showToast(
-      "Connection issue. Check your Supabase setup and reload."
+      "Startup error: " +
+      (error?.message || "Unknown error. Check the browser console.")
     );
   }
 };
@@ -504,5 +516,5 @@ if (document.readyState === "loading") {
   );
 } else {
   initializeShopyFont();
-     }
-   
+       }
+    
