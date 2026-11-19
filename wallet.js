@@ -1,8 +1,8 @@
 
 /* =====================================================
    SHOPY FONT — USD MEMBER WALLET
-   Updated wallet with reliable withdrawal handling
-   ===================================================== */
+   Emerald design, USD ledger and withdrawal handling
+===================================================== */
 
 window.SF = window.SF || {};
 const SF = window.SF;
@@ -17,6 +17,7 @@ SF.wallet.money = value =>
 
 SF.wallet.showMessage = (message, success = false) => {
   const el = document.getElementById("sfWalletMessage");
+
   if (!el) {
     if (typeof SF.showToast === "function") SF.showToast(message);
     return;
@@ -440,7 +441,7 @@ SF.wallet.requestWithdrawal = async event => {
   }
 };
 
-/* WALLET DESIGN */
+/* WALLET DESIGN — EMERALD AND WHITE */
 
 SF.wallet.addStyles = () => {
   if (document.getElementById("sfWalletStyles")) return;
@@ -452,10 +453,11 @@ SF.wallet.addStyles = () => {
     .sf-wallet-panel {
       margin:24px 0;
       padding:26px;
-      border:1px solid #d8c69d;
+      border:1px solid #dcebe1;
       border-radius:18px;
-      background:linear-gradient(145deg,#fffefa,#f5f8f4);
-      box-shadow:0 15px 38px rgba(18,45,34,.08);
+      background:linear-gradient(145deg,#ffffff,#f2f8f4);
+      box-shadow:0 15px 38px rgba(18,45,34,.07);
+      color:#193629;
     }
 
     .sf-wallet-heading {
@@ -478,7 +480,7 @@ SF.wallet.addStyles = () => {
     }
 
     .sf-wallet-kicker {
-      color:#a17b35;
+      color:#167347;
       font-size:10px;
       font-weight:800;
       letter-spacing:1.5px;
@@ -490,31 +492,47 @@ SF.wallet.addStyles = () => {
       display:grid;
       place-items:center;
       border-radius:14px;
-      background:#173b2e;
-      color:#e7cf91;
+      background:#176b47;
+      color:#fff;
       font-size:27px;
       font-weight:800;
     }
 
     .sf-wallet-main {
+      position:relative;
+      overflow:hidden;
       margin-top:22px;
-      padding:25px;
-      border-radius:15px;
-      background:linear-gradient(125deg,#103d2d,#1e5b43);
+      padding:28px;
+      border-radius:16px;
+      background:linear-gradient(125deg,#0c3022,#176b47);
       color:white;
+    }
+
+    .sf-wallet-main:after {
+      content:"";
+      position:absolute;
+      width:180px;
+      height:180px;
+      right:-55px;
+      top:-75px;
+      border:1px solid #ffffff30;
+      border-radius:50%;
+      box-shadow:0 0 0 22px #ffffff0b,0 0 0 45px #ffffff08;
     }
 
     .sf-wallet-main span,
     .sf-wallet-main small {
       display:block;
-      color:#d5e4da;
+      color:#d5eade;
       font-size:11px;
       letter-spacing:1px;
     }
 
     .sf-wallet-main strong {
+      position:relative;
+      z-index:1;
       display:block;
-      margin:10px 0;
+      margin:12px 0;
       font-size:clamp(32px,6vw,45px);
       letter-spacing:-1px;
     }
@@ -529,7 +547,7 @@ SF.wallet.addStyles = () => {
     .sf-wallet-stats div {
       padding:15px 10px;
       background:white;
-      border:1px solid #e8e9e2;
+      border:1px solid #e5eee7;
       border-radius:12px;
     }
 
@@ -556,9 +574,9 @@ SF.wallet.addStyles = () => {
       gap:15px;
       margin-top:18px;
       padding:19px;
-      border:1px solid #e5d4a9;
+      border:1px solid #dcebe1;
       border-radius:14px;
-      background:#fffaf0;
+      background:#f5faf6;
     }
 
     .sf-wallet-bonus h3 {
@@ -583,10 +601,10 @@ SF.wallet.addStyles = () => {
       cursor:pointer;
     }
 
-    .sf-wallet-claim {
-      background:#c9a45c;
-      color:#182e25;
-      white-space:nowrap;
+    .sf-wallet-claim,
+    .sf-wallet-withdraw {
+      background:#176b47;
+      color:white;
     }
 
     .sf-wallet-claim:disabled {
@@ -601,14 +619,10 @@ SF.wallet.addStyles = () => {
       margin-top:16px;
     }
 
-    .sf-wallet-withdraw {
-      background:#174b37;
-      color:white;
-    }
-
     .sf-wallet-upgrade {
-      background:#c9a45c;
-      color:#173b2e;
+      background:#e8f4eb;
+      color:#176b47;
+      border:1px solid #cfe5d5;
     }
 
     #sfWalletWithdrawArea {
@@ -641,13 +655,15 @@ SF.wallet.addStyles = () => {
       border:1px solid #dce3dc;
       border-radius:8px;
       background:white;
+      color:#193629;
     }
 
     .sf-wallet-cancel {
       margin-left:10px;
       padding:12px;
       border:0;
-      background:#eef1ed;
+      background:#eef4ef;
+      color:#315642;
       border-radius:8px;
       cursor:pointer;
     }
