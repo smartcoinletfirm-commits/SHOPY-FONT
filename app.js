@@ -1,4 +1,28 @@
 window.SF = window.SF || {};
+/* Authentication tab fallback */
+if (typeof window.SF.setAuthTab !== "function") {
+  window.SF.setAuthTab = function (tab) {
+    const login = document.getElementById("loginForm");
+    const register = document.getElementById("registerForm");
+
+    if (!login || !register) return;
+
+    const showLogin = tab === "login";
+
+    login.classList.toggle("hidden", !showLogin);
+    register.classList.toggle("hidden", showLogin);
+
+    document.querySelectorAll("[data-auth-tab]").forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.authTab === (showLogin ? "login" : "register")
+      );
+    });
+
+    const message = document.getElementById("authMessage");
+    if (message) message.textContent = "";
+  };
+}
 
 /* =====================================================
    SHOPY FONT — CENTRAL APPLICATION CONTROLLER
