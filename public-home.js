@@ -798,10 +798,35 @@
       }, 5500);
     };
 
-    slider.querySelector("[data-slider-prev]")
+        slider.querySelector("[data-slider-prev]")
       ?.addEventListener("click", () => {
         showSlide(current - 1);
         start();
       });
 
-    slider.queryS
+    slider.querySelector("[data-slider-next]")
+      ?.addEventListener("click", () => {
+        showSlide(current + 1);
+        start();
+      });
+
+    dots.forEach(dot => {
+      dot.addEventListener("click", () => {
+        showSlide(Number(dot.dataset.slide));
+        start();
+      });
+    });
+
+    slider.addEventListener("mouseenter", stop);
+    slider.addEventListener("mouseleave", start);
+
+    showSlide(0);
+    start();
+  }
+
+  /*
+   * Do not override SF.navigate here.
+   * app.js handles navigation after login and registration.
+   */
+
+})();
