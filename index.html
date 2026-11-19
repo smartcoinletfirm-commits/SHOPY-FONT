@@ -483,5 +483,268 @@
             <button type="button" class="sf-level-button" data-select-level="3">Choose Level 3</button>
           </article>
 
-          <article class="sf-level-card sf-level-premium">
-            <div class="sf-level-top"
+                    <article class="sf-level-card sf-level-premium">
+            <div class="sf-level-top">
+              <span class="sf-level-number">04</span>
+              <span class="sf-level-label">PREMIUM</span>
+            </div>
+            <h3>Level 4</h3>
+            <p class="sf-level-description">Premium membership package</p>
+            <div class="sf-price-main">KES 4,500</div>
+            <div class="sf-price-divider"></div>
+            <div class="sf-currency-row"><span>Nigeria</span><strong>₦46,680</strong></div>
+            <div class="sf-currency-row"><span>Ghana</span><strong>GH₵405.03</strong></div>
+            <button type="button" class="sf-level-button" data-select-level="4">Choose Level 4</button>
+          </article>
+
+        </div>
+
+        <!-- COMMUNITY AT THE BOTTOM -->
+        <div id="communityEntryCard" class="panel" style="margin:24px 0;padding:22px;border:1px solid #c9a45c;border-radius:16px;">
+          <p class="eyebrow">KENYA COMMUNITY ACCESS</p>
+          <h2>SHOPY FONT Community</h2>
+          <p>Join the Community for a one-time membership fee of:</p>
+          <h2 style="color:#c9a45c;">KES 200</h2>
+          <p class="muted">Community access includes daily trivia, referrals and a Community wallet. Full SHOPY FONT access requires an upgrade.</p>
+          <button type="button" class="btn btn-gold" id="communityStartButton">
+            JOIN COMMUNITY — KES 200
+          </button>
+        </div>
+
+        <div id="communityRequestWorkspace" class="panel hidden" style="margin:20px 0;padding:22px;">
+          <h2>Community registration</h2>
+          <p>Complete your Community membership payment to continue.</p>
+          <div class="package-payment">
+            <h3>SHOPY FONT Community</h3>
+            <p><strong>KES 200</strong></p>
+            <button type="button" class="btn btn-gold btn-full"
+              onclick="window.location.assign('https://pay.lipwa.app/p/14078c173')">
+              PAY KES 200 — LIPWA
+            </button>
+          </div>
+          <p id="communityRequestMessage" class="form-message" role="status"></p>
+        </div>
+
+      </div>
+
+      <!-- PAYMENT PROOF SUBMISSION -->
+      <div class="sf-proof-entry" id="sfPaymentProofEntry">
+        <div class="sf-proof-entry-copy">
+          <span class="sf-kicker">ALREADY PAID?</span>
+          <h3>Submit your payment proof</h3>
+          <p>Upload your receipt, enter your transaction reference, or share your payment link for manual verification.</p>
+        </div>
+
+        <button type="button" class="btn btn-gold btn-large btn-full"
+          id="sfOpenPaymentProof">
+          SUBMIT PAYMENT PROOF →
+        </button>
+
+        <div id="sfPaymentProofWorkspace" class="panel hidden">
+          <h3>Payment verification</h3>
+          <p class="muted">Submit the evidence that matches your payment method.</p>
+
+          <form id="sfPaymentProofForm">
+            <label>Payment evidence type
+              <select name="proof_type" id="sfProofType" required>
+                <option value="">Choose evidence type</option>
+                <option value="receipt">Receipt screenshot or PDF</option>
+                <option value="reference">Transaction reference/code</option>
+                <option value="link">Shareable payment link</option>
+              </select>
+            </label>
+
+            <div id="sfReceiptField" class="hidden">
+              <label>Upload payment receipt
+                <input type="file" name="receipt" id="sfPaymentReceipt"
+                  accept="image/jpeg,image/png,image/webp,application/pdf">
+              </label>
+              <small class="muted">Maximum file size: 10 MB.</small>
+            </div>
+
+            <div id="sfReferenceField" class="hidden">
+              <label>Transaction reference/code
+                <input type="text" name="payment_reference"
+                  id="sfPaymentReference" maxlength="150"
+                  placeholder="Enter transaction reference">
+              </label>
+            </div>
+
+            <div id="sfLinkField" class="hidden">
+              <label>Shareable payment link
+                <input type="url" name="payment_link"
+                  id="sfPaymentLink" maxlength="1000"
+                  placeholder="https://...">
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-gold btn-full"
+              id="sfSubmitPaymentProof">
+              SUBMIT FOR VERIFICATION
+            </button>
+
+            <button type="button" class="btn btn-outline btn-full"
+              id="sfCancelPaymentProof">
+              Cancel
+            </button>
+
+            <p id="sfPaymentProofMessage" class="form-message"
+              role="status"></p>
+          </form>
+        </div>
+      </div>
+      <!-- END PAYMENT PROOF SUBMISSION -->
+
+      <div class="sf-registration-card" id="sfRegistrationDetails">
+        <form id="activationForm" class="sf-registration-form">
+
+          <div class="sf-selected-package">
+            <div>
+              <small>SELECTED MEMBERSHIP</small>
+              <strong id="sfSelectedLevel">No level selected</strong>
+            </div>
+            <span id="sfSelectedPrice">Choose a package above</span>
+          </div>
+
+          <div class="sf-form-grid">
+            <label>
+              Full name
+              <input name="full_name" required maxlength="100"
+                autocomplete="name" placeholder="Enter your full name">
+            </label>
+
+            <label>
+              Phone number
+              <input name="phone" type="tel" required maxlength="30"
+                autocomplete="tel" placeholder="+254 700 000 000">
+            </label>
+
+            <label class="sf-form-wide">
+              Country of residence
+              <select name="country" id="activationCountry" required>
+                <option value="">Select your country</option>
+                <option value="Kenya">🇰🇪 Kenya</option>
+                <option value="Nigeria">🇳🇬 Nigeria</option>
+                <option value="Ghana">🇬🇭 Ghana</option>
+              </select>
+            </label>
+
+            <input type="hidden" name="membership_level" id="activationLevel" required>
+          </div>
+
+          <div id="packagePricePreview" class="sf-price-preview">
+            Select a membership level and country to see your exact payment amount.
+          </div>
+
+          <button class="sf-continue-button" type="submit">
+            Continue to secure checkout <span>→</span>
+          </button>
+
+          <p class="sf-secure-note">🔒 Your registration details are handled securely.</p>
+        </form>
+      </div>
+
+      <p id="activationMessage" class="form-message" role="status"></p>
+
+      <!-- REJECTION -->
+      <div id="rejectedWorkspace" class="panel hidden">
+        <h2>Activation not approved</h2>
+        <p id="rejectionDetails">Your submission was not approved. Contact support for assistance.</p>
+      </div>
+
+      <!-- APPROVED MEMBER DASHBOARD -->
+      <div id="approvedDashboard" class="hidden">
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>Account status</span>
+            <strong id="memberStatus">Member</strong>
+          </article>
+          <article class="stat-card">
+            <span>Referral code</span>
+            <strong id="memberCode">—</strong>
+          </article>
+          <article class="stat-card">
+            <span>Available wallet</span>
+            <strong id="walletBalance">KES 0.00</strong>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <h2>Account overview</h2>
+            <p id="memberEmail" class="muted"></p>
+            <p id="memberCountry" class="muted"></p>
+            <p id="walletReserved" class="muted"></p>
+            <button class="btn btn-outline" data-view="referrals">Open referral centre</button>
+          </article>
+
+          <article class="panel">
+            <h2>Recent activity</h2>
+            <div id="activityList">
+              <p class="muted">No recent activity to display.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- REFERRALS -->
+    <section id="referralsView" class="view page-view">
+      <div class="page-heading">
+        <p class="eyebrow">GROW YOUR NETWORK</p>
+        <h1>Referral centre</h1>
+        <p>Share your personal referral link and track registrations.</p>
+      </div>
+
+      <div class="panel referral-panel">
+        <p class="muted">Your personal referral link</p>
+        <div class="copy-row">
+          <input id="referralLink" readonly value="Log in to view your link">
+          <button class="btn btn-gold" data-action="copy-referral">Copy link</button>
+        </div>
+
+        <div class="stats-grid compact">
+          <article class="stat-card">
+            <span>Total sign-ups</span>
+            <strong id="refTotal">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Eligible / rewarded</span>
+            <strong id="refVerified">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Pending</span>
+            <strong id="refPending">0</strong>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN AREA -->
+    <section id="adminView" class="view page-view">
+      <div class="page-heading">
+        <p class="eyebrow">PLATFORM MANAGEMENT</p>
+        <h1>Administration</h1>
+      </div>
+      <div id="adminContent" class="panel">
+        <p class="muted">Loading administration workspace…</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <a class="brand footer-brand" href="#" data-view="home">
+      <span class="brand-mark">SF</span>
+      <span>SHOPY <b>FONT</b><small>THE WORLD CONNECTED THROUGH OPPORTUNITY</small></span>
+    </a>
+    <p>© <span id="year"></span> SHOPY FONT. Use the platform responsibly.</p>
+    <div>
+      <a href="#" data-view="home">Home</a>
+      <a href="#auth" data-view="auth">Member login</a>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
