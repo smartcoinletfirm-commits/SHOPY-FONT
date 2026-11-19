@@ -3,7 +3,6 @@ window.SF = window.SF || {};
 
 /* =====================================================
    SHOPY FONT — CENTRAL APPLICATION CONTROLLER
-   Updated public homepage routing
 ===================================================== */
 
 SF.escapeHtml = value =>
@@ -85,13 +84,13 @@ SF.canAccessView = async view => {
   const loginRequired = [
     "dashboard",
     "referrals",
-    "admin"
+    "admin",
+    "scholarbridge"
   ];
 
   const fullMemberViews = [
     "marketplace",
-    "opportunities",
-    "scholarbridge"
+    "opportunities"
   ];
 
   if (loginRequired.includes(view) && !SF.currentUser) {
@@ -105,7 +104,8 @@ SF.canAccessView = async view => {
 
   if (
     fullMemberViews.includes(view) ||
-    view === "referrals"
+    view === "referrals" ||
+    view === "scholarbridge"
   ) {
     if (!SF.currentUser) {
       SF.setAuthTab("register");
@@ -150,7 +150,10 @@ SF.canAccessView = async view => {
 
     if (
       access.community &&
-      fullMemberViews.includes(view)
+      (
+        fullMemberViews.includes(view) ||
+        view === "scholarbridge"
+      )
     ) {
       SF.showToast(
         "This section requires full SHOPY FONT membership. Upgrade your Community account first."
@@ -429,20 +432,13 @@ const initializeShopyFont = async () => {
       location.pathname.endsWith("/index.html");
 
     /* PRODUCT LINKS */
+
     if (hasProductLink) {
       await SF.navigate("marketplace");
       return;
     }
 
-    /*
-      PUBLIC HOMEPAGE RULE
-
-      Opening shopyfont.xyz directly must show
-      the public homepage, not the member dashboard.
-
-      Old dashboard bookmarks are also redirected
-      to the public homepage on the main entry URL.
-    */
+    /* PUBLIC HOMEPAGE RULE */
 
     if (
       isMainEntry &&
@@ -467,6 +463,7 @@ const initializeShopyFont = async () => {
     }
 
     /* EXPLICIT NAVIGATION LINKS */
+
     const validViews = [
       "dashboard",
       "marketplace",
@@ -484,6 +481,7 @@ const initializeShopyFont = async () => {
     }
 
     /* FALLBACK: PUBLIC HOMEPAGE */
+
     await SF.navigate("home");
 
   } catch (error) {
@@ -506,5 +504,5 @@ if (document.readyState === "loading") {
   );
 } else {
   initializeShopyFont();
-  }
-         
+     }
+   
