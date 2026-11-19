@@ -796,9 +796,69 @@
     let current = 0;
     let interval = null;
 
-    const showSlide = index => {
+        const showSlide = index => {
       if (!slides.length) return;
 
       current = (index + slides.length) % slides.length;
 
-      slides.forEac
+      slides.forEach((slide, i) => {
+        slide.classList.toggle("active", i === current);
+      });
+
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("active", i === current);
+      });
+    };
+
+    const stop = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const start = () => {
+      stop();
+
+      interval = setInterval(() => {
+        showSlide(current + 1);
+      }, 5500);
+    };
+
+    slider.querySelector("[data-slider-prev]")
+      ?.addEventListener("click", () => {
+        showSlide(current - 1);
+        start();
+      });
+
+    slider.querySelector("[data-slider-next]")
+      ?.addEventListener("click", () => {
+        showSlide(current + 1);
+        start();
+      });
+
+    dots.forEach(dot => {
+      dot.addEventListener("click", () => {
+        showSlide(Number(dot.dataset.slide));
+        start();
+      });
+    });
+
+    slider.addEventListener("mouseenter", stop);
+    slider.addEventListener("mouseleave", start);
+
+    showSlide(0);
+    start();
+  }
+
+  /* =====================================================
+     NAVIGATION SAFETY
+     app.js remains the only navigation controller.
+  ===================================================== */
+
+  // Do not set home.style.display.
+  // Do not force home.classList.add("active").
+  // Do not replace or override SF.navigate.
+  // app.js switches between the homepage and dashboard.
+
+})();
