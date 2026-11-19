@@ -1,506 +1,478 @@
 
 /* =====================================================
-   SHOPY FONT — NEW MEMBER DASHBOARD DESIGN
-   Purple / Blue / White visual system
-   Existing Supabase functions remain in place.
-   ===================================================== */
+   SHOPY FONT — MEMBER DASHBOARD SHELL
+   Emerald / White premium design
+   Preserves existing dashboard content and navigation
+===================================================== */
 
 (() => {
   "use strict";
 
   window.SF = window.SF || {};
+  const SF = window.SF;
 
   const styles = `
     body.sf-dashboard-mode {
-      background: #f7f8fc;
-      color: #171b46;
+      background:#f5f8f6;
+      color:#183b2d;
     }
 
     body.sf-dashboard-mode .announcement,
     body.sf-dashboard-mode .topbar,
     body.sf-dashboard-mode .footer {
-      display: none !important;
+      display:none !important;
     }
 
-    /* Keep the member dashboard hidden on public pages. */
-#dashboardView.sf-dashboard-view {
-  display: none;
-  max-width: none;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  background: #f7f8fc;
-}
+    #dashboardView.sf-dashboard-view {
+      display:none;
+      width:100%;
+      max-width:none;
+      margin:0;
+      padding:0;
+      background:#f5f8f6;
+    }
 
-/* Display the dashboard only when it is the active page. */
-#dashboardView.sf-dashboard-view.active {
-  display: block;
-}
+    #dashboardView.sf-dashboard-view.active {
+      display:block;
+    }
+
+    .sf-app-shell {
+      min-height:100vh;
+      background:#f5f8f6;
+    }
 
     .sf-app-header {
-      min-height: 88px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 22px;
-      padding: 15px 30px;
-      background: #fff;
-      border-bottom: 1px solid #e9eaf2;
+      min-height:78px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+      padding:13px 28px;
+      background:#fff;
+      border-bottom:1px solid #e4ece6;
     }
 
     .sf-app-brand {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      min-width: 280px;
-      color: #4923c6;
-      font-family: Manrope, sans-serif;
-      font-size: 23px;
-      font-weight: 900;
-      letter-spacing: -.8px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:220px;
+      color:#145c3c;
+      font-family:Manrope,sans-serif;
+      font-size:21px;
+      font-weight:900;
+      text-decoration:none;
     }
 
     .sf-app-brand small {
-      display: block;
-      margin-top: 2px;
-      color: #70718d;
-      font-family: "DM Sans", sans-serif;
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0;
+      display:block;
+      margin-top:3px;
+      color:#7b897f;
+      font-family:"DM Sans",sans-serif;
+      font-size:10px;
+      font-weight:500;
     }
 
     .sf-app-logo {
-      width: 65px;
-      height: 65px;
-      flex-shrink: 0;
+      width:52px;
+      height:52px;
+      flex-shrink:0;
     }
 
     .sf-app-search {
-      flex: 1;
-      max-width: 710px;
-      min-width: 100px;
-      height: 58px;
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      padding: 0 22px;
-      border-radius: 40px;
-      background: #f3f4fa;
-      color: #727594;
+      flex:1;
+      max-width:650px;
+      height:48px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:0 17px;
+      border:1px solid #e4ece6;
+      border-radius:30px;
+      background:#f5f8f6;
+      color:#648071;
     }
 
     .sf-app-search input {
-      width: 100%;
-      border: 0;
-      outline: 0;
-      background: transparent;
-      color: #25294f;
-      font-size: 15px;
+      width:100%;
+      border:0;
+      outline:0;
+      background:transparent;
+      color:#183b2d;
+      font-size:14px;
     }
 
     .sf-app-user {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      color: #171b46;
-      font-weight: 800;
-      white-space: nowrap;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      color:#183b2d;
+      font-size:13px;
+      font-weight:800;
+      white-space:nowrap;
     }
 
     .sf-app-notice {
-      position: relative;
-      border: 0;
-      background: transparent;
-      color: #666b8c;
-      font-size: 25px;
+      color:#176b47;
+      font-size:22px;
     }
 
     .sf-app-avatar {
-      width: 49px;
-      height: 49px;
-      display: grid;
-      place-items: center;
-      border-radius: 50%;
-      background: linear-gradient(135deg,#1764dc,#3988f2);
-      color: #fff;
-      font-size: 22px;
-      font-weight: 800;
+      width:42px;
+      height:42px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      background:#176b47;
+      color:#fff;
+      font-size:18px;
+      font-weight:800;
     }
 
     .sf-app-layout {
-      display: grid;
-      grid-template-columns: 315px minmax(0,1fr);
-      min-height: calc(100vh - 88px);
+      display:grid;
+      grid-template-columns:245px minmax(0,1fr);
+      min-height:calc(100vh - 78px);
     }
 
     .sf-app-sidebar {
-      padding: 32px 18px;
-      background: #fff;
-      border-right: 1px solid #e9eaf2;
+      padding:25px 15px;
+      background:#fff;
+      border-right:1px solid #e4ece6;
     }
 
     .sf-app-side-link {
-      width: 100%;
-      min-height: 62px;
-      display: flex;
-      align-items: center;
-      gap: 17px;
-      margin-bottom: 7px;
-      padding: 13px 18px;
-      border: 0;
-      border-radius: 15px;
-      background: transparent;
-      color: #171b46;
-      text-align: left;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: .2s;
+      width:100%;
+      min-height:49px;
+      display:flex;
+      align-items:center;
+      gap:13px;
+      margin-bottom:6px;
+      padding:11px 14px;
+      border:0;
+      border-radius:11px;
+      background:transparent;
+      color:#42594b;
+      text-align:left;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+      transition:background .18s,color .18s;
     }
 
     .sf-app-side-link:hover,
     .sf-app-side-link.active {
-      background: #f1edff;
-      color: #5125d5;
+      background:#eaf4ed;
+      color:#176b47;
     }
 
     .sf-app-side-icon {
-      width: 28px;
-      text-align: center;
-      font-size: 22px;
+      width:24px;
+      text-align:center;
+      font-size:18px;
     }
 
     .sf-app-side-bottom {
-      margin-top: 30px;
-      padding-top: 25px;
-      border-top: 1px solid #eceef4;
+      margin-top:25px;
+      padding-top:20px;
+      border-top:1px solid #e8eee9;
     }
 
     .sf-app-logout {
-      width: 100%;
-      min-height: 59px;
-      border: 0;
-      border-radius: 13px;
-      background: linear-gradient(110deg,#5420c9,#3c16b4);
-      color: white;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
+      width:100%;
+      min-height:47px;
+      border:0;
+      border-radius:10px;
+      background:#176b47;
+      color:#fff;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
     }
 
     .sf-app-main {
-      min-width: 0;
-      padding: 35px 28px 65px;
-      overflow: hidden;
+      min-width:0;
+      padding:30px 28px 55px;
+      overflow:hidden;
     }
 
     .sf-app-main > .page-heading {
-      display: none;
+      display:none;
     }
 
     #approvedDashboard {
-      max-width: none;
-      padding: 0;
-      margin: 0;
+      max-width:none;
+      margin:0;
+      padding:0;
     }
 
     #sfMemberOverview {
-      margin: 0 0 25px !important;
+      margin:0 0 25px !important;
     }
 
     #sfMemberOverview .sf-dash-welcome {
-      min-height: 95px;
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
-      color: #171b46;
+      background:linear-gradient(120deg,#0c3022,#176b47) !important;
+      border:0 !important;
+      color:#fff !important;
     }
 
-    #sfMemberOverview .sf-dash-welcome h2 {
-      color: #171b46;
-      font-size: clamp(25px,3vw,37px);
-    }
-
-    #sfMemberOverview .sf-dash-welcome p {
-      color: #525879;
-      font-size: 15px;
-    }
-
+    #sfMemberOverview .sf-dash-welcome h2,
+    #sfMemberOverview .sf-dash-welcome p,
     #sfMemberOverview .sf-dash-welcome small {
-      color: #777b9b;
+      color:#fff !important;
     }
 
     #sfMemberOverview .sf-dash-status {
-      background: #dcf6ee;
-      border: 0;
-      color: #087b43;
+      background:#e4f4e9 !important;
+      border:0 !important;
+      color:#176b47 !important;
     }
 
     #sfMemberOverview .sf-dash-referral {
-      background: white;
-      border-color: #e5e7f0;
+      background:#fff !important;
+      border:1px solid #e1ebe3 !important;
+      box-shadow:0 6px 20px rgba(18,45,34,.04);
     }
 
-    #sfMemberOverview .sf-dash-workspace {
-      margin-top: 25px;
+    #sfMemberOverview .sf-dash-kicker {
+      color:#176b47 !important;
+    }
+
+    #sfMemberOverview .sf-dash-referral h3,
+    #sfMemberOverview .sf-dash-workspace h3 {
+      color:#173b2e !important;
+    }
+
+    #sfMemberOverview .sf-dash-btn.gold {
+      background:#176b47 !important;
+      color:#fff !important;
+    }
+
+    #sfMemberOverview .sf-quick-card {
+      border-color:#e2ebe4;
+      color:#183b2d;
+      background:#fff;
+    }
+
+    #sfMemberOverview .sf-quick-card:hover {
+      border-color:#a8cbb2;
+      background:#f7fbf8;
+    }
+
+    #sfMemberOverview .sf-quick-icon {
+      background:#eaf4ed;
+      color:#176b47;
     }
 
     .sf-wallet-panel {
-      margin: 20px 0 25px !important;
-      padding: 22px !important;
-      border: 1px solid #e4e6f0 !important;
-      border-radius: 17px !important;
-      background: white !important;
-      box-shadow: 0 5px 20px rgba(27,31,80,.045) !important;
+      margin:20px 0 25px !important;
+      padding:22px !important;
+      border:1px solid #dcebe1 !important;
+      border-radius:17px !important;
+      background:linear-gradient(145deg,#fff,#f2f8f4) !important;
+      box-shadow:0 10px 30px rgba(18,45,34,.06) !important;
+      color:#193629 !important;
     }
 
     .sf-wallet-heading {
-      display: none !important;
+      display:flex !important;
     }
 
     .sf-wallet-main {
-      position: relative;
-      min-height: 240px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      margin: 0 !important;
-      padding: 35px !important;
-      overflow: hidden;
-      border-radius: 17px !important;
-      background:
-        radial-gradient(circle at 80% 20%,rgba(255,255,255,.17),transparent 25%),
-        linear-gradient(110deg,#6331d4,#276be6 70%,#21a8e9) !important;
+      background:linear-gradient(125deg,#0c3022,#176b47) !important;
+      color:#fff !important;
     }
 
-    .sf-wallet-main:after {
-      content: " ";
-      position: absolute;
-      width: 360px;
-      height: 360px;
-      right: -80px;
-      top: -170px;
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 50%;
-      box-shadow: 0 0 0 35px rgba(255,255,255,.035),
-                  0 0 0 75px rgba(255,255,255,.025);
-      pointer-events: none;
-    }
-
-    .sf-wallet-main span {
-      color: #eee9ff !important;
-      font-size: 14px !important;
-    }
-
-    .sf-wallet-main strong {
-      position: relative;
-      z-index: 1;
-      font-size: clamp(42px,6vw,67px) !important;
-      letter-spacing: -2px;
-    }
-
+    .sf-wallet-main span,
     .sf-wallet-main small {
-      color: white !important;
-      font-size: 14px !important;
-      letter-spacing: 0 !important;
-    }
-
-    .sf-wallet-stats {
-      grid-template-columns: repeat(3,minmax(0,1fr));
-      gap: 15px;
-      margin-top: 20px;
+      color:#d5eade !important;
     }
 
     .sf-wallet-stats div {
-      min-height: 105px;
-      padding: 22px 17px;
-      border: 1px solid #e5e7f0;
-      border-radius: 15px;
-      background: white;
+      background:#fff !important;
+      border-color:#e1ebe3 !important;
     }
 
     .sf-wallet-stats span {
-      color: #626888;
-      font-size: 13px;
+      color:#758278 !important;
     }
 
     .sf-wallet-stats strong {
-      color: #171b46;
-      font-size: 25px;
-    }
-
-    .sf-wallet-history {
-      margin-top: 25px;
-      padding: 20px;
-      border: 1px solid #e5e7f0;
-      border-radius: 15px;
-      background: white;
-    }
-
-    .sf-wallet-history h3 {
-      color: #171b46;
-      font-size: 21px;
-    }
-
-    .sf-wallet-transaction {
-      min-height: 70px;
-      padding: 15px 0;
-      border-color: #eceef4;
-    }
-
-    .sf-wallet-transaction strong {
-      color: #171b46;
-      font-size: 14px;
-    }
-
-    .sf-wallet-transaction .sf-wallet-positive {
-      color: #078442;
-      font-size: 17px;
-    }
-
-    .sf-wallet-transaction .sf-wallet-negative {
-      color: #b42318;
-      font-size: 17px;
+      color:#183d30 !important;
     }
 
     .sf-wallet-bonus {
-      border-color: #e5e7f0;
-      background: #f8f7ff;
+      background:#f5faf6 !important;
+      border-color:#dcebe1 !important;
     }
 
-    @media(max-width:1000px) {
+    .sf-wallet-bonus h3 {
+      color:#173b2e !important;
+    }
+
+    .sf-wallet-history {
+      background:#fff;
+      border:1px solid #e5eee7;
+      border-radius:14px;
+      padding:18px;
+    }
+
+    .sf-wallet-history h3 {
+      color:#173b2e !important;
+    }
+
+    .sf-wallet-transaction {
+      border-color:#edf0eb !important;
+    }
+
+    .sf-wallet-transaction strong {
+      color:#193629;
+    }
+
+    .sf-wallet-transaction .sf-wallet-positive {
+      color:#237a57 !important;
+    }
+
+    .sf-wallet-transaction .sf-wallet-negative {
+      color:#b42318 !important;
+    }
+
+    @media(max-width:950px) {
       .sf-app-layout {
-        grid-template-columns: 235px minmax(0,1fr);
+        grid-template-columns:205px minmax(0,1fr);
       }
 
       .sf-app-sidebar {
-        padding: 22px 12px;
+        padding:20px 10px;
       }
 
       .sf-app-main {
-        padding: 25px 18px 45px;
+        padding:23px 17px 40px;
       }
     }
 
     @media(max-width:700px) {
       .sf-app-header {
-        min-height: 72px;
-        padding: 10px 13px;
-        gap: 9px;
+        min-height:65px;
+        padding:9px 12px;
+        gap:8px;
       }
 
       .sf-app-brand {
-        min-width: 0;
-        font-size: 16px;
-        gap: 7px;
+        min-width:0;
+        gap:7px;
+        font-size:16px;
       }
 
       .sf-app-brand small {
-        font-size: 8px;
+        font-size:8px;
       }
 
       .sf-app-logo {
-        width: 43px;
-        height: 43px;
+        width:39px;
+        height:39px;
       }
 
       .sf-app-search {
-        display: none;
+        display:none;
       }
 
       .sf-app-user {
-        gap: 7px;
-        font-size: 12px;
+        gap:7px;
+        font-size:11px;
       }
 
       .sf-app-avatar {
-        width: 37px;
-        height: 37px;
-        font-size: 17px;
+        width:34px;
+        height:34px;
+        font-size:15px;
       }
 
       .sf-app-layout {
-        display: block;
+        display:block;
       }
 
       .sf-app-sidebar {
-        display: flex;
-        gap: 5px;
-        padding: 9px;
-        overflow-x: auto;
-        border-right: 0;
-        border-bottom: 1px solid #e9eaf2;
+        display:flex;
+        gap:5px;
+        padding:8px;
+        overflow-x:auto;
+        border-right:0;
+        border-bottom:1px solid #e4ece6;
+        scrollbar-width:none;
+      }
+
+      .sf-app-sidebar::-webkit-scrollbar {
+        display:none;
       }
 
       .sf-app-side-link {
-        width: auto;
-        min-width: max-content;
-        min-height: 43px;
-        margin: 0;
-        padding: 8px 12px;
-        gap: 7px;
-        font-size: 12px;
+        width:auto;
+        min-width:max-content;
+        min-height:40px;
+        margin:0;
+        padding:8px 11px;
+        gap:6px;
+        font-size:11px;
       }
 
       .sf-app-side-icon {
-        font-size: 16px;
+        font-size:15px;
       }
 
       .sf-app-side-bottom {
-        display: none;
+        display:none;
       }
 
       .sf-app-main {
-        padding: 20px 13px 40px;
+        padding:18px 12px 35px;
+      }
+
+      .sf-wallet-panel {
+        padding:16px !important;
       }
 
       .sf-wallet-main {
-        min-height: 185px;
-        padding: 24px !important;
+        min-height:170px;
+        padding:23px !important;
       }
 
       .sf-wallet-stats {
-        gap: 7px;
+        gap:6px;
       }
 
       .sf-wallet-stats div {
-        min-height: 85px;
-        padding: 13px 9px;
+        padding:11px 7px;
       }
 
       .sf-wallet-stats strong {
-        font-size: 17px;
+        font-size:13px !important;
       }
     }
   `;
 
   function buildShell() {
     const root = document.getElementById("dashboardView");
+
     if (!root || root.dataset.sfShellBuilt === "true") return;
 
     root.dataset.sfShellBuilt = "true";
     root.classList.add("sf-dashboard-view");
 
     const logo = `
-      <svg class="sf-app-logo" viewBox="0 0 100 100"
-           xmlns="http://www.w3.org/2000/svg" aria-label="SHOPY FONT logo">
-        <defs>
-          <linearGradient id="sfBagGradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#713ce0"/>
-            <stop offset="100%" stop-color="#3513ae"/>
-          </linearGradient>
-        </defs>
+      <svg class="sf-app-logo"
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="SHOPY FONT logo">
         <path d="M29 34V25a21 21 0 0 1 42 0v9"
-              fill="none" stroke="#6330d4" stroke-width="8"
-              stroke-linecap="round"/>
-        <rect x="13" y="31" width="74" height="61" rx="12"
-              fill="url(#sfBagGradient)"/>
+          fill="none" stroke="#176b47"
+          stroke-width="8" stroke-linecap="round"/>
+        <rect x="13" y="31" width="74" height="61"
+          rx="12" fill="#176b47"/>
         <path d="M36 50l14 12 15-12M50 62v15"
-              fill="none" stroke="white" stroke-width="5"
-              stroke-linecap="round" stroke-linejoin="round"/>
+          fill="none" stroke="#fff"
+          stroke-width="5" stroke-linecap="round"
+          stroke-linejoin="round"/>
       </svg>
     `;
 
@@ -511,7 +483,8 @@
       <header class="sf-app-header">
         <a class="sf-app-brand" href="#dashboard">
           ${logo}
-          <span>SHOPY FONT
+          <span>
+            SHOPY FONT
             <small>Your World. Your Opportunities.</small>
           </span>
         </a>
@@ -519,7 +492,7 @@
         <div class="sf-app-search">
           <span>⌕</span>
           <input type="search"
-            placeholder="Search products, opportunities..."
+            placeholder="Search products and opportunities..."
             aria-label="Search">
         </div>
 
@@ -535,27 +508,35 @@
           <button class="sf-app-side-link active" data-view="dashboard">
             <span class="sf-app-side-icon">⌂</span>Dashboard
           </button>
+
           <button class="sf-app-side-link" data-view="marketplace">
-            <span class="sf-app-side-icon">🛒</span>Marketplace
+            <span class="sf-app-side-icon">▦</span>Marketplace
           </button>
+
           <button class="sf-app-side-link" data-view="opportunities">
-            <span class="sf-app-side-icon">✿</span>Opportunities
+            <span class="sf-app-side-icon">↗</span>Opportunities
           </button>
+
           <button class="sf-app-side-link" data-view="scholarbridge">
-            <span class="sf-app-side-icon">♧</span>ScholarBridge
+            <span class="sf-app-side-icon">✎</span>ScholarBridge
           </button>
+
           <button class="sf-app-side-link" data-view="referrals">
-            <span class="sf-app-side-icon">♙</span>Referrals
+            <span class="sf-app-side-icon">♧</span>Referrals
           </button>
-          <button class="sf-app-side-link" data-view="dashboard">
-            <span class="sf-app-side-icon">▣</span>Wallet
+
+          <button class="sf-app-side-link" data-sf-dashboard-action="wallet">
+            <span class="sf-app-side-icon">$</span>My Wallet
           </button>
-          <button class="sf-app-side-link" data-view="dashboard">
-            <span class="sf-app-side-icon">♙</span>Profile
+
+          <button class="sf-app-side-link" data-sf-dashboard-view="tasks">
+            <span class="sf-app-side-icon">✓</span>Task Centre
           </button>
+
           <button class="sf-app-side-link" data-action="show-coming">
             <span class="sf-app-side-icon">⚙</span>Settings
           </button>
+
           <button class="sf-app-side-link" data-action="show-coming">
             <span class="sf-app-side-icon">?</span>Help & Support
           </button>
@@ -581,18 +562,19 @@
 
     root.appendChild(shell);
 
-    const name = String(
+    const fullName = String(
       SF.profile?.full_name || "Member"
     ).trim();
 
-    const firstName = name.split(/\\s+/)[0];
+    const firstName = fullName.split(/\s+/)[0] || "Member";
 
     const nameNode = document.getElementById("sfAppUserName");
     const avatarNode = document.getElementById("sfAppAvatar");
 
     if (nameNode) nameNode.textContent = firstName;
+
     if (avatarNode) {
-      avatarNode.textContent = firstName.charAt(0).toUpperCase() || "M";
+      avatarNode.textContent = firstName.charAt(0).toUpperCase();
     }
   }
 
@@ -636,16 +618,40 @@
     }
 
     setDashboardMode(
-      document.getElementById("dashboardView")?.classList.contains("active")
+      document.getElementById("dashboardView")
+        ?.classList.contains("active")
         ? "dashboard"
         : ""
     );
+
+    const root = document.getElementById("dashboardView");
+
+    if (root && !root.dataset.sfWalletNavigationInstalled) {
+      root.dataset.sfWalletNavigationInstalled = "true";
+
+      root.addEventListener("click", event => {
+        const button = event.target.closest(
+          '[data-sf-dashboard-action="wallet"]'
+        );
+
+        if (!button) return;
+
+        event.preventDefault();
+
+        document.getElementById("sfWalletPanel")
+          ?.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+          });
+      });
+    }
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", install, { once: true });
+    document.addEventListener("DOMContentLoaded", install, { once:true });
   } else {
     install();
   }
+
 })();
       
