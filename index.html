@@ -169,22 +169,83 @@
         </div>
 
         <div class="auth-panel">
-          <div class="auth-tabs">
-            <button class="auth-tab active" data-auth-tab="login">Log in</button>
-            <button class="auth-tab" data-auth-tab="register">Create account</button>
-          </div>
+          
+<div class="auth-tabs">
+  <button class="auth-tab" data-auth-tab="login">Log in</button>
+  <button class="auth-tab active" data-auth-tab="register">Create account</button>
+</div>
 
-          <form id="loginForm" class="auth-form">
-            <h2>Welcome back</h2>
-            <p class="muted">Log in to continue to your workspace.</p>
-            <label>Email address
-              <input name="email" type="email" autocomplete="email" required placeholder="you@example.com">
-            </label>
-            <label>Password
-              <input name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password">
-            </label>
-            <button class="btn btn-gold btn-full" type="submit">Log in</button>
-          </form>
+<form id="loginForm" class="auth-form hidden">
+  <h2>Welcome back</h2>
+  <p class="muted">Log in to continue to your workspace.</p>
+
+  <label>Gmail address
+    <input name="email" type="email" autocomplete="email"
+      required placeholder="you@gmail.com">
+  </label>
+
+  <label>Password
+    <input name="password" type="password"
+      autocomplete="current-password" required minlength="8"
+      placeholder="Your password">
+  </label>
+
+  <button class="btn btn-gold btn-full" type="submit">Log in</button>
+</form>
+
+<form id="registerForm" class="auth-form">
+  <h2>Create your account</h2>
+  <p class="muted">Enter your details to join SHOPY FONT.</p>
+
+  <label>Full name
+    <input name="full_name" required maxlength="100"
+      autocomplete="name" placeholder="Your full name">
+  </label>
+
+  <label>Choose your country
+    <select name="country" required>
+      <option value="">Select your country</option>
+    </select>
+  </label>
+
+  <label>Phone number
+    <input name="phone" type="tel" autocomplete="tel"
+      required maxlength="30"
+      placeholder="Include country code, e.g. +254 700 000 000">
+  </label>
+
+  <label>Gmail address
+    <input name="email" type="email" autocomplete="email"
+      required placeholder="you@gmail.com">
+  </label>
+
+  <label>Where did you hear about us?
+    <span class="muted">(Optional)</span>
+    <input name="heard_about" type="text" maxlength="120"
+      placeholder="Friend, social media, advertisement...">
+  </label>
+
+  <label>Password
+    <input name="password" type="password"
+      autocomplete="new-password" required minlength="8"
+      placeholder="At least 8 characters">
+  </label>
+
+  <label>Confirm password
+    <input name="confirm_password" type="password"
+      autocomplete="new-password" required minlength="8"
+      placeholder="Enter your password again">
+  </label>
+
+  <button class="btn btn-gold btn-full" type="submit">
+    Create account
+  </button>
+
+  <small class="muted">
+    By joining, you agree to follow platform rules and applicable laws.
+  </small>
+</form>
+          
 
           <form id="registerForm" class="auth-form hidden">
             <h2>Create your account</h2>
