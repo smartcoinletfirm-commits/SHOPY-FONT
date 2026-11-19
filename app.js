@@ -508,25 +508,33 @@ const initializeShopyFont = async () => {
     }
     
 
+    const validViews = [
+      "dashboard",
+      "marketplace",
+      "scholarbridge",
+      "opportunities",
+      "admin",
+      "referrals",
+      "auth",
+      "home"
+    ];
+
+    if (hash === "tasks" && SF.currentUser) {
+      await SF.navigate("dashboard");
+      return;
+    }
+
     if (validViews.includes(hash)) {
       await SF.navigate(hash);
       return;
     }
 
-    await SF.navigate("home");
-
-  } catch (error) {
-    console.error(
-      "SHOPY FONT initialization error:",
-      error
-    );
-
-    SF.showToast(
-      "Startup error: " +
-      (error?.message || "Unknown error. Check the browser console.")
-    );
-  }
-};
+    if (SF.currentUser) {
+      await SF.navigate("dashboard");
+    } else {
+      await SF.navigate("home");
+    }
+    
 
 if (document.readyState === "loading") {
   document.addEventListener(
