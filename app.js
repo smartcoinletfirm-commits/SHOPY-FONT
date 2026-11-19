@@ -479,6 +479,7 @@ const initializeShopyFont = async () => {
       return;
     }
 
+    
     if (
       isMainEntry &&
       (
@@ -487,30 +488,25 @@ const initializeShopyFont = async () => {
         hash === "home"
       )
     ) {
-      history.replaceState(
-        null,
-        "",
-        location.pathname + location.search + "#"
-      );
+      if (SF.currentUser) {
+        await SF.navigate("dashboard");
+      } else {
+        history.replaceState(
+          null,
+          "",
+          location.pathname + location.search + "#"
+        );
 
-      document.body.classList.remove(
-        "sf-dashboard-mode"
-      );
+        document.body.classList.remove(
+          "sf-dashboard-mode"
+        );
 
-      await SF.navigate("home");
+        await SF.navigate("home");
+      }
+
       return;
     }
-
-    const validViews = [
-      "dashboard",
-      "marketplace",
-      "scholarbridge",
-      "opportunities",
-      "admin",
-      "referrals",
-      "auth",
-      "home"
-    ];
+    
 
     if (validViews.includes(hash)) {
       await SF.navigate(hash);
