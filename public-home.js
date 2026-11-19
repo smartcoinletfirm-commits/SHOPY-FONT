@@ -1,7 +1,8 @@
+
 /* =========================================================
-   SHOPY FONT — CLASSIC INTERNATIONAL WELCOME PAGE
-   Emerald green identity, trust-led content and image slider.
-   Uses the central navigation controller in app.js.
+   SHOPY FONT — PUBLIC WELCOME PAGE
+   IMPORTANT: app.js controls which .view is visible.
+   This file must NEVER force #homeView to display:block.
 ========================================================= */
 
 (() => {
@@ -9,9 +10,14 @@
 
   const SF = window.SF = window.SF || {};
 
+  /* =====================================================
+     HOMEPAGE STYLES
+  ===================================================== */
+
   const css = `
+    /* Do not set display here.
+       style.css controls .view and .view.active. */
     #homeView.sf-public-home {
-      display:block;
       padding:0;
       background:#f6faf7;
       color:#193629;
@@ -454,8 +460,16 @@
     document.head.appendChild(style);
   }
 
+  /* =====================================================
+     HOMEPAGE CONTENT
+  ===================================================== */
+
   const home = document.getElementById("homeView");
-  if (!home) return;
+
+  if (!home) {
+    console.warn("SHOPY FONT: homeView was not found.");
+    return;
+  }
 
   home.classList.add("sf-public-home");
 
@@ -762,71 +776,29 @@
     </section>
   `;
 
-  /* IMAGE SLIDER */
+  /* =====================================================
+     IMAGE SLIDER
+  ===================================================== */
 
   const slider = document.getElementById("sfWelcomeSlider");
 
   if (slider && !slider.dataset.initialized) {
     slider.dataset.initialized = "true";
 
-    const slides = [...slider.querySelectorAll(".sf-home-slide")];
-    const dots = [...slider.querySelectorAll(".sf-home-dot")];
+    const slides = [
+      ...slider.querySelectorAll(".sf-home-slide")
+    ];
+
+    const dots = [
+      ...slider.querySelectorAll(".sf-home-dot")
+    ];
 
     let current = 0;
     let interval = null;
 
     const showSlide = index => {
+      if (!slides.length) return;
+
       current = (index + slides.length) % slides.length;
 
-      slides.forEach((slide, i) => {
-        slide.classList.toggle("active", i === current);
-      });
-
-      dots.forEach((dot, i) => {
-        dot.classList.toggle("active", i === current);
-      });
-    };
-
-    const stop = () => {
-      if (interval) clearInterval(interval);
-    };
-
-    const start = () => {
-      stop();
-      interval = setInterval(() => {
-        showSlide(current + 1);
-      }, 5500);
-    };
-
-        slider.querySelector("[data-slider-prev]")
-      ?.addEventListener("click", () => {
-        showSlide(current - 1);
-        start();
-      });
-
-    slider.querySelector("[data-slider-next]")
-      ?.addEventListener("click", () => {
-        showSlide(current + 1);
-        start();
-      });
-
-    dots.forEach(dot => {
-      dot.addEventListener("click", () => {
-        showSlide(Number(dot.dataset.slide));
-        start();
-      });
-    });
-
-    slider.addEventListener("mouseenter", stop);
-    slider.addEventListener("mouseleave", start);
-
-    showSlide(0);
-    start();
-  }
-
-  /*
-   * Do not override SF.navigate here.
-   * app.js handles navigation after login and registration.
-   */
-
-})();
+      slides.forEac
