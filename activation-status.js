@@ -1,7 +1,9 @@
-
+/* SHOPY FONT — MEMBERSHIP STATUS
+   Preserves approved dashboard and payment review records.
+   Pending members receive a clear system-review screen.
+*/
 window.SF = window.SF || {};
 
-/* Preserve the original approved-member dashboard loader. */
 const SF_originalLoadDashboard = SF.loadDashboard;
 
 SF.loadDashboard = async () => {
@@ -15,33 +17,29 @@ SF.loadDashboard = async () => {
     throw new Error("Your member profile could not be loaded.");
   }
 
-  const updateWelcomeName = () => {
-    const displayName = String(
-      profile.full_name ||
-      SF.currentUser.user_metadata?.full_name ||
-      "Member"
-    ).trim();
+  const displayName = String(
+    profile.full_name ||
+    SF.currentUser.user_metadata?.full_name ||
+    "Member"
+  ).trim();
 
-    const firstName = displayName.split(/\s+/)[0] || "Member";
-    const welcomeElement = document.getElementById("welcomeName");
+  const firstName = displayName.split(/\s+/)[0] || "Member";
+  const welcomeElement = document.getElementById("welcomeName");
 
-    if (welcomeElement) {
-      welcomeElement.textContent = `Welcome back, ${firstName}.`;
-    }
-  };
+  if (welcomeElement) {
+    welcomeElement.textContent = `Welcome back, ${firstName}.`;
+  }
 
-  updateWelcomeName();
+  const status = String(profile.account_status || "")
+    .trim()
+    .toLowerCase();
 
-  const status = String(profile.account_status || "").toLowerCase();
-
-  /* Approved members retain their existing dashboard. */
+  // Preserve the existing approved-member dashboard.
   if (
     status === "approved" &&
     typeof SF_originalLoadDashboard === "function"
   ) {
     const result = await SF_originalLoadDashboard();
-
-    updateWelcomeName();
 
     SF.wallet?.addStyles?.();
     SF.wallet?.mount?.();
@@ -60,128 +58,150 @@ SF.loadDashboard = async () => {
   };
 
   const put = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.textContent =
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent =
         value == null || value === ""
           ? "—"
           : String(value);
     }
   };
 
-  ["fbkWorkspace", "miniPayWorkspace"].forEach(id => {
-    document.getElementById(id)?.remove();
-  });
-
   show("approvedDashboard", false);
   show("activationWorkspace", false);
-  show("reviewWorkspace", false);
   show("rejectedWorkspace", false);
 
-  /* Load the member's latest activation request. */
-  const result = await db
+  // Load the latest membership request.
+  const requestResult = await db
     .from("activation_requests")
     .select("id,full_name,phone,membership_level,status,created_at")
     .eq("user_id", SF.currentUser.id)
     .order("created_at", { ascending: false })
     .limit(1);
 
-  if (result.error) throw result.error;
+  if (requestResult.error) throw requestResult.error;
 
-  const request = result.data?.[0] || null;
-  const requestStatus = String(request?.status || "").toLowerCase();
+  const request = requestResult.data?.[0] || null;
+  const requestStatus = String(request?.status || "")
+    .trim()
+    .toLowerCase();
 
-  /* No activation request yet: show package selection. */
+  // Load payment review records without changing them.
+  const paymentResult = await db
+    .from("payment_submissions")
+    .select("status,review_reason,reviewed_at,submitted_at,payment_provider")
+    .eq("user_id", SF.currentUser.id)
+    .order("submitted_at", { ascending: false })
+    .limit(10);
+
+  if (paymentResult.error) throw paymentResult.error;
+
+  const payments = paymentResult.data || [];
+
+  // No request yet: allow the member to choose a package.
   if (!request && status !== "rejected") {
     show("activationWorkspace", true);
     SF.updatePackagePreview?.();
     return;
   }
 
-  /* Rejected account: retrieve the administrator's reason. */
-  if (status === "rejected" || requestStatus === "rejected") {
-    let rejectionReason = "";
-    let rejectionDate = "";
+  // Rejected membership or payment.
+  const rejectedPayment = payments.find(
+    item => String(item.status || "").toLowerCase() === "rejected"
+  );
 
-    /* First check the payment review record. */
-    const paymentResult = await db
-      .from("payment_submissions")
-      .select("review_reason,reviewed_at,submitted_at,status")
-      .eq("user_id", SF.currentUser.id)
-      .order("submitted_at", { ascending: false })
-      .limit(10);
-
-    if (paymentResult.error) throw paymentResult.error;
-
-    const rejectedPayment = (paymentResult.data || []).find(
-      item => String(item.status || "").toLowerCase() === "rejected"
-    );
-
-    if (rejectedPayment) {
-      rejectionReason = rejectedPayment.review_reason || "";
-      rejectionDate = rejectedPayment.reviewed_at || "";
-    }
-
-    /* If payment was not the rejected item, check FBK review. */
-    if (!rejectionReason) {
-      const fbkResult = await db
-        .from("fbk_code_submissions")
-        .select("status,admin_note,created_at")
-        .eq("user_id", SF.currentUser.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (fbkResult.error) throw fbkResult.error;
-
-      const rejectedFBK = (fbkResult.data || []).find(
-        item => String(item.status || "").toLowerCase() === "rejected"
-      );
-
-      if (rejectedFBK) {
-        rejectionReason = rejectedFBK.admin_note || "";
-        rejectionDate = rejectedFBK.created_at || "";
-      }
-    }
-
+  if (
+    status === "rejected" ||
+    requestStatus === "rejected" ||
+    rejectedPayment
+  ) {
     show("rejectedWorkspace", true);
+
+    const reason = rejectedPayment?.review_reason || "";
+    const reviewDate = rejectedPayment?.reviewed_at || "";
 
     put(
       "rejectionDetails",
-      rejectionReason
-        ? `Your membership application was rejected.
+      reason
+        ? `Your membership application was not approved.
 
-Reason given by the administrator:
-${rejectionReason}
+Reason:
+${reason}
 
-${rejectionDate
-  ? "Review date: " + new Date(rejectionDate).toLocaleString()
+${reviewDate
+  ? "Review date: " + new Date(reviewDate).toLocaleString()
   : ""}
 
-Please follow the instructions above or contact SHOPY FONT support for assistance.`
+Please follow the administrator's instructions or contact SHOPY FONT support.`
         : `Your membership application was not approved.
 
-The administrator did not provide a written reason in the available review record. Please contact SHOPY FONT support for clarification.`
+Please contact SHOPY FONT support for clarification and the next steps.`
     );
 
     return;
   }
 
-  /* Pending request: show review information. */
+  // Pending request: show a review panel.
   if (request) {
-    show("reviewWorkspace", true);
+    let reviewPanel = document.getElementById("sfMembershipReview");
 
-    const level = Number(request.membership_level);
+    if (!reviewPanel) {
+      reviewPanel = document.createElement("section");
+      reviewPanel.id = "sfMembershipReview";
+      reviewPanel.className = "panel";
+      reviewPanel.style.cssText =
+        "margin:24px 0;padding:26px;border:1px solid #dcebe1;border-radius:16px;background:#fff;color:#193629;";
+
+      document.getElementById("activationWorkspace")
+        ?.insertAdjacentElement("afterend", reviewPanel);
+    }
+
+    const latestPayment = payments[0] || null;
+    const paymentStatus = String(latestPayment?.status || "")
+      .trim()
+      .toLowerCase();
+
+    const level = Number(request.membership_level) || "—";
     const country = profile.country || "—";
     const submitted = request.created_at
       ? new Date(request.created_at).toLocaleString()
       : "recently";
 
-    put(
-      "reviewDetails",
-      `Your Level ${level} membership request for ${country} was received on ${submitted}.
+    let paymentMessage = "Payment verification may still be required.";
 
-Your account is awaiting verification. Please complete the required payment and verification steps. Access to member services will be granted after administrator approval.`
-    );
+    if (paymentStatus === "submitted" || paymentStatus === "pending") {
+      paymentMessage = "Your payment evidence has been received and is awaiting review.";
+    } else if (paymentStatus === "approved" || paymentStatus === "verified") {
+      paymentMessage = "Your payment has been verified. Membership approval is still pending.";
+    }
+
+    reviewPanel.innerHTML = `
+      <p style="margin:0 0 8px;color:#167347;font-size:11px;font-weight:900;letter-spacing:1.5px;">
+        MEMBERSHIP APPLICATION
+      </p>
+      <h2 style="margin:0 0 12px;color:#17462f;">
+        Your account is under review
+      </h2>
+      <p style="color:#687d70;line-height:1.8;">
+        Your membership request has been received. Our team is reviewing
+        your submission. Your member services will become available after
+        administrator approval.
+      </p>
+      <div style="margin:18px 0;padding:16px;border-radius:10px;background:#f3f8f4;">
+        <p><strong>Membership level:</strong> ${SF.escapeHtml(level)}</p>
+        <p><strong>Country:</strong> ${SF.escapeHtml(country)}</p>
+        <p><strong>Request received:</strong> ${SF.escapeHtml(submitted)}</p>
+        <p><strong>Payment:</strong> ${SF.escapeHtml(paymentMessage)}</p>
+        <p style="margin-bottom:0;"><strong>Account status:</strong> Under review</p>
+      </div>
+      <p style="margin:0;color:#718176;font-size:12px;">
+        Please check your account again after the review is complete.
+      </p>
+    `;
+
+    show("activationWorkspace", false);
+    show("rejectedWorkspace", false);
+    reviewPanel.classList.remove("hidden");
 
     return;
   }
@@ -189,3 +209,4 @@ Your account is awaiting verification. Please complete the required payment and 
   show("activationWorkspace", true);
   SF.updatePackagePreview?.();
 };
+      
