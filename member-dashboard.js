@@ -1,312 +1,312 @@
-
 /* =====================================================
    SHOPY FONT — MEMBER DASHBOARD
-   Reliable dashboard button handling
-   ===================================================== */
+   Emerald and white member workspace
+===================================================== */
 
 (function () {
   "use strict";
 
   window.SF = window.SF || {};
-
+  const SF = window.SF;
   const $ = id => document.getElementById(id);
 
   const styles = `
     #sfMemberOverview {
-      margin: 22px 0 28px;
-      color: #183b2d;
+      margin:22px 0 28px;
+      color:#183b2d;
     }
 
     .sf-dash-welcome {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-      padding: 22px;
-      border-radius: 18px;
-      background: linear-gradient(120deg,#103b2b,#1d6245);
-      color: #fff;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      padding:22px;
+      border-radius:18px;
+      background:linear-gradient(120deg,#103b2b,#1d704b);
+      color:#fff;
     }
 
     .sf-dash-welcome small {
-      display: block;
-      color: #d7e7dc;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 1.6px;
+      display:block;
+      color:#d7e7dc;
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:1.6px;
     }
 
     .sf-dash-welcome h2 {
-      margin: 7px 0 4px;
-      color: #fff;
-      font-size: clamp(21px,4vw,29px);
+      margin:7px 0 4px;
+      color:#fff;
+      font-size:clamp(21px,4vw,29px);
     }
 
     .sf-dash-welcome p {
-      margin: 0;
-      color: #d7e7dc;
-      font-size: 12px;
-      line-height: 1.6;
+      margin:0;
+      color:#d7e7dc;
+      font-size:12px;
+      line-height:1.6;
     }
 
     .sf-dash-status {
-      padding: 8px 12px;
-      border: 1px solid #d7c18c;
-      border-radius: 30px;
-      color: #f5dfaa;
-      font-size: 11px;
-      font-weight: 800;
+      padding:8px 12px;
+      border:1px solid #a9d6b8;
+      border-radius:30px;
+      color:#e4f7e9;
+      font-size:11px;
+      font-weight:800;
     }
 
     .sf-dash-summary {
-      display: grid;
-      grid-template-columns: repeat(2,minmax(0,1fr));
-      gap: 10px;
-      margin-top: 13px;
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-top:13px;
     }
 
     .sf-dash-summary-card {
-      padding: 15px 16px;
-      border-radius: 13px;
-      background: #f4f7f3;
-      border: 1px solid #e3eae2;
+      padding:15px 16px;
+      border-radius:13px;
+      background:#f4f7f3;
+      border:1px solid #e3eae2;
     }
 
     .sf-dash-summary-card span {
-      display: block;
-      color: #6e7e72;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+      display:block;
+      color:#6e7e72;
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:1px;
+      text-transform:uppercase;
     }
 
     .sf-dash-summary-card strong {
-      display: block;
-      margin-top: 7px;
-      color: #173b2e;
-      font-size: 20px;
+      display:block;
+      margin-top:7px;
+      color:#173b2e;
+      font-size:20px;
     }
 
     .sf-dash-summary-card.wallet {
-      background: linear-gradient(120deg,#0e6845,#168052);
-      border-color: #168052;
+      background:linear-gradient(120deg,#0e6845,#168052);
+      border-color:#168052;
     }
 
     .sf-dash-summary-card.wallet span,
     .sf-dash-summary-card.wallet strong {
-      color: #fff;
+      color:#fff;
     }
 
     .sf-dash-referral {
-      margin-top: 16px;
-      padding: 20px;
-      border: 1px solid #e5dcc7;
-      border-radius: 16px;
-      background: linear-gradient(145deg,#fffefa,#f5f8f4);
+      margin-top:16px;
+      padding:20px;
+      border:1px solid #e0eae3;
+      border-radius:16px;
+      background:#fbfdfb;
     }
 
     .sf-dash-section-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      flex-wrap: wrap;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
     }
 
     .sf-dash-kicker {
-      color: #a17b35;
-      font-size: 9px;
-      font-weight: 900;
-      letter-spacing: 1.6px;
+      color:#23734b;
+      font-size:9px;
+      font-weight:900;
+      letter-spacing:1.6px;
     }
 
     .sf-dash-referral h3 {
-      margin: 6px 0;
-      color: #173b2e;
-      font-size: 19px;
+      margin:6px 0;
+      color:#173b2e;
+      font-size:19px;
     }
 
     .sf-dash-referral p {
-      margin: 0;
-      color: #758278;
-      font-size: 12px;
-      line-height: 1.6;
+      margin:0;
+      color:#758278;
+      font-size:12px;
+      line-height:1.6;
     }
 
     .sf-dash-linkrow {
-      display: flex;
-      gap: 9px;
-      margin-top: 15px;
+      display:flex;
+      gap:9px;
+      margin-top:15px;
     }
 
     .sf-dash-linkrow input {
-      min-width: 0;
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #dce5dc;
-      border-radius: 9px;
-      background: #fff;
-      color: #315342;
-      font-size: 12px;
+      min-width:0;
+      flex:1;
+      padding:12px;
+      border:1px solid #dce5dc;
+      border-radius:9px;
+      background:#fff;
+      color:#315342;
+      font-size:12px;
     }
 
     .sf-dash-btn {
-      border: 0;
-      border-radius: 9px;
-      padding: 12px 15px;
-      background: #174b37;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 800;
-      cursor: pointer;
+      border:0;
+      border-radius:9px;
+      padding:12px 15px;
+      background:#174b37;
+      color:#fff;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
     }
 
-    .sf-dash-btn.gold {
-      background: #c9a45c;
-      color: #183b2d;
+    .sf-dash-btn.green {
+      background:#e8f4eb;
+      color:#175b39;
+      border:1px solid #cfe3d4;
     }
 
     .sf-dash-ref-stats {
-      display: grid;
-      grid-template-columns: repeat(3,minmax(0,1fr));
-      gap: 10px;
-      margin-top: 14px;
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-top:14px;
     }
 
     .sf-dash-ref-stats article {
-      padding: 12px;
-      border: 1px solid #e8ece6;
-      border-radius: 10px;
-      background: #fff;
+      padding:12px;
+      border:1px solid #e8ece6;
+      border-radius:10px;
+      background:#fff;
     }
 
     .sf-dash-ref-stats span,
     .sf-dash-ref-stats strong {
-      display: block;
+      display:block;
     }
 
     .sf-dash-ref-stats span {
-      color: #78857b;
-      font-size: 10px;
+      color:#78857b;
+      font-size:10px;
     }
 
     .sf-dash-ref-stats strong {
-      margin-top: 5px;
-      color: #174b37;
-      font-size: 20px;
+      margin-top:5px;
+      color:#174b37;
+      font-size:20px;
     }
 
     .sf-dash-workspace {
-      margin-top: 22px;
+      margin-top:22px;
     }
 
     .sf-dash-workspace h3 {
-      margin: 0 0 5px;
-      color: #173b2e;
-      font-size: 19px;
+      margin:0 0 5px;
+      color:#173b2e;
+      font-size:19px;
     }
 
     .sf-dash-workspace > p {
-      margin: 0 0 14px;
-      color: #758278;
-      font-size: 12px;
+      margin:0 0 14px;
+      color:#758278;
+      font-size:12px;
     }
 
     .sf-quick-grid {
-      display: grid;
-      grid-template-columns: repeat(3,minmax(0,1fr));
-      gap: 12px;
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
     }
 
     .sf-quick-card {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-      min-height: 116px;
-      padding: 16px;
-      border: 1px solid #e4eae3;
-      border-radius: 13px;
-      background: #fff;
-      color: #183b2d;
-      text-align: left;
-      cursor: pointer;
-      box-shadow: 0 5px 16px rgba(18,45,34,.035);
-      transition: .18s;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:8px;
+      min-height:116px;
+      padding:16px;
+      border:1px solid #e4eae3;
+      border-radius:13px;
+      background:#fff;
+      color:#183b2d;
+      text-align:left;
+      cursor:pointer;
+      box-shadow:0 5px 16px rgba(18,45,34,.035);
+      transition:.18s;
     }
 
     .sf-quick-card:hover {
-      transform: translateY(-2px);
-      border-color: #b9cdbd;
+      transform:translateY(-2px);
+      border-color:#a9cbb2;
     }
 
     .sf-quick-icon {
-      display: grid;
-      place-items: center;
-      width: 35px;
-      height: 35px;
-      border-radius: 10px;
-      background: #edf5ee;
-      color: #1d6245;
-      font-size: 18px;
+      display:grid;
+      place-items:center;
+      width:35px;
+      height:35px;
+      border-radius:10px;
+      background:#edf5ee;
+      color:#1d6245;
+      font-size:18px;
     }
 
     .sf-quick-card strong {
-      font-size: 13px;
+      font-size:13px;
     }
 
     .sf-quick-card small {
-      color: #78857b;
-      font-size: 10px;
-      line-height: 1.5;
+      color:#78857b;
+      font-size:10px;
+      line-height:1.5;
     }
 
     .sf-quick-card:disabled,
     .sf-dash-btn:disabled {
-      opacity: .6;
-      cursor: not-allowed;
+      opacity:.6;
+      cursor:not-allowed;
     }
 
     @media(max-width:700px) {
       .sf-quick-grid {
-        grid-template-columns: repeat(2,minmax(0,1fr));
+        grid-template-columns:repeat(2,minmax(0,1fr));
       }
     }
 
     @media(max-width:430px) {
       .sf-dash-linkrow {
-        flex-direction: column;
+        flex-direction:column;
       }
 
       .sf-dash-linkrow .sf-dash-btn {
-        width: 100%;
+        width:100%;
       }
 
       .sf-dash-ref-stats {
-        gap: 7px;
+        gap:7px;
       }
 
       .sf-dash-ref-stats article {
-        padding: 10px 8px;
+        padding:10px 8px;
       }
 
       .sf-dash-ref-stats strong {
-        font-size: 17px;
+        font-size:17px;
       }
 
       .sf-quick-card {
-        min-height: 108px;
-        padding: 13px;
+        min-height:108px;
+        padding:13px;
       }
 
       .sf-dash-summary-card {
-        padding: 13px;
+        padding:13px;
       }
 
       .sf-dash-summary-card strong {
-        font-size: 18px;
+        font-size:18px;
       }
     }
   `;
@@ -328,15 +328,11 @@
       SF.profile?.membership_type || ""
     ).toLowerCase();
 
-    return [
-      "community",
-      "build_community"
-    ].includes(type);
+    return ["community", "build_community"].includes(type);
   }
 
   function getWalletBalance() {
     const value = $("walletBalance")?.textContent?.trim() || "";
-
     return /^\$/.test(value) ? value : "$0.00";
   }
 
@@ -464,7 +460,7 @@
             placeholder="Your referral link will appear here">
 
           <button type="button"
-            class="sf-dash-btn gold"
+            class="sf-dash-btn green"
             data-sf-dashboard-action="copy">
             Copy link
           </button>
@@ -481,12 +477,10 @@
             <span>Total sign-ups</span>
             <strong id="sfDashRefTotal">—</strong>
           </article>
-
           <article>
             <span>Eligible / rewarded</span>
             <strong id="sfDashRefConfirmed">—</strong>
           </article>
-
           <article>
             <span>Pending</span>
             <strong id="sfDashRefPending">—</strong>
@@ -600,7 +594,7 @@
         return;
       }
 
-      if (action === "wallet" || action === "bonus" || action === "withdraw") {
+      if (["wallet", "bonus", "withdraw"].includes(action)) {
         const wallet = $("sfWalletPanel");
 
         if (!wallet) {
@@ -608,8 +602,8 @@
         }
 
         wallet.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
+          behavior:"smooth",
+          block:"start"
         });
 
         if (action === "bonus") {
@@ -652,8 +646,8 @@
         details.classList.remove("hidden");
 
         details.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
+          behavior:"smooth",
+          block:"start"
         });
 
         SF.showToast("Select your full membership package and follow the payment instructions.");
@@ -661,10 +655,7 @@
 
     } catch (error) {
       console.error("Dashboard button error:", error);
-
-      SF.showToast(
-        error.message || "This action could not be completed."
-      );
+      SF.showToast(error.message || "This action could not be completed.");
 
     } finally {
       button.disabled = false;
@@ -690,9 +681,7 @@
 
       SF.loadDashboard = async function (...args) {
         const result = await originalLoadDashboard.apply(this, args);
-
         render();
-
         return result;
       };
 
@@ -709,3 +698,4 @@
   }
 
 })();
+       
