@@ -1,5 +1,42 @@
+
+// =====================================================
+// SHOPY FONT — AUTHENTICATION SYSTEM
+// Clean login, registration, session, referral & logout
+// =====================================================
+
 window.SF = window.SF || {};
 const SF = window.SF;
+
+// -----------------------------------------------------
+// SUPABASE CLIENT
+// -----------------------------------------------------
+
+SF.getClient = function () {
+  if (!window.sfSupabase) {
+    throw new Error("Supabase is not connected. Please reload the page.");
+  }
+  return window.sfSupabase;
+};
+
+// -----------------------------------------------------
+// AUTH MESSAGES
+// -----------------------------------------------------
+
+SF.showAuthMessage = function (message, success = false) {
+  const el = document.getElementById("authMessage");
+
+  if (!el) {
+    if (typeof SF.showToast === "function") SF.showToast(message);
+    return;
+  }
+
+  el.textContent = message;
+  el.style.color = success ? "#237a57" : "#b42318";
+};
+
+// -----------------------------------------------------
+// LOGIN / REGISTRATION TABS
+// -----------------------------------------------------
 
 SF.setAuthTab = function (tab) {
   const login = document.getElementById("loginForm");
@@ -19,10 +56,14 @@ SF.setAuthTab = function (tab) {
     );
   });
 
-  const message = document.getElementById("authMessage");
-  if (message) message.textContent = "";
+  SF.showAuthMessage("");
 };
-SF.register = async form => {
+
+// -----------------------------------------------------
+// REGISTRATION
+// -----------------------------------------------------
+
+SF.register = async function (form) {
   const fd = new FormData(form);
 
   const fullName = String(fd.get("full_name") || "").trim();
@@ -33,14 +74,8 @@ SF.register = async form => {
   const country = String(fd.get("country") || "").trim();
   const heardAbout = String(fd.get("heard_about") || "").trim();
 
-  if (
-    !fullName ||
-    !email ||
-    !password ||
-    !confirmPassword ||
-    !phone ||
-    !country
-  ) {
+  if (!fullName || !email || !password ||
+      !confirmPassword || !phone || !country) {
     throw new Error("Please complete all required registration fields.");
   }
 
@@ -60,12 +95,14 @@ SF.register = async form => {
     throw new Error("Your passwords do not match. Please try again.");
   }
 
+  // Save referral code if one exists
   const referralCode = SF.getReferralCodeFromUrl();
 
   if (referralCode) {
     sessionStorage.setItem("sf_pending_ref", referralCode);
   }
 
+  // Create Supabase account
   const { data, error } = await SF.getClient().auth.signUp({
     email,
     password,
@@ -95,56 +132,14 @@ SF.register = async form => {
 
   return data;
 };
-/* =====================================================
-   SHOPY FONT — AUTHENTICATION REPAIR
-   Adds missing login, tab switching and session helpers.
-===================================================== */
 
-window.SF = window.SF || {};
+// -----------------------------------------------------
+// SESSION RESTORATION
+// -----------------------------------------------------
 
-/* Supabase client */
-SF.getClient = function () {
-  if (!window.sfSupabase) {
-    throw new Error("Supabase is not connected. Please reload the page.");
-  }
-  return window.sfSupabase;
-};
-
-/* Display authentication messages */
-SF.showAuthMessage = function (message, success = false) {
-  const el = document.getElementById("authMessage");
-  if (!el) {
-    if (typeof SF.showToast === "function") SF.showToast(message);
-    return;
-  }
-
-  el.textContent = message;
-  el.style.color = success ? "#237a57" : "#b42318";
-};
-
-/* Switch between login and registration */
-SF.setAuthTab = function (tab) {
-  const login = document.getElementById("loginForm");
-  const register = document.getElementById("registerForm");
-
-  if (!login || !register) return;
-
-  const showLogin = tab === "login";
-
-  login.classList.toggle("hidden", !showLogin);
-  register.classList.toggle("hidden", showLogin);
-
-  document.querySelectorAll("[data-auth-tab]").forEach(button => {
-    const active = button.dataset.authTab === (showLogin ? "login" : "register");
-    button.classList.toggle("active", active);
-  });
-
-  SF.showAuthMessage("");
-};
-
-/* Restore current session */
 SF.refreshSession = async function () {
   const { data, error } = await SF.getClient().auth.getSession();
+
   if (error) throw error;
 
   SF.currentUser = data.session?.user || null;
@@ -158,7 +153,10 @@ SF.refreshSession = async function () {
   return SF.currentUser;
 };
 
-/* Load the signed-in member profile */
+// -----------------------------------------------------
+// LOAD MEMBER PROFILE
+// -----------------------------------------------------
+
 SF.loadProfile = async function () {
   if (!SF.currentUser) return null;
 
@@ -180,7 +178,10 @@ SF.loadProfile = async function () {
   return data;
 };
 
-/* Referral code from a shared registration URL */
+// -----------------------------------------------------
+// REFERRAL SYSTEM
+// -----------------------------------------------------
+
 SF.getReferralCodeFromUrl = function () {
   const params = new URLSearchParams(window.location.search);
 
@@ -192,9 +193,9 @@ SF.getReferralCodeFromUrl = function () {
   ).trim();
 };
 
-/* Apply a pending referral once the member is signed in */
 SF.applyPendingReferral = async function () {
   const code = sessionStorage.getItem("sf_pending_ref");
+
   if (!code || !SF.currentUser) return false;
 
   const { data, error } = await SF.getClient().rpc(
@@ -208,13 +209,21 @@ SF.applyPendingReferral = async function () {
   }
 
   sessionStorage.removeItem("sf_pending_ref");
+
   return data === true;
 };
 
-/* Log in existing members */
+// -----------------------------------------------------
+// LOGIN
+// -----------------------------------------------------
+
 SF.login = async function (form) {
   const fd = new FormData(form);
-  const email = String(fd.get("email") || "").trim().toLowerCase();
+
+  const email = String(fd.get("email") || "")
+    .trim()
+    .toLowerCase();
+
   const password = String(fd.get("password") || "");
 
   if (!email || !password) {
@@ -225,118 +234,129 @@ SF.login = async function (form) {
     email,
     password
   });
-document.getElementById("registerForm")?.addEventListener("submit", async event => {
-  event.preventDefault();
 
-  const form = event.currentTarget;
-  const button = form.querySelector('[type="submit"]');
-
-  if (button) button.disabled = true;
-
-  SF.showAuthMessage("Creating your account...");
-
-  try {
-    await SF.register(form);
-
-    if (typeof SF.updateNavigation === "function") {
-      SF.updateNavigation();
-    }
-
-    const navigate = window.SF?.navigate;
-
-    if (typeof navigate !== "function") {
-      throw new Error(
-        "Account created, but page navigation is unavailable. Please contact support."
-      );
-    }
-
-    await navigate("dashboard");
-
-  } catch (error) {
-    console.error("Registration error:", error);
-    SF.showAuthMessage(error.message || "Unable to create your account.");
-  } finally {
-    if (button) button.disabled = false;
-  }
-});
   if (error) throw error;
 
   SF.currentUser = data.user;
+
   await SF.loadProfile();
 
   if (typeof SF.updateNavigation === "function") {
     SF.updateNavigation();
   }
 
+  if (typeof SF.navigate !== "function") {
+    throw new Error("Navigation is unavailable. Please reload the page.");
+  }
+
   await SF.navigate("dashboard");
+
   return data;
 };
 
-/* Log out */
+// -----------------------------------------------------
+// LOGOUT
+// -----------------------------------------------------
+
 SF.logout = async function () {
   const { error } = await SF.getClient().auth.signOut();
+
   if (error) throw error;
 
   SF.currentUser = null;
   SF.profile = null;
 };
 
-/* Connect the two forms */
+// -----------------------------------------------------
+// FORM EVENT HANDLERS — INSTALL ONLY ONCE
+// -----------------------------------------------------
+
 if (!SF.authFormEventsInstalled) {
   SF.authFormEventsInstalled = true;
 
+  // Login / Register tab switching
   document.addEventListener("click", event => {
     const button = event.target.closest("[data-auth-tab]");
+
     if (!button) return;
 
     event.preventDefault();
     SF.setAuthTab(button.dataset.authTab);
   });
 
-  document.getElementById("loginForm")?.addEventListener("submit", async event => {
-    event.preventDefault();
+  // Login form
+  document.getElementById("loginForm")?.addEventListener(
+    "submit",
+    async event => {
+      event.preventDefault();
 
-    const button = event.currentTarget.querySelector('[type="submit"]');
-    if (button) button.disabled = true;
+      const form = event.currentTarget;
+      const button = form.querySelector('[type="submit"]');
 
-    SF.showAuthMessage("Signing you in...");
+      if (button) button.disabled = true;
 
-    try {
-      await SF.login(event.currentTarget);
-      SF.showAuthMessage("Login successful.", true);
-    } catch (error) {
-      console.error("Login error:", error);
-      SF.showAuthMessage(error.message || "Unable to log in.");
-    } finally {
-      if (button) button.disabled = false;
-    }
-  });
+      SF.showAuthMessage("Signing you in...");
 
-  document.getElementById("registerForm")?.addEventListener("submit", async event => {
-    event.preventDefault();
-
-    const button = event.currentTarget.querySelector('[type="submit"]');
-    if (button) button.disabled = true;
-
-    SF.showAuthMessage("Creating your account...");
-
-    try {
-      await SF.register(event.currentTarget);
-
-      if (typeof SF.updateNavigation === "function") {
-        SF.updateNavigation();
+      try {
+        await SF.login(form);
+        SF.showAuthMessage("Login successful.", true);
+      } catch (error) {
+        console.error("Login error:", error);
+        SF.showAuthMessage(
+          error.message || "Unable to log in."
+        );
+      } finally {
+        if (button) button.disabled = false;
       }
-
-      await SF.navigate("dashboard");
-    } catch (error) {
-      console.error("Registration error:", error);
-      SF.showAuthMessage(error.message || "Unable to create your account.");
-    } finally {
-      if (button) button.disabled = false;
     }
-  });
+  );
+
+  // Registration form — one listener only
+  document.getElementById("registerForm")?.addEventListener(
+    "submit",
+    async event => {
+      event.preventDefault();
+
+      const form = event.currentTarget;
+      const button = form.querySelector('[type="submit"]');
+
+      if (button) button.disabled = true;
+
+      SF.showAuthMessage("Creating your account...");
+
+      try {
+        await SF.register(form);
+
+        if (typeof SF.updateNavigation === "function") {
+          SF.updateNavigation();
+        }
+
+        const navigate = window.SF?.navigate;
+
+        if (typeof navigate !== "function") {
+          throw new Error(
+            "Account created, but navigation is unavailable. Please reload the page."
+          );
+        }
+
+        await navigate("dashboard");
+
+      } catch (error) {
+        console.error("Registration error:", error);
+
+        SF.showAuthMessage(
+          error.message || "Unable to create your account."
+        );
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+  );
 }
 
-/* Default to Create account */
+// -----------------------------------------------------
+// DEFAULT AUTH TAB
+// -----------------------------------------------------
+
 SF.setAuthTab("register");
-                                     
+    
