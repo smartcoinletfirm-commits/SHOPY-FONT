@@ -1,7 +1,7 @@
 
 // =====================================================
 // SHOPY FONT — AUTHENTICATION SYSTEM
-// Clean login, registration, session, referral & logout
+// Login, Registration, Sessions, Referrals & Logout
 // =====================================================
 
 window.SF = window.SF || {};
@@ -35,7 +35,7 @@ SF.showAuthMessage = function (message, success = false) {
 };
 
 // -----------------------------------------------------
-// LOGIN / REGISTRATION TABS
+// AUTH TABS
 // -----------------------------------------------------
 
 SF.setAuthTab = function (tab) {
@@ -95,7 +95,7 @@ SF.register = async function (form) {
     throw new Error("Your passwords do not match. Please try again.");
   }
 
-  // Save referral code if one exists
+  // Save referral code
   const referralCode = SF.getReferralCodeFromUrl();
 
   if (referralCode) {
@@ -154,7 +154,7 @@ SF.refreshSession = async function () {
 };
 
 // -----------------------------------------------------
-// LOAD MEMBER PROFILE
+// MEMBER PROFILE
 // -----------------------------------------------------
 
 SF.loadProfile = async function () {
@@ -179,7 +179,7 @@ SF.loadProfile = async function () {
 };
 
 // -----------------------------------------------------
-// REFERRAL SYSTEM
+// REFERRAL CODE
 // -----------------------------------------------------
 
 SF.getReferralCodeFromUrl = function () {
@@ -192,6 +192,10 @@ SF.getReferralCodeFromUrl = function () {
     ""
   ).trim();
 };
+
+// -----------------------------------------------------
+// APPLY REFERRAL
+// -----------------------------------------------------
 
 SF.applyPendingReferral = async function () {
   const code = sessionStorage.getItem("sf_pending_ref");
@@ -220,10 +224,7 @@ SF.applyPendingReferral = async function () {
 SF.login = async function (form) {
   const fd = new FormData(form);
 
-  const email = String(fd.get("email") || "")
-    .trim()
-    .toLowerCase();
-
+  const email = String(fd.get("email") || "").trim().toLowerCase();
   const password = String(fd.get("password") || "");
 
   if (!email || !password) {
@@ -245,11 +246,11 @@ SF.login = async function (form) {
     SF.updateNavigation();
   }
 
-  if (typeof SF.navigate !== "function") {
-    throw new Error("Navigation is unavailable. Please reload the page.");
+  if (typeof SF.navigate === "function") {
+    await SF.navigate("dashboard");
+  } else {
+    window.location.reload();
   }
-
-  await SF.navigate("dashboard");
 
   return data;
 };
@@ -268,13 +269,14 @@ SF.logout = async function () {
 };
 
 // -----------------------------------------------------
-// FORM EVENT HANDLERS — INSTALL ONLY ONCE
+// FORM EVENT HANDLERS
+// INSTALL ONCE
 // -----------------------------------------------------
 
 if (!SF.authFormEventsInstalled) {
   SF.authFormEventsInstalled = true;
 
-  // Login / Register tab switching
+  // Auth tab switching
   document.addEventListener("click", event => {
     const button = event.target.closest("[data-auth-tab]");
 
@@ -284,7 +286,7 @@ if (!SF.authFormEventsInstalled) {
     SF.setAuthTab(button.dataset.authTab);
   });
 
-  // Login form
+  // Login
   document.getElementById("loginForm")?.addEventListener(
     "submit",
     async event => {
@@ -302,6 +304,7 @@ if (!SF.authFormEventsInstalled) {
         SF.showAuthMessage("Login successful.", true);
       } catch (error) {
         console.error("Login error:", error);
+
         SF.showAuthMessage(
           error.message || "Unable to log in."
         );
@@ -311,7 +314,7 @@ if (!SF.authFormEventsInstalled) {
     }
   );
 
-  // Registration form — one listener only
+  // Registration — SINGLE EVENT LISTENER
   document.getElementById("registerForm")?.addEventListener(
     "submit",
     async event => {
@@ -333,13 +336,13 @@ if (!SF.authFormEventsInstalled) {
 
         const navigate = window.SF?.navigate;
 
-        if (typeof navigate !== "function") {
-          throw new Error(
-            "Account created, but navigation is unavailable. Please reload the page."
-          );
+        if (typeof navigate === "function") {
+          await navigate("dashboard");
+        } else {
+          // Account creation succeeded.
+          // Reload to allow application initialization.
+          window.location.reload();
         }
-
-        await navigate("dashboard");
 
       } catch (error) {
         console.error("Registration error:", error);
@@ -355,8 +358,7 @@ if (!SF.authFormEventsInstalled) {
 }
 
 // -----------------------------------------------------
-// DEFAULT AUTH TAB
+// DEFAULT TAB
 // -----------------------------------------------------
 
 SF.setAuthTab("register");
-    
