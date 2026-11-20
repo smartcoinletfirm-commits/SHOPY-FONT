@@ -1,7 +1,10 @@
+
 window.SF = window.SF || {};
+const SF = window.SF;
+
 /* Authentication tab fallback */
-if (typeof window.SF.setAuthTab !== "function") {
-  window.SF.setAuthTab = function (tab) {
+if (typeof SF.setAuthTab !== "function") {
+  SF.setAuthTab = function (tab) {
     const login = document.getElementById("loginForm");
     const register = document.getElementById("registerForm");
 
@@ -45,6 +48,7 @@ SF.escapeAttr = SF.escapeHtml;
 
 SF.showToast = message => {
   const el = document.getElementById("toast");
+
   if (!el) {
     console.warn("SHOPY FONT:", message);
     return;
@@ -391,7 +395,10 @@ if (!SF.appEventsInstalled) {
         await SF.navigate(viewElement.dataset.view);
       } catch (error) {
         console.error("Navigation failed:", error);
-        SF.showToast(error.message || "Unable to open this section.");
+
+        SF.showToast(
+          error.message || "Unable to open this section."
+        );
       }
 
       return;
@@ -479,7 +486,6 @@ const initializeShopyFont = async () => {
       return;
     }
 
-    
     if (
       isMainEntry &&
       (
@@ -506,7 +512,6 @@ const initializeShopyFont = async () => {
 
       return;
     }
-    
 
     const validViews = [
       "dashboard",
@@ -534,7 +539,19 @@ const initializeShopyFont = async () => {
     } else {
       await SF.navigate("home");
     }
-    
+
+  } catch (error) {
+    console.error("SHOPY FONT initialization failed:", error);
+
+    SF.showToast(
+      error.message || "SHOPY FONT could not finish loading."
+    );
+  }
+};
+
+/* =====================================================
+   START APPLICATION
+===================================================== */
 
 if (document.readyState === "loading") {
   document.addEventListener(
@@ -544,5 +561,4 @@ if (document.readyState === "loading") {
   );
 } else {
   initializeShopyFont();
-       }
-    
+        }
