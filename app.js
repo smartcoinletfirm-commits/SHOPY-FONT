@@ -1,6 +1,5 @@
 
 window.SF = window.SF || {};
-const SF = window.SF;
 
 /* Authentication tab fallback */
 if (typeof SF.setAuthTab !== "function") {
