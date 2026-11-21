@@ -1,7 +1,8 @@
 
 window.SF = window.SF || {};
 
-/* Authentication tab fallback */
+/* AUTHENTICATION TAB FALLBACK */
+
 if (typeof SF.setAuthTab !== "function") {
   SF.setAuthTab = function (tab) {
     const login = document.getElementById("loginForm");
@@ -451,12 +452,32 @@ const initializeShopyFont = async () => {
       );
     }
 
+    /* RESTORE SESSION WITHOUT LOADING PROFILE YET */
+
     await SF.refreshSession();
+
+    /* CHECK ADMIN PERMISSION */
+
+    if (
+      SF.currentUser &&
+      typeof SF.checkAdmin === "function"
+    ) {
+      try {
+        await SF.checkAdmin();
+      } catch (adminError) {
+        console.warn(
+          "Admin verification failed:",
+          adminError
+        );
+
+        SF.adminAuthorized = false;
+      }
+    }
 
     SF.updateNavigation();
 
-    /* Product click tracking is optional.
-       A tracking error must never block the application. */
+    /* OPTIONAL PRODUCT TRACKING */
+
     if (typeof SF.trackProductVisit === "function") {
       try {
         await SF.trackProductVisit();
@@ -480,10 +501,14 @@ const initializeShopyFont = async () => {
       location.pathname === "/" ||
       location.pathname.endsWith("/index.html");
 
+    /* PRODUCT LINKS TAKE PRIORITY */
+
     if (hasProductLink) {
       await SF.navigate("marketplace");
       return;
     }
+
+    /* DEFAULT ENTRY ROUTING */
 
     if (
       isMainEntry &&
@@ -494,7 +519,12 @@ const initializeShopyFont = async () => {
       )
     ) {
       if (SF.currentUser) {
-        await SF.navigate("dashboard");
+        if (SF.adminAuthorized === true) {
+          await SF.navigate("admin");
+        } else {
+          await SF.navigate("dashboard");
+        }
+
       } else {
         history.replaceState(
           null,
@@ -528,13 +558,21 @@ const initializeShopyFont = async () => {
       return;
     }
 
+    /* HONOUR EXPLICIT VIEW LINKS */
+
     if (validViews.includes(hash)) {
       await SF.navigate(hash);
       return;
     }
 
+    /* FALLBACK ROUTING */
+
     if (SF.currentUser) {
-      await SF.navigate("dashboard");
+      if (SF.adminAuthorized === true) {
+        await SF.navigate("admin");
+      } else {
+        await SF.navigate("dashboard");
+      }
     } else {
       await SF.navigate("home");
     }
@@ -560,4 +598,5 @@ if (document.readyState === "loading") {
   );
 } else {
   initializeShopyFont();
-        }
+  }
+        
