@@ -1,4 +1,3 @@
-
 /* =====================================================
    SHOPY FONT — AUTHENTICATION SYSTEM
    Login, Registration, Sessions, Referrals & Logout
@@ -7,12 +6,9 @@
 (() => {
   "use strict";
 
-  // Keep all variables scoped to avoid conflicts with app.js.
   const SF = window.SF = window.SF || {};
 
-  /* -----------------------------------------------------
-     SUPABASE CLIENT
-  ----------------------------------------------------- */
+  /* SUPABASE CLIENT */
 
   SF.getClient = function () {
     if (!window.sfSupabase) {
@@ -22,9 +18,7 @@
     return window.sfSupabase;
   };
 
-  /* -----------------------------------------------------
-     AUTH MESSAGES
-  ----------------------------------------------------- */
+  /* AUTH MESSAGES */
 
   SF.showAuthMessage = function (message, success = false) {
     const el = document.getElementById("authMessage");
@@ -40,9 +34,7 @@
     el.style.color = success ? "#237a57" : "#b42318";
   };
 
-  /* -----------------------------------------------------
-     AUTH TABS
-  ----------------------------------------------------- */
+  /* AUTH TABS */
 
   SF.setAuthTab = function (tab) {
     const login = document.getElementById("loginForm");
@@ -65,9 +57,7 @@
     SF.showAuthMessage("");
   };
 
-  /* -----------------------------------------------------
-     REFERRAL CODE
-  ----------------------------------------------------- */
+  /* REFERRAL CODE */
 
   SF.getReferralCodeFromUrl = function () {
     const params = new URLSearchParams(window.location.search);
@@ -80,9 +70,7 @@
     ).trim().toUpperCase();
   };
 
-  /* -----------------------------------------------------
-     REGISTRATION
-  ----------------------------------------------------- */
+  /* REGISTRATION */
 
   SF.register = async function (form) {
     const fd = new FormData(form);
@@ -124,16 +112,14 @@
 
     const referralCode = SF.getReferralCodeFromUrl();
 
-    // The database signup trigger reads referral_code
-    // directly from the new user's metadata.
     const { data, error } = await SF.getClient().auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
-          phone: phone,
-          country: country,
+          phone,
+          country,
           heard_about: heardAbout,
           referral_code: referralCode || null
         }
@@ -147,23 +133,18 @@
     }
 
     SF.currentUser = data.user;
-
-    // Do not wait for additional profile or referral queries here.
-    // The database trigger creates the profile and wallets.
-    // App initialization loads the profile after navigation.
+    SF.profile = null;
 
     if (!data.session) {
       throw new Error(
-        "Your account was created, but email confirmation is required. Please check your email before signing in. Do not register again with the same email."
+        "Your account was created, but email confirmation is required. Check your email before signing in. Do not register again with the same email."
       );
     }
 
     return data;
   };
 
-  /* -----------------------------------------------------
-     SESSION RESTORATION
-  ----------------------------------------------------- */
+  /* SESSION RESTORATION */
 
   SF.refreshSession = async function () {
     const { data, error } = await SF.getClient().auth.getSession();
@@ -172,18 +153,16 @@
 
     SF.currentUser = data.session?.user || null;
 
-    if (SF.currentUser) {
-      await SF.loadProfile();
-    } else {
+    // Profile loading is deferred until a screen needs it.
+    // This avoids an unnecessary profile query during every session restore.
+    if (!SF.currentUser) {
       SF.profile = null;
     }
 
     return SF.currentUser;
   };
 
-  /* -----------------------------------------------------
-     MEMBER PROFILE
-  ----------------------------------------------------- */
+  /* MEMBER PROFILE */
 
   SF.loadProfile = async function () {
     if (!SF.currentUser) return null;
@@ -207,10 +186,7 @@
     return data;
   };
 
-  /* -----------------------------------------------------
-     APPLY PENDING REFERRAL
-     Retained for compatibility with existing code.
-  ----------------------------------------------------- */
+  /* APPLY PENDING REFERRAL */
 
   SF.applyPendingReferral = async function () {
     const code = sessionStorage.getItem("sf_pending_ref");
@@ -234,9 +210,7 @@
     return data === true;
   };
 
-  /* -----------------------------------------------------
-     LOGIN
-  ----------------------------------------------------- */
+  /* LOGIN */
 
   SF.login = async function (form) {
     const fd = new FormData(form);
@@ -263,24 +237,36 @@
     }
 
     SF.currentUser = data.user;
+    SF.profile = null;
 
-    // Let app initialization restore the profile.
+    SF.showAuthMessage("Signed in. Preparing your account...", true);
+
+    // Verify admin status before choosing the destination.
+    let isAdmin = false;
+
+    if (typeof SF.checkAdmin === "function") {
+      try {
+        isAdmin = await SF.checkAdmin();
+      } catch (adminError) {
+        console.warn("Admin verification failed:", adminError);
+      }
+    }
+
     if (typeof SF.updateNavigation === "function") {
       SF.updateNavigation();
     }
 
-    window.location.replace(
-      window.location.pathname +
-      window.location.search +
-      "#dashboard"
-    );
+    // Navigate without reloading the whole application.
+    if (typeof SF.navigate === "function") {
+      await SF.navigate(isAdmin ? "admin" : "dashboard");
+    } else {
+      window.location.hash = isAdmin ? "admin" : "dashboard";
+    }
 
     return data;
   };
 
-  /* -----------------------------------------------------
-     LOGOUT
-  ----------------------------------------------------- */
+  /* LOGOUT */
 
   SF.logout = async function () {
     const { error } = await SF.getClient().auth.signOut();
@@ -289,16 +275,14 @@
 
     SF.currentUser = null;
     SF.profile = null;
+    SF.adminAuthorized = false;
   };
 
-  /* -----------------------------------------------------
-     FORM EVENT HANDLERS — INSTALL ONCE
-  ----------------------------------------------------- */
+  /* FORM EVENTS — INSTALL ONCE */
 
   if (!SF.authFormEventsInstalled) {
     SF.authFormEventsInstalled = true;
 
-    // Authentication tabs
     document.addEventListener("click", event => {
       const button = event.target.closest("[data-auth-tab]");
 
@@ -308,45 +292,72 @@
       SF.setAuthTab(button.dataset.authTab);
     });
 
-    // LOGIN
+    /* LOGIN FORM */
+
     document.getElementById("loginForm")?.addEventListener(
       "submit",
       async event => {
         event.preventDefault();
 
         const form = event.currentTarget;
+
+        if (form.dataset.submitting === "true") return;
+
         const button = form.querySelector('[type="submit"]');
+        const originalText = button?.textContent;
 
-        if (button) button.disabled = true;
+        form.dataset.submitting = "true";
 
-        SF.showAuthMessage("Signing you in...");
+        if (button) {
+          button.disabled = true;
+          button.textContent = "Signing in...";
+        }
+
+        SF.showAuthMessage("Signing you in. Please wait...");
 
         try {
           await SF.login(form);
+
         } catch (error) {
           console.error("Login error:", error);
 
           SF.showAuthMessage(
-            error.message || "Unable to log in."
+            error.message || "Unable to log in. Please try again."
           );
 
-          if (button) button.disabled = false;
+        } finally {
+          form.dataset.submitting = "false";
+
+          if (button) {
+            button.disabled = false;
+            button.textContent = originalText || "Sign In";
+          }
         }
       }
     );
 
-    // REGISTRATION
+    /* REGISTRATION FORM */
+
     document.getElementById("registerForm")?.addEventListener(
       "submit",
       async event => {
         event.preventDefault();
 
         const form = event.currentTarget;
+
+        if (form.dataset.submitting === "true") return;
+
         const button = form.querySelector('[type="submit"]');
+        const originalText = button?.textContent;
 
-        if (button) button.disabled = true;
+        form.dataset.submitting = "true";
 
-        SF.showAuthMessage("Creating your account...");
+        if (button) {
+          button.disabled = true;
+          button.textContent = "Creating account...";
+        }
+
+        SF.showAuthMessage("Creating your account. Please wait...");
 
         try {
           await SF.register(form);
@@ -355,12 +366,17 @@
             SF.updateNavigation();
           }
 
-          // Continue without waiting for repeated database queries.
-          window.location.replace(
-            window.location.pathname +
-            window.location.search +
-            "#dashboard"
+          SF.showAuthMessage(
+            "Account created. Preparing your next step...",
+            true
           );
+
+          // Continue without a full-page reload.
+          if (typeof SF.navigate === "function") {
+            await SF.navigate("dashboard");
+          } else {
+            window.location.hash = "dashboard";
+          }
 
         } catch (error) {
           console.error("Registration error:", error);
@@ -369,17 +385,21 @@
             error.message || "Unable to create your account."
           );
 
-          if (button) button.disabled = false;
+        } finally {
+          form.dataset.submitting = "false";
+
+          if (button) {
+            button.disabled = false;
+            button.textContent = originalText || "Create Account";
+          }
         }
       }
     );
   }
 
-  /* -----------------------------------------------------
-     DEFAULT TAB
-  ----------------------------------------------------- */
+  /* DEFAULT TAB */
 
   SF.setAuthTab("register");
 
 })();
-         
+     
