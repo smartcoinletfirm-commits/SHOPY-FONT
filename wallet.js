@@ -340,7 +340,9 @@ SF.wallet.bindButtons = () => {
     if (event.target.id !== "sfWalletWithdrawForm") return;
 
     event.preventDefault();
-    SF.wallet.requestWithdrawal(event);
+    const form = event.currentTarget;
+event.preventDefault();
+SF.wallet.requestWithdrawal(form);
   });
 };
 
