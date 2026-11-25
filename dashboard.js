@@ -289,4 +289,119 @@ if (!SF.packageEventsInstalled) {
     SF.updatePackagePreview();
   });
 }
+
+/* =====================================================
+   WITHDRAWAL REQUEST
+   MEMBER SUBMITS AMOUNT + PAYMENT PHONE
+   ===================================================== */
+
+SF.submitWithdrawal = async () => {
+  const amountInput =
+    document.getElementById("withdrawAmount");
+
+  const phoneInput =
+    document.getElementById("withdrawPhone");
+
+  const message =
+    document.getElementById("withdrawMessage");
+
+  const button =
+    document.getElementById("withdrawSubmitButton");
+
+  if (!SF.currentUser) {
+    SF.setDashboardMessage(
+      "withdrawMessage",
+      "Please sign in first."
+    );
+    return;
+  }
+
+  const amount = Number(amountInput?.value);
+
+  const phone = phoneInput?.value?.trim();
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    SF.setDashboardMessage(
+      "withdrawMessage",
+      "Enter a valid withdrawal amount."
+    );
+    return;
+  }
+
+  if (!phone) {
+    SF.setDashboardMessage(
+      "withdrawMessage",
+      "Enter your payment phone number."
+    );
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Submitting...";
+  }
+
+  if (message) {
+    message.textContent = "";
+  }
+
+  try {
+    const db = SF.getClient();
+
+    const { error } = await db.rpc(
+      "scf_request_withdrawal",
+      {
+        p_amount: amount,
+        p_payment_phone: phone
+      }
+    );
+
+    if (error) throw error;
+
+    SF.setDashboardMessage(
+      "withdrawMessage",
+      "Your withdrawal request has been submitted successfully.",
+      true
+    );
+
+    if (amountInput) amountInput.value = "";
+    if (phoneInput) phoneInput.value = "";
+
+  } catch (error) {
+    console.error("Withdrawal request error:", error);
+
+    SF.setDashboardMessage(
+      "withdrawMessage",
+      error.message || "Failed to submit withdrawal request."
+    );
+
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Submit Withdrawal Request";
+    }
+  }
+};
+
+/* =====================================================
+   WITHDRAWAL EVENT
+   ===================================================== */
+
+if (!SF.withdrawalEventsInstalled) {
+  SF.withdrawalEventsInstalled = true;
+
+  document.addEventListener("click", event => {
+    const target = event.target;
+
+    if (!(target instanceof Element)) return;
+
+    const button = target.closest("#withdrawSubmitButton");
+
+    if (!button) return;
+
+    event.preventDefault();
+
+    SF.submitWithdrawal();
+  });
+}
    
