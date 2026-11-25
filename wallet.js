@@ -336,13 +336,18 @@ SF.wallet.bindButtons = () => {
     }
   });
 
+  /* CORRECTED WITHDRAWAL FORM SUBMISSION */
+
   panel.addEventListener("submit", event => {
     if (event.target.id !== "sfWalletWithdrawForm") return;
 
     event.preventDefault();
-    const form = event.currentTarget;
-event.preventDefault();
-SF.wallet.requestWithdrawal(form);
+
+    // event.target is the actual submitted form.
+    // event.currentTarget would be the wallet panel.
+    const form = event.target;
+
+    SF.wallet.requestWithdrawal(form);
   });
 };
 
@@ -388,6 +393,11 @@ SF.wallet.requestWithdrawal = async form => {
   const button = form.querySelector('[type="submit"]');
 
   try {
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Submitting...";
+    }
+
     const fd = new FormData(form);
 
     const amount = Number(fd.get("amount_usd"));
@@ -428,6 +438,8 @@ SF.wallet.requestWithdrawal = async form => {
     await SF.wallet.render();
 
   } catch (error) {
+    console.error("Withdrawal request error:", error);
+
     SF.wallet.showMessage(
       error.message || "Withdrawal request failed."
     );
@@ -770,4 +782,4 @@ document.addEventListener("DOMContentLoaded", () => {
   SF.wallet.addStyles();
   SF.wallet.mount();
 });
-       
+                         
