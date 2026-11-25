@@ -552,7 +552,8 @@
     }
   }
 
-  async function submitAssignment() {
+  
+async function submitAssignment() {
     const assignment = window.SF.scholarbridgeCurrentAssignment;
     if (!assignment || !allowed()) return;
 
@@ -561,4 +562,143 @@
     const text = $("sfAwEditor").innerText.trim();
 
     if (!title) {
-      message("Please enter a document
+      message("Please enter a document title.", true);
+      return;
+    }
+
+    if (!text) {
+      message("Please write your assignment before submitting.", true);
+      return;
+    }
+
+    const isResubmission = currentSubmission &&
+      String(currentSubmission.status).toLowerCase() === "returned";
+
+    const confirmText = isResubmission
+      ? "Resubmit your corrected assignment for review?"
+      : "Submit this assignment now? You will not be able to edit it unless it is returned.";
+
+    if (!confirm(confirmText)) return;
+
+    $("sfAwSubmit").disabled = true;
+    message(isResubmission ? "Resubmitting corrections..." : "Submitting assignment...");
+
+    try {
+      // Save final draft first.
+      const { error: draftError } = await db()
+        .from("scholarbridge_drafts")
+        .upsert({
+          assignment_id: assignment.id,
+          user_id: userId(),
+          title,
+          body,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: "assignment_id,user_id"
+        });
+
+      if (draftError) throw draftError;
+
+      if (isResubmission) {
+        // Secure SQL RPC preserves the previous revision.
+        const { data: revisionId, error } = await db().rpc(
+          "scholarbridge_resubmit_assignment",
+          {
+            p_submission_id: currentSubmission.id,
+            p_body: body
+          }
+        );
+
+        if (error) throw error;
+
+        message("Corrections resubmitted successfully. Revision saved: " + revisionId);
+      } else {
+        const { error } = await db()
+          .from("scholarbridge_submissions")
+          .insert({
+            assignment_id: assignment.id,
+            user_id: userId(),
+            title,
+            body,
+            status: "submitted"
+          });
+
+        if (error) throw error;
+
+        message("Assignment submitted successfully. Your work is now awaiting review.");
+      }
+
+      await checkSubmission(assignment.id);
+
+      if (SF.showToast) {
+        SF.showToast(isResubmission ? "Corrections resubmitted." : "Assignment submitted.");
+      }
+
+    } catch (error) {
+      $("sfAwSubmit").disabled = false;
+      message("Submission failed: " + error.message, true);
+    }
+  }
+
+  // Editor toolbar and workspace buttons.
+  document.addEventListener("click", async event => {
+    const openButton = event.target.closest("[data-aw-open]");
+    if (openButton) {
+      openAssignment(openButton.dataset.awOpen);
+      return;
+    }
+
+    const formatButton = event.target.closest("[data-aw-format]");
+    if (formatButton && allowed() && $("sfAwEditor")?.contentEditable === "true") {
+      $("sfAwEditor").focus();
+      document.execCommand(formatButton.dataset.awFormat, false, null);
+      wordCount();
+      return;
+    }
+
+    if (event.target.closest("#sfAwSave")) {
+      saveDraft();
+      return;
+    }
+
+    if (event.target.closest("#sfAwSubmit")) {
+      submitAssignment();
+    }
+  });
+
+  // Keep word count updated while the student writes.
+  document.addEventListener("input", event => {
+    if (event.target.id === "sfAwEditor") wordCount();
+  });
+
+  // Reopen and refresh workspace when ScholarBridge navigation occurs.
+  const originalNavigate = SF.navigate;
+
+  if (typeof originalNavigate === "function") {
+    SF.navigate = async function (view) {
+      const result = await originalNavigate.apply(this, arguments);
+
+      if (view === "scholarbridge") {
+        setTimeout(() => {
+          mount();
+          updateAccess();
+          loadAssignments();
+        }, 0);
+      }
+
+      return result;
+    };
+  }
+
+  // Initial workspace mount.
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mount);
+  } else {
+    mount();
+  }
+
+  // Expose mount function for existing app navigation.
+  SF.mountAcademicWriting = mount;
+
+})();
+
