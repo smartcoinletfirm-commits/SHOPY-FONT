@@ -379,16 +379,13 @@ SF.wallet.claim = async event => {
 
 /* REQUEST WITHDRAWAL */
 
-SF.wallet.requestWithdrawal = async event => {
-  event.preventDefault();
-
-  const form = event.currentTarget;
-  const button = form.querySelector('[type="submit"]');
-
-  if (button) {
-    button.disabled = true;
-    button.textContent = "Submitting...";
+SF.wallet.requestWithdrawal = async form => {
+  if (!(form instanceof HTMLFormElement)) {
+    console.error("Invalid withdrawal form:", form);
+    return;
   }
+
+  const button = form.querySelector('[type="submit"]');
 
   try {
     const fd = new FormData(form);
