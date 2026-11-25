@@ -688,6 +688,32 @@
             </div>
           </article>
         </div>
+        
+<!-- WITHDRAWAL FORM -->
+<div class="panel" id="withdrawalSection" style="margin-top:20px">
+  <h2>Withdraw Funds</h2>
+  <p>Submit your withdrawal request in USD.</p>
+
+  <form id="withdrawalForm" onsubmit="return false;">
+    <label for="withdrawAmount">Amount (USD)</label>
+    <input id="withdrawAmount" type="number"
+      min="1" step="0.01"
+      placeholder="Enter amount in USD" required>
+
+    <label for="withdrawPhone">Payment phone number</label>
+    <input id="withdrawPhone" type="tel"
+      placeholder="Enter payment phone number" required>
+
+    <button class="btn btn-gold" type="button"
+      id="withdrawSubmitButton">
+      Submit Withdrawal Request
+    </button>
+
+    <p id="withdrawMessage" role="status"></p>
+  </form>
+</div>
+<!-- END WITHDRAWAL FORM -->
+        
       </div>
     </section>
 
