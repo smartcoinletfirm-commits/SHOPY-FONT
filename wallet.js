@@ -1,7 +1,7 @@
 
 /* =====================================================
    SHOPY FONT — USD MEMBER WALLET
-   Emerald design, USD ledger and withdrawal handling
+   Emerald design, USD ledger and wallet transactions
 ===================================================== */
 
 window.SF = window.SF || {};
@@ -176,57 +176,13 @@ SF.wallet.render = async () => {
         </button>
       </div>
 
-      <div class="sf-wallet-actions">
-        <button type="button" class="sf-wallet-withdraw" id="sfOpenWithdraw">
-          Withdraw Funds
-        </button>
-
-        ${isCommunity ? `
+      ${isCommunity ? `
+        <div class="sf-wallet-actions">
           <button type="button" class="sf-wallet-upgrade" id="sfCommunityUpgrade">
             Upgrade to Full SHOPY FONT
           </button>
-        ` : ""}
-      </div>
-
-      <div id="sfWalletWithdrawArea" class="hidden" hidden>
-        <h3>Request a withdrawal</h3>
-        <p class="sf-wallet-muted">
-          Minimum withdrawal: KES 1,000 equivalent. Your request will be reviewed by an administrator.
-        </p>
-
-        <form id="sfWalletWithdrawForm">
-          <label>
-            Amount in USD
-            <input name="amount_usd" type="number"
-              min="0.01" step="0.01" required
-              placeholder="Example: 10.00">
-          </label>
-
-          <label>
-            Payment destination
-            <select name="destination_type" required>
-              <option value="">Choose destination</option>
-              <option value="mobile_money">Mobile money</option>
-              <option value="bank">Bank account</option>
-            </select>
-          </label>
-
-          <label>
-            Payment details
-            <textarea name="destination_details"
-              minlength="5" maxlength="300" required
-              placeholder="Enter your account name, number and payment details"></textarea>
-          </label>
-
-          <button type="submit" class="sf-wallet-withdraw">
-            Submit withdrawal request
-          </button>
-
-          <button type="button" class="sf-wallet-cancel" id="sfCancelWithdraw">
-            Cancel
-          </button>
-        </form>
-      </div>
+        </div>
+      ` : ""}
 
       <div class="sf-wallet-history">
         <h3>Recent transactions</h3>
@@ -255,7 +211,7 @@ SF.wallet.render = async () => {
   }
 };
 
-/* DELEGATED WALLET BUTTON EVENTS */
+/* WALLET BUTTON EVENTS */
 
 SF.wallet.bindButtons = () => {
   const panel = document.getElementById("sfWalletPanel");
@@ -267,53 +223,15 @@ SF.wallet.bindButtons = () => {
     const button = event.target.closest?.("button");
     if (!button || !panel.contains(button)) return;
 
+    /* WELCOME BONUS */
+
     if (button.id === "sfClaimWelcomeBonus") {
       event.preventDefault();
       await SF.wallet.claim({ currentTarget: button });
       return;
     }
 
-    if (button.id === "sfOpenWithdraw") {
-      event.preventDefault();
-
-      if (SF.wallet.isCommunity()) {
-        SF.wallet.showMessage(
-          "Community accounts must upgrade before accessing full withdrawal services."
-        );
-        return;
-      }
-
-      const area = document.getElementById("sfWalletWithdrawArea");
-
-      if (!area) {
-        SF.wallet.showMessage(
-          "Withdrawal form is unavailable. Please refresh your dashboard."
-        );
-        return;
-      }
-
-      area.hidden = false;
-      area.classList.remove("hidden");
-
-      area.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-
-      return;
-    }
-
-    if (button.id === "sfCancelWithdraw") {
-      event.preventDefault();
-
-      const area = document.getElementById("sfWalletWithdrawArea");
-      if (area) {
-        area.hidden = true;
-        area.classList.add("hidden");
-      }
-
-      return;
-    }
+    /* COMMUNITY UPGRADE */
 
     if (button.id === "sfCommunityUpgrade") {
       event.preventDefault();
@@ -334,20 +252,6 @@ SF.wallet.bindButtons = () => {
         SF.showToast("Please contact support to upgrade your account.");
       }
     }
-  });
-
-  /* CORRECTED WITHDRAWAL FORM SUBMISSION */
-
-  panel.addEventListener("submit", event => {
-    if (event.target.id !== "sfWalletWithdrawForm") return;
-
-    event.preventDefault();
-
-    // event.target is the actual submitted form.
-    // event.currentTarget would be the wallet panel.
-    const form = event.target;
-
-    SF.wallet.requestWithdrawal(form);
   });
 };
 
@@ -379,76 +283,6 @@ SF.wallet.claim = async event => {
 
     button.disabled = false;
     button.textContent = "Claim $0.60";
-  }
-};
-
-/* REQUEST WITHDRAWAL */
-
-SF.wallet.requestWithdrawal = async form => {
-  if (!(form instanceof HTMLFormElement)) {
-    console.error("Invalid withdrawal form:", form);
-    return;
-  }
-
-  const button = form.querySelector('[type="submit"]');
-
-  try {
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Submitting...";
-    }
-
-    const fd = new FormData(form);
-
-    const amount = Number(fd.get("amount_usd"));
-    const destinationType = String(fd.get("destination_type") || "");
-    const destinationDetails = String(
-      fd.get("destination_details") || ""
-    ).trim();
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-      throw new Error("Enter a valid USD withdrawal amount.");
-    }
-
-    if (!destinationType || destinationDetails.length < 5) {
-      throw new Error("Complete all payment destination details.");
-    }
-
-    const { error } = await SF.getClient().rpc(
-      "sf_usd_request_withdrawal",
-      {
-        p_amount_usd: amount,
-        p_destination_type: destinationType,
-        p_destination_details: destinationDetails
-      }
-    );
-
-    if (error) throw error;
-
-    SF.showToast("Your withdrawal request has been submitted.");
-
-    form.reset();
-
-    const area = document.getElementById("sfWalletWithdrawArea");
-    if (area) {
-      area.hidden = true;
-      area.classList.add("hidden");
-    }
-
-    await SF.wallet.render();
-
-  } catch (error) {
-    console.error("Withdrawal request error:", error);
-
-    SF.wallet.showMessage(
-      error.message || "Withdrawal request failed."
-    );
-
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.textContent = "Submit withdrawal request";
-    }
   }
 };
 
@@ -603,7 +437,6 @@ SF.wallet.addStyles = () => {
     }
 
     .sf-wallet-claim,
-    .sf-wallet-withdraw,
     .sf-wallet-upgrade {
       border:0;
       border-radius:9px;
@@ -612,8 +445,7 @@ SF.wallet.addStyles = () => {
       cursor:pointer;
     }
 
-    .sf-wallet-claim,
-    .sf-wallet-withdraw {
+    .sf-wallet-claim {
       background:#176b47;
       color:white;
     }
@@ -634,49 +466,6 @@ SF.wallet.addStyles = () => {
       background:#e8f4eb;
       color:#176b47;
       border:1px solid #cfe5d5;
-    }
-
-    #sfWalletWithdrawArea {
-      margin-top:20px;
-      padding:20px;
-      border:1px solid #e3e8e1;
-      border-radius:13px;
-      background:white;
-    }
-
-    #sfWalletWithdrawArea[hidden] {
-      display:none !important;
-    }
-
-    #sfWalletWithdrawArea label {
-      display:block;
-      margin:13px 0;
-      color:#34483d;
-      font-size:12px;
-      font-weight:700;
-    }
-
-    #sfWalletWithdrawArea input,
-    #sfWalletWithdrawArea select,
-    #sfWalletWithdrawArea textarea {
-      display:block;
-      width:100%;
-      margin-top:7px;
-      padding:12px;
-      border:1px solid #dce3dc;
-      border-radius:8px;
-      background:white;
-      color:#193629;
-    }
-
-    .sf-wallet-cancel {
-      margin-left:10px;
-      padding:12px;
-      border:0;
-      background:#eef4ef;
-      color:#315642;
-      border-radius:8px;
-      cursor:pointer;
     }
 
     .sf-wallet-history {
@@ -711,21 +500,39 @@ SF.wallet.addStyles = () => {
       font-size:10px;
     }
 
-    .sf-wallet-positive { color:#237a57; }
-    .sf-wallet-negative { color:#b42318; }
+    .sf-wallet-positive {
+      color:#237a57;
+    }
+
+    .sf-wallet-negative {
+      color:#b42318;
+    }
 
     @media(max-width:600px) {
-      .sf-wallet-panel { padding:17px; }
+      .sf-wallet-panel {
+        padding:17px;
+      }
 
       .sf-wallet-bonus {
         align-items:flex-start;
         flex-direction:column;
       }
 
-      .sf-wallet-stats { gap:6px; }
-      .sf-wallet-stats div { padding:11px 7px; }
-      .sf-wallet-stats strong { font-size:12px; }
-      .sf-wallet-actions button { width:100%; }
+      .sf-wallet-stats {
+        gap:6px;
+      }
+
+      .sf-wallet-stats div {
+        padding:11px 7px;
+      }
+
+      .sf-wallet-stats strong {
+        font-size:12px;
+      }
+
+      .sf-wallet-actions button {
+        width:100%;
+      }
     }
   `;
 
@@ -782,4 +589,4 @@ document.addEventListener("DOMContentLoaded", () => {
   SF.wallet.addStyles();
   SF.wallet.mount();
 });
-                         
+                                         
