@@ -1,6 +1,7 @@
 /* =====================================================
    SHOPY FONT — AUTHENTICATION SYSTEM
    Login, Registration, Sessions, Referrals & Logout
+   CORRECTED REFERRAL CAPTURE AND REGISTRATION
 ===================================================== */
 
 (() => {
@@ -8,7 +9,9 @@
 
   const SF = window.SF = window.SF || {};
 
-  /* SUPABASE CLIENT */
+  /* =====================================================
+     SUPABASE CLIENT
+  ===================================================== */
 
   SF.getClient = function () {
     if (!window.sfSupabase) {
@@ -18,7 +21,45 @@
     return window.sfSupabase;
   };
 
-  /* AUTH MESSAGES */
+  /* =====================================================
+     CAPTURE REFERRAL LINK IMMEDIATELY
+     Example: ?ref=ABC123
+  ===================================================== */
+
+  SF.getReferralCodeFromUrl = function () {
+    const params = new URLSearchParams(window.location.search);
+
+    const code = (
+      params.get("ref") ||
+      params.get("referral") ||
+      params.get("code") ||
+      ""
+    ).trim().toUpperCase();
+
+    return code;
+  };
+
+  SF.captureReferralCode = function () {
+    try {
+      const code = SF.getReferralCodeFromUrl();
+
+      if (code) {
+        sessionStorage.setItem("sf_pending_ref", code);
+      }
+
+      return sessionStorage.getItem("sf_pending_ref") || "";
+    } catch (error) {
+      console.warn("Referral capture failed:", error);
+      return "";
+    }
+  };
+
+  // Capture referral immediately when this file loads.
+  SF.captureReferralCode();
+
+  /* =====================================================
+     AUTH MESSAGES
+  ===================================================== */
 
   SF.showAuthMessage = function (message, success = false) {
     const el = document.getElementById("authMessage");
@@ -34,7 +75,9 @@
     el.style.color = success ? "#237a57" : "#b42318";
   };
 
-  /* AUTH TABS */
+  /* =====================================================
+     AUTH TABS
+  ===================================================== */
 
   SF.setAuthTab = function (tab) {
     const login = document.getElementById("loginForm");
@@ -57,20 +100,56 @@
     SF.showAuthMessage("");
   };
 
-  /* REFERRAL CODE */
+  /* =====================================================
+     APPLY PENDING REFERRAL
+     Referral is processed only when a logged-in user exists.
+  ===================================================== */
 
-  SF.getReferralCodeFromUrl = function () {
-    const params = new URLSearchParams(window.location.search);
-
-    return (
-      params.get("ref") ||
-      params.get("referral") ||
-      params.get("code") ||
+  SF.applyPendingReferral = async function () {
+    const code = (
+      sessionStorage.getItem("sf_pending_ref") ||
+      SF.getReferralCodeFromUrl() ||
       ""
     ).trim().toUpperCase();
+
+    if (!code || !SF.currentUser) {
+      return false;
+    }
+
+    // Keep the referral code available until the RPC succeeds.
+    try {
+      sessionStorage.setItem("sf_pending_ref", code);
+    } catch (_) {}
+
+    try {
+      const { data, error } = await SF.getClient().rpc(
+        "sf_register_referral",
+        {
+          p_referral_code: code
+        }
+      );
+
+      if (error) {
+        console.warn("Referral registration failed:", error.message);
+        return false;
+      }
+
+      // Remove the pending code only after successful RPC execution.
+      sessionStorage.removeItem("sf_pending_ref");
+
+      console.log("Referral registration RPC completed.", data);
+
+      return true;
+
+    } catch (error) {
+      console.warn("Referral registration error:", error);
+      return false;
+    }
   };
 
-  /* REGISTRATION */
+  /* =====================================================
+     REGISTRATION
+  ===================================================== */
 
   SF.register = async function (form) {
     const fd = new FormData(form);
@@ -110,7 +189,11 @@
       throw new Error("Your passwords do not match.");
     }
 
-    const referralCode = SF.getReferralCodeFromUrl();
+    // Ensure the referral code was captured before registration.
+    const referralCode =
+      SF.captureReferralCode() ||
+      sessionStorage.getItem("sf_pending_ref") ||
+      "";
 
     const { data, error } = await SF.getClient().auth.signUp({
       email,
@@ -135,16 +218,25 @@
     SF.currentUser = data.user;
     SF.profile = null;
 
+    // If signup created a session immediately, process the referral now.
+    // If email verification is required, the code stays pending for login.
+    if (data.session && referralCode) {
+      await SF.applyPendingReferral();
+    }
+
     if (!data.session) {
       throw new Error(
         "Your account was created, but email confirmation is required. Check your email before signing in. Do not register again with the same email."
+
       );
     }
 
     return data;
   };
 
-  /* SESSION RESTORATION */
+  /* =====================================================
+     SESSION RESTORATION
+  ===================================================== */
 
   SF.refreshSession = async function () {
     const { data, error } = await SF.getClient().auth.getSession();
@@ -153,8 +245,6 @@
 
     SF.currentUser = data.session?.user || null;
 
-    // Profile loading is deferred until a screen needs it.
-    // This avoids an unnecessary profile query during every session restore.
     if (!SF.currentUser) {
       SF.profile = null;
     }
@@ -162,7 +252,9 @@
     return SF.currentUser;
   };
 
-  /* MEMBER PROFILE */
+  /* =====================================================
+     MEMBER PROFILE
+  ===================================================== */
 
   SF.loadProfile = async function () {
     if (!SF.currentUser) return null;
@@ -186,31 +278,9 @@
     return data;
   };
 
-  /* APPLY PENDING REFERRAL */
-
-  SF.applyPendingReferral = async function () {
-    const code = sessionStorage.getItem("sf_pending_ref");
-
-    if (!code || !SF.currentUser) return false;
-
-    const { data, error } = await SF.getClient().rpc(
-      "sf_register_referral",
-      {
-        p_referral_code: code
-      }
-    );
-
-    if (error) {
-      console.warn("Referral registration:", error.message);
-      return false;
-    }
-
-    sessionStorage.removeItem("sf_pending_ref");
-
-    return data === true;
-  };
-
-  /* LOGIN */
+  /* =====================================================
+     LOGIN
+  ===================================================== */
 
   SF.login = async function (form) {
     const fd = new FormData(form);
@@ -241,6 +311,10 @@
 
     SF.showAuthMessage("Signed in. Preparing your account...", true);
 
+    // Attempt to apply the referral after successful authentication.
+    // Referral errors do not block login.
+    await SF.applyPendingReferral();
+
     // Verify admin status before choosing the destination.
     let isAdmin = false;
 
@@ -266,7 +340,9 @@
     return data;
   };
 
-  /* LOGOUT */
+  /* =====================================================
+     LOGOUT
+  ===================================================== */
 
   SF.logout = async function () {
     const { error } = await SF.getClient().auth.signOut();
@@ -278,7 +354,9 @@
     SF.adminAuthorized = false;
   };
 
-  /* FORM EVENTS — INSTALL ONCE */
+  /* =====================================================
+     FORM EVENTS — INSTALL ONCE
+  ===================================================== */
 
   if (!SF.authFormEventsInstalled) {
     SF.authFormEventsInstalled = true;
@@ -397,9 +475,10 @@
     );
   }
 
-  /* DEFAULT TAB */
+  /* =====================================================
+     DEFAULT TAB
+  ===================================================== */
 
   SF.setAuthTab("register");
 
 })();
-     
