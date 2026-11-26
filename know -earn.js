@@ -1,571 +1,581 @@
 
-/* ==========================================================
-   SHOPY FONT — KNOW & EARN
-   Independent member interface
-   4 choices | USD rewards | 10 daily questions | No timer
-   ========================================================== */
+/* =========================================================
+   SHOPY FONT — KNOW & EARN MEMBER MODULE
+   Independent from the old Trivia system.
+   RPC: sf_know_earn_submit
+   Daily limit: 10
+   Options: A, B, C, D
+   No timer
+========================================================= */
 
 (function () {
   "use strict";
 
-  const $ = id => document.getElementById(id);
-  const db = () => window.SF.getClient();
+  const SF = window.SF;
+  if (!SF) return;
 
+  const db = () => SF.getClient();
+  const PANEL_ID = "sfKnowEarnPanel";
   const DAILY_LIMIT = 10;
-  const LETTERS = ["A", "B", "C", "D"];
-
-  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  }[c]));
 
   let currentQuestion = null;
+  let answeredIds = new Set();
+  let attemptsUsed = 0;
   let selectedAnswer = null;
   let busy = false;
 
-  const css = `
-    #sfKnowEarnPanel {
-      margin:22px 0;
-      padding:22px;
-      background:linear-gradient(145deg,#ffffff,#f3f8f4);
-      border:1px solid #dce9df;
-      border-radius:24px;
-      color:#163d2b;
-      box-shadow:0 15px 40px rgba(12,45,30,.07);
-    }
-
-    #sfKnowEarnPanel * {
-      box-sizing:border-box;
-    }
-
-    .ke-header {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      flex-wrap:wrap;
-      gap:14px;
-    }
-
-    .ke-kicker {
-      color:#b28a44;
-      font-size:10px;
-      font-weight:900;
-      letter-spacing:2px;
-    }
-
-    .ke-header h2 {
-      font-size:27px;
-      font-weight:900;
-      margin:8px 0;
-      color:#123d29;
-    }
-
-    .ke-header p {
-      color:#687a70;
-      line-height:1.6;
-      margin:0;
-    }
-
-    .ke-count {
-      background:#fff;
-      border:1px solid #dce8df;
-      border-radius:30px;
-      padding:11px 15px;
-      font-weight:900;
-      color:#17633d;
-      font-size:12px;
-    }
-
-    .ke-progress {
-      height:9px;
-      border-radius:30px;
-      background:#e3ece5;
-      overflow:hidden;
-      margin:22px 0;
-    }
-
-    .ke-progress-fill {
-      height:100%;
-      width:0%;
-      background:linear-gradient(90deg,#147b4b,#38b778);
-      border-radius:30px;
-      transition:width .3s ease;
-    }
-
-    .ke-question-box {
-      padding:20px;
-      border-radius:20px;
-      background:#fff;
-      border:1px solid #e0eae2;
-    }
-
-    .ke-question-title {
-      display:flex;
-      gap:13px;
-      align-items:flex-start;
-      margin-bottom:20px;
-    }
-
-    .ke-number {
-      display:grid;
-      place-items:center;
-      min-width:45px;
-      height:45px;
-      border-radius:14px;
-      background:#14432e;
-      color:#f2d89d;
-      font-size:16px;
-      font-weight:900;
-    }
-
-    .ke-question-text {
-      font-size:18px;
-      font-weight:900;
-      line-height:1.6;
-      color:#163d2b;
-      margin:5px 0;
-    }
-
-    .ke-options {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-
-    .ke-option {
-      display:flex;
-      align-items:center;
-      gap:12px;
-      text-align:left;
-      min-height:62px;
-      padding:12px;
-      border:1px solid #dce7de;
-      border-radius:15px;
-      background:#fff;
-      color:#244333;
-      cursor:pointer;
-      font-size:14px;
-      transition:.2s;
-    }
-
-    .ke-option:hover {
-      background:#f2faf4;
-      border-color:#438765;
-    }
-
-    .ke-option.selected {
-      background:#eaf7ef;
-      border:2px solid #18804e;
-      color:#155b37;
-    }
-
-    .ke-option:disabled {
-      cursor:default;
-      opacity:1;
-    }
-
-    .ke-letter {
-      display:grid;
-      place-items:center;
-      min-width:34px;
-      height:34px;
-      border-radius:10px;
-      background:#edf3ee;
-      color:#386349;
-      font-weight:900;
-    }
-
-    .ke-option.selected .ke-letter {
-      background:#16804f;
-      color:white;
-    }
-
-    .ke-submit {
-      width:100%;
-      margin-top:18px;
-      padding:15px;
-      border:0;
-      border-radius:14px;
-      background:linear-gradient(135deg,#188052,#10432d);
-      color:#fff;
-      font-weight:900;
-      cursor:pointer;
-    }
-
-    .ke-submit:disabled {
-      background:#aebdb2;
-      cursor:not-allowed;
-    }
-
-    .ke-reward {
-      margin-top:16px;
-      padding:13px;
-      border-radius:13px;
-      background:#fffdf6;
-      border:1px solid #eee4cc;
-      color:#8a6b35;
-      font-size:13px;
-      font-weight:800;
-    }
-
-    .ke-feedback {
-      margin-top:17px;
-      padding:16px;
-      border-radius:15px;
-      font-size:14px;
-      line-height:1.7;
-    }
-
-    .ke-success {
-      background:#e9f8ee;
-      border:1px solid #bce4c8;
-      color:#16623a;
-    }
-
-    .ke-error {
-      background:#fff0f0;
-      border:1px solid #efc1c1;
-      color:#a02f2f;
-    }
-
-    .ke-feedback strong {
-      display:block;
-      font-size:17px;
-      margin-bottom:5px;
-    }
-
-    .ke-next {
-      width:100%;
-      margin-top:14px;
-      padding:15px;
-      border:0;
-      border-radius:13px;
-      background:#174d34;
-      color:#fff;
-      font-weight:900;
-      cursor:pointer;
-    }
-
-    .ke-empty {
-      padding:30px 16px;
-      text-align:center;
-      border-radius:17px;
-      background:#f5f9f5;
-      color:#66776b;
-    }
-
-    .ke-empty strong {
-      display:block;
-      font-size:18px;
-      color:#17432e;
-      margin-bottom:8px;
-    }
-
-    .ke-note {
-      margin-top:14px;
-      font-size:12px;
-      color:#7a887e;
-      line-height:1.6;
-    }
-
-    @media(max-width:600px) {
-      #sfKnowEarnPanel {
-        padding:15px;
-      }
-
-      .ke-options {
-        grid-template-columns:1fr;
-      }
-
-      .ke-question-box {
-        padding:13px;
-      }
-
-      .ke-question-text {
-        font-size:16px;
-      }
-    }
-  `;
-
-  function installStyles() {
-    if ($("sfKnowEarnStyles")) return;
-
-    const style = document.createElement("style");
-    style.id = "sfKnowEarnStyles";
-    style.textContent = css;
-    document.head.appendChild(style);
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[char]));
   }
 
-  function installPanel() {
-    const root = $("tasksView");
-    if (!root || $("sfKnowEarnPanel")) return;
-
-    const tabs = root.querySelector(".sf-task-tabs");
-    if (!tabs) return;
-
-    if (!tabs.querySelector('[data-task-tab="know-earn"]')) {
-      const tab = document.createElement("button");
-      tab.type = "button";
-      tab.className = "sf-task-tab";
-      tab.dataset.taskTab = "know-earn";
-      tab.textContent = "KNOW & EARN";
-      tabs.appendChild(tab);
-    }
-
-    const panel = document.createElement("section");
-    panel.id = "sfKnowEarnPanel";
-    panel.className = "hidden";
-
-    panel.innerHTML = `
-      <div class="ke-header">
-        <div>
-          <span class="ke-kicker">THINK · LEARN · EARN</span>
-          <h2>KNOW & EARN</h2>
-          <p>Answer correctly and earn USD rewards.</p>
-        </div>
-
-        <div class="ke-count" id="keCount">
-          0 / ${DAILY_LIMIT} TODAY
-        </div>
-      </div>
-
-      <div class="ke-progress">
-        <div class="ke-progress-fill" id="keProgress"></div>
-      </div>
-
-      <div id="keContent">
-        <div class="ke-empty">
-          <strong>Preparing your questions...</strong>
-          Please wait.
-        </div>
-      </div>
-    `;
-
-    tabs.insertAdjacentElement("afterend", panel);
+  function money(value) {
+    return "$" + Number(value || 0).toFixed(2);
   }
 
-  function updateProgress(count) {
-    const safeCount = Math.min(count, DAILY_LIMIT);
-
-    if ($("keCount")) {
-      $("keCount").textContent =
-        safeCount + " / " + DAILY_LIMIT + " TODAY";
-    }
-
-    if ($("keProgress")) {
-      $("keProgress").style.width =
-        (safeCount / DAILY_LIMIT * 100) + "%";
-    }
+  function todayUTC() {
+    return new Date().toISOString().slice(0, 10);
   }
 
-  function showEmpty(title, message, retry = false) {
-    const content = $("keContent");
-    if (!content) return;
-
-    content.innerHTML = `
-      <div class="ke-empty">
-        <strong>${esc(title)}</strong>
-        <p>${esc(message)}</p>
-        ${retry ? `
-          <button class="ke-next" id="keRetry">
-            TRY AGAIN
-          </button>
-        ` : ""}
-      </div>
-    `;
-
-    if (retry) {
-      $("keRetry")?.addEventListener("click", loadQuestion);
-    }
+  function getPanel() {
+    return document.getElementById(PANEL_ID);
   }
 
-  /*
-   * The backend tables and RPC will be connected after the
-   * KNOW & EARN database setup is installed.
-   * This intentionally does not call the old Trivia RPC.
-   */
+  function getOptions(question) {
+    return [
+      { key: "A", value: question.option_a },
+      { key: "B", value: question.option_b },
+      { key: "C", value: question.option_c },
+      { key: "D", value: question.option_d }
+    ];
+  }
 
-  async function loadQuestion() {
-    currentQuestion = null;
-    selectedAnswer = null;
-    busy = false;
-
-    showEmpty(
-      "KNOW & EARN is being prepared",
-      "The new question system is awaiting backend setup."
+  function progressHTML() {
+    const percentage = Math.min(
+      100,
+      (attemptsUsed / DAILY_LIMIT) * 100
     );
 
-    updateProgress(0);
+    return `
+      <div class="ke-progress-card">
+        <div class="ke-progress-top">
+          <span>Daily attempts</span>
+          <strong>${attemptsUsed}/${DAILY_LIMIT}</strong>
+        </div>
+
+        <div class="ke-progress-track">
+          <div class="ke-progress-fill" style="width:${percentage}%"></div>
+        </div>
+
+        <small>${DAILY_LIMIT - attemptsUsed} attempts remaining today</small>
+      </div>
+    `;
   }
 
-  function renderQuestion(question, count) {
-    currentQuestion = question;
-    selectedAnswer = null;
+  function stylesHTML() {
+    return `
+      <style>
+        .ke-member {
+          max-width: 850px;
+          margin: 0 auto;
+          padding: 10px;
+        }
 
-    const options = Array.isArray(question.options)
-      ? question.options
-      : [];
+        .ke-header {
+          border-radius: 20px;
+          padding: 22px;
+          margin-bottom: 18px;
+          background: linear-gradient(135deg,#064e3b,#087553);
+          color: #fff;
+        }
 
-    if (options.length !== 4) {
-      showEmpty(
-        "Question unavailable",
-        "This question must have exactly four answer choices."
-      );
+        .ke-header h2 {
+          margin: 0 0 8px;
+          font-size: 24px;
+        }
+
+        .ke-header p {
+          margin: 0;
+          opacity: .88;
+        }
+
+        .ke-progress-card {
+          padding: 16px;
+          border: 1px solid rgba(20,130,90,.25);
+          border-radius: 15px;
+          margin-bottom: 18px;
+          background: rgba(20,130,90,.05);
+        }
+
+        .ke-progress-top {
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+
+        .ke-progress-track {
+          height: 10px;
+          border-radius: 20px;
+          background: #dce9e2;
+          overflow: hidden;
+          margin-bottom: 8px;
+        }
+
+        .ke-progress-fill {
+          height: 100%;
+          background: #07885d;
+          border-radius: 20px;
+          transition: width .25s ease;
+        }
+
+        .ke-question-card {
+          padding: 20px;
+          border: 1px solid rgba(20,130,90,.2);
+          border-radius: 18px;
+          margin-bottom: 16px;
+        }
+
+        .ke-question-text {
+          font-size: 19px;
+          font-weight: 700;
+          line-height: 1.6;
+          margin-bottom: 18px;
+        }
+
+        .ke-option {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          width: 100%;
+          padding: 14px;
+          border: 1px solid #d6e5dc;
+          border-radius: 12px;
+          background: transparent;
+          text-align: left;
+          color: inherit;
+          cursor: pointer;
+          margin-bottom: 10px;
+          transition: .15s;
+        }
+
+        .ke-option:hover {
+          border-color: #07885d;
+        }
+
+        .ke-option.selected {
+          border: 2px solid #07885d;
+          background: rgba(7,136,93,.09);
+        }
+
+        .ke-option:disabled {
+          cursor: not-allowed;
+          opacity: .8;
+        }
+
+        .ke-letter {
+          display: inline-flex;
+          min-width: 30px;
+          height: 30px;
+          align-items: center;
+          justify-content: center;
+          border-radius: 9px;
+          background: rgba(7,136,93,.12);
+          color: #07885d;
+          font-weight: 800;
+        }
+
+        .ke-option-text {
+          padding-top: 4px;
+          line-height: 1.5;
+        }
+
+        .ke-submit {
+          width: 100%;
+          border: 0;
+          padding: 15px;
+          border-radius: 12px;
+          background: #087553;
+          color: #fff;
+          font-weight: 800;
+          cursor: pointer;
+          margin-top: 10px;
+        }
+
+        .ke-submit:disabled {
+          opacity: .5;
+          cursor: not-allowed;
+        }
+
+        .ke-next {
+          width: 100%;
+          border: 0;
+          padding: 15px;
+          border-radius: 12px;
+          background: #d6a83b;
+          color: #17241c;
+          font-weight: 800;
+          cursor: pointer;
+          margin-top: 10px;
+        }
+
+        .ke-result {
+          padding: 16px;
+          margin: 16px 0;
+          border-radius: 13px;
+          font-weight: 700;
+          line-height: 1.6;
+        }
+
+        .ke-correct {
+          background: rgba(16,155,91,.12);
+          border: 1px solid #17a366;
+        }
+
+        .ke-wrong {
+          background: rgba(210,70,70,.09);
+          border: 1px solid #d46b6b;
+        }
+
+        .ke-message {
+          padding: 20px;
+          text-align: center;
+          border: 1px solid rgba(20,130,90,.2);
+          border-radius: 16px;
+          line-height: 1.7;
+        }
+
+        .ke-reward {
+          font-size: 27px;
+          color: #07885d;
+          font-weight: 900;
+          margin: 8px 0;
+        }
+
+        @media(max-width:500px) {
+          .ke-question-card {
+            padding: 14px;
+          }
+
+          .ke-question-text {
+            font-size: 17px;
+          }
+        }
+      </style>
+    `;
+  }
+
+  function showMessage(title, description) {
+    const panel = getPanel();
+    if (!panel) return;
+
+    panel.innerHTML = stylesHTML() + `
+      <div class="ke-member">
+        <div class="ke-header">
+          <h2>KNOW & EARN</h2>
+          <p>Knowledge creates opportunity.</p>
+        </div>
+
+        ${progressHTML()}
+
+        <div class="ke-message">
+          <h3>${escapeHTML(title)}</h3>
+          <p>${escapeHTML(description)}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadAttempts() {
+    const user = SF.currentUser;
+
+    if (!user) {
+      attemptsUsed = 0;
+      answeredIds = new Set();
       return;
     }
 
-    const content = $("keContent");
+    const { data, error } = await db()
+      .from("sf_know_earn_attempts")
+      .select("question_id,attempt_date")
+      .eq("user_id", user.id)
+      .eq("attempt_date", todayUTC());
 
-    content.innerHTML = `
-      <div class="ke-question-box">
+    if (error) throw error;
 
-        <div class="ke-question-title">
-          <span class="ke-number">
-            ${String(count + 1).padStart(2, "0")}
-          </span>
+    const attempts = data || [];
+    attemptsUsed = attempts.length;
+    answeredIds = new Set(attempts.map(row => row.question_id));
+  }
 
-          <div>
-            <span class="ke-kicker">
-              QUESTION ${count + 1} OF ${DAILY_LIMIT}
-            </span>
+  async function loadQuestion() {
+    if (busy) return;
 
-            <p class="ke-question-text">
-              ${esc(question.question)}
-            </p>
-          </div>
+    const panel = getPanel();
+    if (!panel) return;
+
+    busy = true;
+    panel.innerHTML = stylesHTML() + `
+      <div class="ke-member">
+        <div class="ke-header">
+          <h2>KNOW & EARN</h2>
+          <p>Loading your questions...</p>
         </div>
-
-        <div class="ke-options">
-          ${options.map((option, index) => `
-            <button type="button"
-              class="ke-option"
-              data-ke-option="${index}">
-              <span class="ke-letter">
-                ${LETTERS[index]}
-              </span>
-              <span>${esc(option)}</span>
-            </button>
-          `).join("")}
-        </div>
-
-        <button type="button"
-          class="ke-submit"
-          id="keSubmit"
-          disabled>
-          SELECT AN ANSWER
-        </button>
-
-        <div class="ke-reward">
-          Potential reward: $${Number(question.reward_usd || 0).toFixed(2)} USD
-        </div>
-
-        <p class="ke-note">
-          No timer. Choose one answer and submit.
-          Rewards are issued only for correct answers
-          confirmed by the system.
-        </p>
       </div>
     `;
 
-    content.querySelectorAll("[data-ke-option]")
-      .forEach(button => {
-        button.addEventListener("click", () => {
-          if (busy) return;
+    try {
+      await loadAttempts();
 
-          selectedAnswer = Number(button.dataset.keOption);
+      if (attemptsUsed >= DAILY_LIMIT) {
+        showMessage(
+          "Daily limit reached",
+          "You have used all 10 attempts for today. Come back tomorrow for more questions."
+        );
+        busy = false;
+        return;
+      }
 
-          content.querySelectorAll("[data-ke-option]")
-            .forEach(b => b.classList.remove("selected"));
+      const { data, error } = await db()
+        .from("sf_know_earn_questions")
+        .select("id,question,option_a,option_b,option_c,option_d,reward_usd")
+        .eq("is_active", true);
 
-          button.classList.add("selected");
+      if (error) throw error;
 
-          const submit = $("keSubmit");
-          submit.disabled = false;
-          submit.textContent = "SUBMIT ANSWER";
-        });
+      const available = (data || []).filter(
+        q => !answeredIds.has(q.id)
+      );
+
+      if (!available.length) {
+        showMessage(
+          "No new questions available",
+          "You have answered all the currently available questions. New questions will appear when they are published."
+        );
+        busy = false;
+        return;
+      }
+
+      currentQuestion = available[
+        Math.floor(Math.random() * available.length)
+      ];
+
+      selectedAnswer = null;
+      renderQuestion();
+
+    } catch (error) {
+      showMessage(
+        "Unable to load questions",
+        error.message || "Please try again."
+      );
+    }
+
+    busy = false;
+  }
+
+  function renderQuestion() {
+    const panel = getPanel();
+    if (!panel || !currentQuestion) return;
+
+    const q = currentQuestion;
+
+    panel.innerHTML = stylesHTML() + `
+      <div class="ke-member">
+
+        <div class="ke-header">
+          <h2>KNOW & EARN</h2>
+          <p>Test your knowledge. Earn rewards.</p>
+        </div>
+
+        ${progressHTML()}
+
+        <div class="ke-question-card">
+
+          <div class="ke-question-text">
+            ${escapeHTML(q.question)}
+          </div>
+
+          <div id="keOptions">
+            ${getOptions(q).map(option => `
+              <button type="button"
+                class="ke-option"
+                data-ke-option="${option.key}">
+
+                <span class="ke-letter">${option.key}</span>
+
+                <span class="ke-option-text">
+                  ${escapeHTML(option.value)}
+                </span>
+
+              </button>
+            `).join("")}
+          </div>
+
+          <div id="keFeedback"></div>
+
+          <button id="keSubmit" class="ke-submit" disabled>
+            SUBMIT ANSWER
+          </button>
+
+        </div>
+
+        <p style="text-align:center;opacity:.7">
+          Reward for this question: ${money(q.reward_usd)}
+        </p>
+
+      </div>
+    `;
+
+    panel.querySelectorAll("[data-ke-option]").forEach(button => {
+      button.addEventListener("click", () => {
+        if (button.disabled) return;
+
+        selectedAnswer = button.dataset.keOption;
+
+        panel.querySelectorAll("[data-ke-option]")
+          .forEach(option => option.classList.remove("selected"));
+
+        button.classList.add("selected");
+
+        const submit = panel.querySelector("#keSubmit");
+        if (submit) submit.disabled = false;
       });
+    });
 
-    $("keSubmit").addEventListener("click", submitAnswer);
+    panel.querySelector("#keSubmit")
+      ?.addEventListener("click", submitAnswer);
   }
 
   async function submitAnswer() {
-    if (busy || selectedAnswer === null || !currentQuestion) return;
+    if (busy || !currentQuestion || !selectedAnswer) return;
 
     busy = true;
 
-    const submit = $("keSubmit");
-    submit.disabled = true;
-    submit.textContent = "CHECKING ANSWER...";
+    const panel = getPanel();
+    const submit = panel?.querySelector("#keSubmit");
 
-    /*
-     * Secure payout RPC will be connected once the backend
-     * is installed. Never calculate or credit a reward here.
-     */
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = "CHECKING ANSWER...";
+    }
+
+    try {
+      const { data, error } = await db().rpc(
+        "sf_know_earn_submit",
+        {
+          p_question_id: currentQuestion.id,
+          p_selected_option: selectedAnswer
+        }
+      );
+
+      if (error) throw error;
+
+      attemptsUsed = Number(
+        data.daily_attempts_used ?? attemptsUsed + 1
+      );
+
+      answeredIds.add(currentQuestion.id);
+
+      showResult(data);
+
+    } catch (error) {
+      showMessage(
+        "Answer could not be submitted",
+        error.message || "Please try again."
+      );
+    }
 
     busy = false;
-    submit.disabled = false;
-    submit.textContent = "BACKEND NOT CONNECTED";
   }
 
-  function activateTab(tab) {
-    const panel = $("sfKnowEarnPanel");
+  function showResult(data) {
+    const panel = getPanel();
     if (!panel) return;
 
-    if (tab.dataset.taskTab === "know-earn") {
-      document.querySelectorAll("#tasksView [data-task-tab]")
-        .forEach(button => {
-          button.classList.toggle("active", button === tab);
-        });
+    const correct = !!data.correct;
+    const reward = Number(data.reward_usd || 0);
 
-      $("sfAvailableTasks")?.classList.add("hidden");
-      $("sfMyTaskSubmissions")?.classList.add("hidden");
-      $("sfTriviaPanel")?.classList.add("hidden");
+    panel.innerHTML = stylesHTML() + `
+      <div class="ke-member">
 
-      panel.classList.remove("hidden");
-      loadQuestion();
-    } else {
-      panel.classList.add("hidden");
-    }
+        <div class="ke-header">
+          <h2>KNOW & EARN</h2>
+          <p>Your answer has been checked.</p>
+        </div>
+
+        ${progressHTML()}
+
+        <div class="ke-question-card">
+
+          <div class="ke-result ${correct ? "ke-correct" : "ke-wrong"}">
+            ${correct
+              ? "Correct answer! Congratulations!"
+              : "Incorrect answer. Better luck on the next question."}
+          </div>
+
+          <div class="ke-question-text">
+            ${escapeHTML(currentQuestion.question)}
+          </div>
+
+          ${getOptions(currentQuestion).map(option => `
+            <div class="ke-option ${option.key === selectedAnswer ? "selected" : ""}">
+              <span class="ke-letter">${option.key}</span>
+              <span class="ke-option-text">${escapeHTML(option.value)}</span>
+            </div>
+          `).join("")}
+
+          <div class="ke-message">
+            <p>Your result</p>
+
+            ${correct
+              ? `<div class="ke-reward">+${money(reward)}</div>
+                 <p>Reward recorded for this correct answer.</p>`
+              : `<div class="ke-reward">$0.00</div>
+                 <p>No reward for this answer.</p>`}
+
+            <p>Attempts used today: ${attemptsUsed}/${DAILY_LIMIT}</p>
+          </div>
+
+          <button class="ke-next" id="keNext">
+            ${attemptsUsed >= DAILY_LIMIT
+              ? "FINISH FOR TODAY"
+              : "NEXT QUESTION"}
+          </button>
+
+        </div>
+      </div>
+    `;
+
+    panel.querySelector("#keNext")
+      ?.addEventListener("click", () => {
+        if (attemptsUsed >= DAILY_LIMIT) {
+          showMessage(
+            "Daily limit reached",
+            "You have completed your 10 attempts for today. Come back tomorrow!"
+          );
+        } else {
+          loadQuestion();
+        }
+      });
   }
 
+  // Load when the member opens KNOW & EARN.
   document.addEventListener("click", event => {
-    const tab = event.target.closest("[data-task-tab]");
+    const tab = event.target.closest("[data-task-tab='know-earn']");
     if (!tab) return;
 
-    if (tab.dataset.taskTab === "know-earn") {
-      activateTab(tab);
-    } else {
-      $("sfKnowEarnPanel")?.classList.add("hidden");
-    }
-  }, true);
+    setTimeout(() => {
+      if (getPanel()) loadQuestion();
+    }, 100);
+  });
 
-  function watchTasks() {
-    const observer = new MutationObserver(() => {
-      if ($("tasksView")) {
-        installPanel();
-        observer.disconnect();
-      }
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
-    installPanel();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      installStyles();
-      watchTasks();
-    });
-  } else {
-    installStyles();
-    watchTasks();
-  }
+  // Public initialization hook for existing dashboard code.
+  SF.loadKnowEarn = loadQuestion;
 
 })();
+   
