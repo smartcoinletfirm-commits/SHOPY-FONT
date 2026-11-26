@@ -1,6 +1,7 @@
 /* =====================================================
    SHOPY FONT — MEMBER DASHBOARD
    Emerald and white member workspace
+   Includes KNOW & EARN and MARKETING PUSH
 ===================================================== */
 
 (function () {
@@ -97,6 +98,85 @@
     .sf-dash-summary-card.wallet strong {
       color:#fff;
     }
+
+    /* EARNING OPPORTUNITIES */
+
+    .sf-earning-opportunities {
+      margin-top:16px;
+      padding:18px;
+      border:1px solid #dce9df;
+      border-radius:17px;
+      background:linear-gradient(145deg,#ffffff,#f2f8f4);
+    }
+
+    .sf-earning-opportunities h3 {
+      margin:0 0 5px;
+      color:#173d2d;
+      font-size:18px;
+      font-weight:900;
+    }
+
+    .sf-earning-opportunities > p {
+      margin:0 0 14px;
+      color:#748278;
+      font-size:12px;
+    }
+
+    .sf-earning-grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+
+    .sf-earning-card {
+      min-height:132px;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:8px;
+      padding:16px;
+      border:1px solid #e2eae3;
+      border-radius:14px;
+      background:#fff;
+      color:#183b2d;
+      text-align:left;
+      cursor:pointer;
+      transition:.18s;
+    }
+
+    .sf-earning-card:hover {
+      transform:translateY(-2px);
+      border-color:#a9cbb2;
+    }
+
+    .sf-earning-card.know {
+      background:linear-gradient(135deg,#124b35,#1d7950);
+      color:#fff;
+      border-color:#1d7950;
+    }
+
+    .sf-earning-icon {
+      font-size:24px;
+    }
+
+    .sf-earning-card strong {
+      font-size:14px;
+    }
+
+    .sf-earning-card small {
+      font-size:11px;
+      line-height:1.55;
+      opacity:.82;
+    }
+
+    .sf-earning-card .sf-earning-cta {
+      margin-top:auto;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.4px;
+    }
+
+    /* REFERRALS */
 
     .sf-dash-referral {
       margin-top:16px;
@@ -198,6 +278,8 @@
       font-size:20px;
     }
 
+    /* MEMBER WORKSPACE */
+
     .sf-dash-workspace {
       margin-top:22px;
     }
@@ -264,7 +346,8 @@
     }
 
     .sf-quick-card:disabled,
-    .sf-dash-btn:disabled {
+    .sf-dash-btn:disabled,
+    .sf-earning-card:disabled {
       opacity:.6;
       cursor:not-allowed;
     }
@@ -276,6 +359,10 @@
     }
 
     @media(max-width:430px) {
+      .sf-earning-grid {
+        grid-template-columns:1fr;
+      }
+
       .sf-dash-linkrow {
         flex-direction:column;
       }
@@ -443,6 +530,51 @@
         </article>
       </div>
 
+      <!-- EARNING OPPORTUNITIES -->
+      <section class="sf-earning-opportunities">
+        <h3>EARNING OPPORTUNITIES</h3>
+        <p>Explore ways to earn rewards on SHOPY FONT.</p>
+
+        <div class="sf-earning-grid">
+
+          <button type="button"
+            class="sf-earning-card know"
+            data-sf-dashboard-view="tasks">
+
+            <span class="sf-earning-icon">🧠</span>
+            <strong>KNOW &amp; EARN</strong>
+
+            <small>
+              Answer questions, test your knowledge
+              and earn USD rewards.
+            </small>
+
+            <span class="sf-earning-cta">
+              START NOW →
+            </span>
+          </button>
+
+          <button type="button"
+            class="sf-earning-card"
+            data-sf-dashboard-view="opportunities">
+
+            <span class="sf-earning-icon">📣</span>
+            <strong>MARKETING PUSH</strong>
+
+            <small>
+              Promote products and submit your promotion
+              for reward review.
+            </small>
+
+            <span class="sf-earning-cta">
+              START PUSH →
+            </span>
+          </button>
+
+        </div>
+      </section>
+
+      <!-- REFERRALS -->
       <div class="sf-dash-referral">
         <div class="sf-dash-section-head">
           <div>
@@ -477,10 +609,12 @@
             <span>Total sign-ups</span>
             <strong id="sfDashRefTotal">—</strong>
           </article>
+
           <article>
             <span>Eligible / rewarded</span>
             <strong id="sfDashRefConfirmed">—</strong>
           </article>
+
           <article>
             <span>Pending</span>
             <strong id="sfDashRefPending">—</strong>
@@ -488,29 +622,39 @@
         </div>
       </div>
 
+      <!-- MEMBER WORKSPACE -->
       <div class="sf-dash-workspace">
         <h3>Your workspace</h3>
         <p>Quick access to your SHOPY FONT services.</p>
 
         <div class="sf-quick-grid">
+
           ${makeCard("marketplace","▦","Marketplace","Discover products and seller services.")}
+
           ${makeCard("opportunities","↗","Opportunities","Explore campaigns and opportunities.")}
+
           ${makeCard("scholarbridge","✎","ScholarBridge","Access academic support services.")}
+
           ${makeCard("referrals","♧","Referral centre","See your referral activity and link.")}
+
           ${makeCard("tasks","✓","Tasks centre","View tasks and your submissions.")}
 
           <button type="button"
             class="sf-quick-card"
             data-sf-dashboard-action="bonus">
+
             <span class="sf-quick-icon">★</span>
             <strong>Welcome bonus</strong>
-            <small>Open your wallet to view and claim your available welcome bonus.</small>
+            <small>
+              Open your wallet to view and claim your available welcome bonus.
+            </small>
           </button>
 
           ${isCommunityMember() ? `
             <button type="button"
               class="sf-quick-card"
               data-sf-dashboard-action="upgrade">
+
               <span class="sf-quick-icon">↑</span>
               <strong>Upgrade account</strong>
               <small>Choose a full SHOPY FONT membership package.</small>
@@ -520,6 +664,7 @@
           <button type="button"
             class="sf-quick-card"
             data-sf-dashboard-action="wallet">
+
             <span class="sf-quick-icon">$</span>
             <strong>My wallet</strong>
             <small>View your balance and transactions.</small>
@@ -528,10 +673,12 @@
           <button type="button"
             class="sf-quick-card"
             data-sf-dashboard-action="withdraw">
+
             <span class="sf-quick-icon">⇧</span>
             <strong>Withdraw funds</strong>
             <small>Open your withdrawal request form.</small>
           </button>
+
         </div>
       </div>
     `;
@@ -698,4 +845,3 @@
   }
 
 })();
-       
