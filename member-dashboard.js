@@ -845,11 +845,59 @@
         );
       }
 
-    } catch (error) {
+        } catch (error) {
       console.error("Dashboard button error:", error);
 
       SF.showToast(
         error.message || "This action could not be completed."
       );
 
-    } fi
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  /* ==========================================
+     INSTALL DASHBOARD
+  ========================================== */
+
+  function install() {
+
+    if (!SF.__memberDashboardClickHandler) {
+      document.addEventListener(
+        "click",
+        handleDashboardClick,
+        true
+      );
+
+      SF.__memberDashboardClickHandler = true;
+    }
+
+    if (
+      typeof SF.loadDashboard === "function" &&
+      !SF.__updatedMemberDashboardWrapped
+    ) {
+      const originalLoadDashboard = SF.loadDashboard;
+
+      SF.loadDashboard = async function (...args) {
+        const result = await originalLoadDashboard.apply(this, args);
+        render();
+        return result;
+      };
+
+      SF.__updatedMemberDashboardWrapped = true;
+    }
+
+    render();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      install
+    );
+  } else {
+    install();
+  }
+
+})();
