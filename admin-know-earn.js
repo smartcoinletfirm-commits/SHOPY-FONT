@@ -1,30 +1,67 @@
 
-// SHOPY FONT — KNOW & EARN ADMIN MODULE
-// Independent from old Trivia.
-
-(() => {
-  if (!window.SF) return;
+/* SHOPY FONT — KNOW & EARN ADMIN */
+(function () {
+  "use strict";
 
   const SF = window.SF;
+  if (!SF) return;
 
-  SF.adminKnowEarn = async () => {
-    const db = SF.getClient();
+  const db = () => SF.getClient();
+  const esc = v => SF.adminEscape(v ?? "");
+  const oldTabs = SF.adminTabs;
+  const oldLoad = SF.loadAdmin;
+  const oldBind = SF.adminBindActions;
 
+  // Add KNOW & EARN to the existing admin navigation.
+  SF.adminTabs = function () {
+    return oldTabs() + `
+      <button class="btn ${SF.adminTab === "know-earn" ? "btn-gold" : "btn-outline"}"
+        data-admin-tab="know-earn">
+        KNOW & EARN
+      </button>`;
+  };
+
+  // Load KNOW & EARN without changing the existing admin sections.
+  SF.loadAdmin = async function (tab = SF.adminTab || "notifications") {
+    if (tab !== "know-earn") return oldLoad.apply(this, arguments);
+
+    const box = document.getElementById("adminContent");
+    if (!box) return;
+
+    if (!SF.currentUser || !(await SF.checkAdmin())) {
+      box.innerHTML = "<p>Administrator access required.</p>";
+      return;
+    }
+
+    SF.adminTab = "know-earn";
+    box.innerHTML = "<p>Loading KNOW & EARN...</p>";
+
+    try {
+      box.innerHTML = SF.adminTabs() + await SF.adminKnowEarn();
+      SF.adminBindActions(box);
+    } catch (error) {
+      box.innerHTML = SF.adminTabs() +
+        `<p class="form-message">${esc(error.message)}</p>`;
+    }
+  };
+
+  // Admin workspace.
+  SF.adminKnowEarn = async function () {
     const [questionsResult, attemptsResult, rewardsResult] =
       await Promise.all([
-        db.from("sf_know_earn_questions")
+        db().from("sf_know_earn_questions")
           .select("*")
           .order("created_at", { ascending: false }),
 
-        db.from("sf_know_earn_attempts")
-          .select("id,user_id,question_id,selected_option,is_correct,reward_usd,attempt_date,created_at")
+        db().from("sf_know_earn_attempts")
+          .select("*")
           .order("created_at", { ascending: false })
-          .limit(500),
+          .limit(100),
 
-        db.from("sf_know_earn_rewards")
-          .select("id,user_id,question_id,amount_usd,created_at")
+        db().from("sf_know_earn_rewards")
+          .select("*")
           .order("created_at", { ascending: false })
-          .limit(500)
+          .limit(100)
       ]);
 
     if (questionsResult.error) throw questionsResult.error;
@@ -35,58 +72,75 @@
     const attempts = attemptsResult.data || [];
     const rewards = rewardsResult.data || [];
 
+    window.__sfKnowEarnQuestions = questions;
+
+    const questionMap = new Map(questions.map(q => [q.id, q]));
+
+    const userIds = [
+      ...new Set([...attempts, ...rewards].map(x => x.user_id))
+    ].filter(Boolean);
+
+    let profiles = [];
+
+    if (userIds.length) {
+      const result = await db()
+        .from("profiles")
+        .select("id,full_name,email")
+        .in("id", userIds);
+
+      if (result.error) throw result.error;
+      profiles = result.data || [];
+    }
+
+    const profileMap = new Map(profiles.map(p => [p.id, p]));
+    const usd = amount => "$" + Number(amount || 0).toFixed(2);
+
     return `
-      <div class="sf-ke-admin">
-        <div class="sf-ke-admin-header">
-          <h2>KNOW & EARN</h2>
-          <p>Manage questions and monitor member performance.</p>
+      <section class="sf-know-earn-admin">
+
+        <h2>KNOW & EARN Control Center</h2>
+
+        <p class="muted">
+          Manage questions, USD rewards, publication and member performance.
+        </p>
+
+        <div class="admin-actions" style="flex-wrap:wrap;margin:15px 0">
+          <span class="status-pill">Questions: ${questions.length}</span>
+          <span class="status-pill">
+            Published: ${questions.filter(q => q.is_active).length}
+          </span>
+          <span class="status-pill">Attempts: ${attempts.length}</span>
+          <span class="status-pill">Rewards: ${rewards.length}</span>
         </div>
 
-        <div class="sf-ke-admin-stats">
-          <div class="admin-row">
-            <strong>${questions.length}</strong>
-            <p>Total questions</p>
-          </div>
+        <form id="sfKnowEarnForm" class="form-card">
 
-          <div class="admin-row">
-            <strong>${questions.filter(q => q.is_active).length}</strong>
-            <p>Published questions</p>
-          </div>
+          <h3 id="sfKnowEarnTitle">Create a question</h3>
 
-          <div class="admin-row">
-            <strong>${attempts.length}</strong>
-            <p>Attempts recorded</p>
-          </div>
+          <input type="hidden" name="id">
 
-          <div class="admin-row">
-            <strong>$${rewards.reduce((sum, r) =>
-              sum + Number(r.amount_usd || 0), 0).toFixed(2)}</strong>
-            <p>Rewards recorded</p>
-          </div>
-        </div>
+          <label>Question
+            <textarea name="question" rows="3" maxlength="1500"
+              required placeholder="Write your question"></textarea>
+          </label>
 
-        <div class="admin-row" style="display:block;padding:15px;margin:15px 0">
-          <h3>Create Question</h3>
+          <label>Option A
+            <input name="option_a" required maxlength="500">
+          </label>
 
-          <form id="sfKnowEarnCreateForm">
-            <label>Question</label>
-            <textarea name="question" required
-              placeholder="Enter your question"
-              style="width:100%;min-height:90px"></textarea>
+          <label>Option B
+            <input name="option_b" required maxlength="500">
+          </label>
 
-            <label>Option A</label>
-            <input name="option_a" required>
+          <label>Option C
+            <input name="option_c" required maxlength="500">
+          </label>
 
-            <label>Option B</label>
-            <input name="option_b" required>
+          <label>Option D
+            <input name="option_d" required maxlength="500">
+          </label>
 
-            <label>Option C</label>
-            <input name="option_c" required>
-
-            <label>Option D</label>
-            <input name="option_d" required>
-
-            <label>Correct Answer</label>
+          <label>Correct answer
             <select name="correct_option" required>
               <option value="">Select correct answer</option>
               <option value="A">A</option>
@@ -94,266 +148,299 @@
               <option value="C">C</option>
               <option value="D">D</option>
             </select>
+          </label>
 
-            <label>Reward (USD)</label>
+          <label>Reward in USD
             <input name="reward_usd" type="number"
-              min="0" step="0.01" value="0" required>
+              min="0" step="0.01" value="0.10" required>
+          </label>
 
+          <label style="display:flex;align-items:center;gap:8px">
+            <input name="is_active" type="checkbox">
+            Publish immediately
+          </label>
+
+          <div class="admin-actions">
             <button class="btn btn-gold" type="submit">
-              Save Question
+              Save question
             </button>
-          </form>
-        </div>
 
-        <h3>Question Management (${questions.length})</h3>
+            <button class="btn btn-outline" type="button"
+              id="sfKnowEarnClear">
+              Clear form
+            </button>
+          </div>
 
-        ${
-          questions.length
-            ? questions.map(q => `
-              <div class="admin-row" style="display:block;padding:14px;margin:12px 0">
-                <strong>${SF.adminEscape(q.question)}</strong>
+        </form>
 
-                <p>A. ${SF.adminEscape(q.option_a)}</p>
-                <p>B. ${SF.adminEscape(q.option_b)}</p>
-                <p>C. ${SF.adminEscape(q.option_c)}</p>
-                <p>D. ${SF.adminEscape(q.option_d)}</p>
+        <h3>Question bank (${questions.length})</h3>
 
-                <p>Correct answer: <strong>${SF.adminEscape(q.correct_option)}</strong></p>
-                <p>Reward: <strong>$${Number(q.reward_usd || 0).toFixed(2)}</strong></p>
-                <p>Status: ${q.is_active ? "Published" : "Paused"}</p>
+        ${questions.length ? questions.map(q => `
+          <article class="admin-row"
+            style="display:block;margin:12px 0;padding:15px">
 
-                <div class="admin-actions">
-                  <button class="btn btn-outline"
-                    data-ke-toggle="${q.id}"
-                    data-ke-active="${q.is_active}">
-                    ${q.is_active ? "Pause" : "Publish"}
-                  </button>
+            <div class="admin-actions"
+              style="justify-content:space-between;flex-wrap:wrap">
 
-                  <button class="btn btn-outline"
-                    data-ke-edit="${q.id}">
-                    Edit
-                  </button>
+              <strong>${esc(q.question)}</strong>
 
-                  <button class="btn btn-outline"
-                    data-ke-delete="${q.id}">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            `).join("")
-            : `<p class="muted">No questions created yet.</p>`
-        }
+              <span class="status-pill">
+                ${q.is_active ? "PUBLISHED" : "PAUSED"}
+              </span>
+            </div>
 
-        <h3>Recent Attempts</h3>
+            <p>
+              A: ${esc(q.option_a)}<br>
+              B: ${esc(q.option_b)}<br>
+              C: ${esc(q.option_c)}<br>
+              D: ${esc(q.option_d)}
+            </p>
 
-        ${
-          attempts.length
-            ? attempts.slice(0, 100).map(a => `
-              <div class="admin-row">
-                <strong>Member: ${SF.adminEscape(a.user_id)}</strong>
-                <p>Selected: ${SF.adminEscape(a.selected_option)}</p>
-                <p>Result: ${a.is_correct ? "Correct" : "Wrong"}</p>
-                <p>Reward: $${Number(a.reward_usd || 0).toFixed(2)}</p>
-                <p>Date: ${SF.adminEscape(a.attempt_date || "")}</p>
-              </div>
-            `).join("")
-            : `<p class="muted">No attempts recorded.</p>`
-        }
-      </div>
+            <p><strong>Reward:</strong> ${usd(q.reward_usd)}</p>
+
+            <div class="admin-actions">
+              <button class="btn btn-outline"
+                data-ke-edit="${q.id}">
+                Edit
+              </button>
+
+              <button class="btn btn-gold"
+                data-ke-toggle="${q.id}"
+                data-ke-active="${q.is_active}">
+                ${q.is_active ? "Pause" : "Publish"}
+              </button>
+
+              <button class="btn btn-outline"
+                data-ke-delete="${q.id}">
+                Delete
+              </button>
+            </div>
+          </article>
+        `).join("") : `
+          <p class="muted">No questions have been created yet.</p>
+        `}
+
+        <h3>Recent member attempts (${attempts.length})</h3>
+
+        ${attempts.length ? attempts.map(a => {
+          const member = profileMap.get(a.user_id) || {};
+          const q = questionMap.get(a.question_id) || {};
+
+          return `
+            <article class="admin-row"
+              style="display:block;margin:10px 0;padding:14px">
+
+              <strong>${esc(member.full_name || "Member")}</strong>
+
+              <p>${esc(member.email || "")}</p>
+
+              <p><strong>Question:</strong>
+                ${esc(q.question || "Unavailable")}
+              </p>
+
+              <p>Selected: ${esc(a.selected_option)}</p>
+
+              <p><strong>Result:</strong>
+                ${a.is_correct ? "Correct" : "Wrong"}
+              </p>
+
+              <p><strong>Reward:</strong> ${usd(a.reward_usd)}</p>
+
+              <p class="muted">
+                ${esc(new Date(a.created_at).toLocaleString())}
+              </p>
+            </article>
+          `;
+        }).join("") : `
+          <p class="muted">No member attempts recorded yet.</p>
+        `}
+
+        <h3>Reward records (${rewards.length})</h3>
+
+        ${rewards.length ? rewards.map(r => {
+          const member = profileMap.get(r.user_id) || {};
+          const q = questionMap.get(r.question_id) || {};
+
+          return `
+            <article class="admin-row"
+              style="display:block;margin:10px 0;padding:12px">
+
+              <strong>${esc(member.full_name || "Member")}</strong>
+
+              <p>${esc(q.question || "Question unavailable")}</p>
+
+              <p><strong>Reward:</strong> ${usd(r.amount_usd)}</p>
+
+              <p class="muted">
+                ${esc(new Date(r.created_at).toLocaleString())}
+              </p>
+            </article>
+          `;
+        }).join("") : `
+          <p class="muted">No reward records yet.</p>
+        `}
+
+      </section>
     `;
   };
 
-  // Save a new question.
-  SF.adminKnowEarnSave = async form => {
-    const db = SF.getClient();
-    const fd = new FormData(form);
+  // Reset the question editor.
+  function clearForm() {
+    const form = document.getElementById("sfKnowEarnForm");
+    if (!form) return;
 
-    const payload = {
-      question: String(fd.get("question") || "").trim(),
-      option_a: String(fd.get("option_a") || "").trim(),
-      option_b: String(fd.get("option_b") || "").trim(),
-      option_c: String(fd.get("option_c") || "").trim(),
-      option_d: String(fd.get("option_d") || "").trim(),
-      correct_option: String(fd.get("correct_option") || ""),
-      reward_usd: Number(fd.get("reward_usd") || 0),
-      is_active: false
-    };
+    form.reset();
+    form.elements.id.value = "";
+    form.elements.reward_usd.value = "0.10";
 
-    if (
-      !payload.question ||
-      !payload.option_a ||
-      !payload.option_b ||
-      !payload.option_c ||
-      !payload.option_d
-    ) {
-      return SF.showToast("Fill in all question fields.");
-    }
+    document.getElementById("sfKnowEarnTitle").textContent =
+      "Create a question";
+  }
 
-    if (!["A", "B", "C", "D"].includes(payload.correct_option)) {
-      return SF.showToast("Select the correct answer.");
-    }
+  // Load question into editor.
+  function editQuestion(id) {
+    const form = document.getElementById("sfKnowEarnForm");
 
-    if (!Number.isFinite(payload.reward_usd) || payload.reward_usd < 0) {
-      return SF.showToast("Invalid reward amount.");
-    }
+    const q = (window.__sfKnowEarnQuestions || [])
+      .find(item => item.id === id);
 
-    const { error } = await db
-      .from("sf_know_earn_questions")
-      .insert(payload);
+    if (!form || !q) return;
+
+    form.elements.id.value = q.id;
+    form.elements.question.value = q.question;
+    form.elements.option_a.value = q.option_a;
+    form.elements.option_b.value = q.option_b;
+    form.elements.option_c.value = q.option_c;
+    form.elements.option_d.value = q.option_d;
+    form.elements.correct_option.value = q.correct_option;
+    form.elements.reward_usd.value = q.reward_usd;
+    form.elements.is_active.checked = q.is_active;
+
+    document.getElementById("sfKnowEarnTitle").textContent =
+      "Edit question";
+
+    form.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+
+  // Save using the secure Supabase RPC.
+  async function saveQuestion(form) {
+    const id = form.elements.id.value || null;
+
+    const { error } = await db().rpc(
+      "sf_know_earn_admin_save",
+      {
+        p_question_id: id,
+        p_question: form.elements.question.value.trim(),
+        p_option_a: form.elements.option_a.value.trim(),
+        p_option_b: form.elements.option_b.value.trim(),
+        p_option_c: form.elements.option_c.value.trim(),
+        p_option_d: form.elements.option_d.value.trim(),
+        p_correct_option: form.elements.correct_option.value,
+        p_reward_usd: Number(form.elements.reward_usd.value),
+        p_is_active: form.elements.is_active.checked
+      }
+    );
 
     if (error) throw error;
 
-    SF.showToast("Question saved.");
+    SF.showToast(id ? "Question updated." : "Question saved.");
     await SF.loadAdmin("know-earn");
-  };
+  }
 
-  // Publish / pause question.
-  SF.adminKnowEarnToggle = async (id, active) => {
-    const { error } = await SF.getClient()
-      .from("sf_know_earn_questions")
-      .update({
-        is_active: !active,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", id);
+  // Publish or pause.
+  async function toggleQuestion(id, active) {
+    const { error } = await db().rpc(
+      "sf_know_earn_admin_toggle",
+      {
+        p_question_id: id,
+        p_is_active: !active
+      }
+    );
 
     if (error) throw error;
 
-    SF.showToast(!active ? "Question published." : "Question paused.");
+    SF.showToast(active ? "Question paused." : "Question published.");
     await SF.loadAdmin("know-earn");
-  };
+  }
 
-  // Delete question.
-  SF.adminKnowEarnDelete = async id => {
-    if (!confirm("Delete this question?")) return;
+  // Delete unused questions.
+  async function deleteQuestion(id) {
+    if (!confirm(
+      "Delete this question? Questions with attempts cannot be deleted. Pause them instead."
+    )) return;
 
-    const { error } = await SF.getClient()
-      .from("sf_know_earn_questions")
-      .delete()
-      .eq("id", id);
+    const { error } = await db().rpc(
+      "sf_know_earn_admin_delete",
+      { p_question_id: id }
+    );
 
     if (error) throw error;
 
     SF.showToast("Question deleted.");
     await SF.loadAdmin("know-earn");
-  };
+  }
 
-  // Edit question.
-  SF.adminKnowEarnEdit = async id => {
-    const db = SF.getClient();
+  // Add handlers while preserving existing admin actions.
+  SF.adminBindActions = function (box) {
+    oldBind(box);
 
-    const { data: q, error } = await db
-      .from("sf_know_earn_questions")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
-
-    const question = prompt("Edit question:", q.question);
-    if (question === null) return;
-
-    const a = prompt("Option A:", q.option_a);
-    if (a === null) return;
-
-    const b = prompt("Option B:", q.option_b);
-    if (b === null) return;
-
-    const c = prompt("Option C:", q.option_c);
-    if (c === null) return;
-
-    const d = prompt("Option D:", q.option_d);
-    if (d === null) return;
-
-    const answer = prompt("Correct answer (A, B, C, or D):", q.correct_option);
-    if (answer === null) return;
-
-    const reward = prompt("Reward USD:", q.reward_usd);
-    if (reward === null) return;
-
-    const payload = {
-      question: question.trim(),
-      option_a: a.trim(),
-      option_b: b.trim(),
-      option_c: c.trim(),
-      option_d: d.trim(),
-      correct_option: answer.trim().toUpperCase(),
-      reward_usd: Number(reward),
-      updated_at: new Date().toISOString()
-    };
-
-    if (
-      !payload.question ||
-      !payload.option_a ||
-      !payload.option_b ||
-      !payload.option_c ||
-      !payload.option_d ||
-      !["A", "B", "C", "D"].includes(payload.correct_option) ||
-      !Number.isFinite(payload.reward_usd) ||
-      payload.reward_usd < 0
-    ) {
-      return SF.showToast("Invalid question details.");
-    }
-
-    const { error: updateError } = await db
-      .from("sf_know_earn_questions")
-      .update(payload)
-      .eq("id", id);
-
-    if (updateError) throw updateError;
-
-    SF.showToast("Question updated.");
-    await SF.loadAdmin("know-earn");
-  };
-
-  // Bind form and buttons.
-  SF.adminKnowEarnBind = box => {
-    const form = box.querySelector("#sfKnowEarnCreateForm");
-
-    if (form) {
-      form.addEventListener("submit", async event => {
-        event.preventDefault();
-
-        try {
-          await SF.adminKnowEarnSave(form);
-        } catch (error) {
-          SF.showToast(error.message);
-        }
+    box.querySelectorAll("[data-admin-tab='know-earn']")
+      .forEach(button => {
+        button.addEventListener("click", () =>
+          SF.loadAdmin("know-earn")
+        );
       });
-    }
 
-    box.querySelectorAll("[data-ke-toggle]").forEach(button => {
-      button.addEventListener("click", async () => {
-        try {
-          await SF.adminKnowEarnToggle(
-            button.dataset.keToggle,
-            button.dataset.keActive === "true"
-          );
-        } catch (error) {
-          SF.showToast(error.message);
-        }
-      });
+    const form = box.querySelector("#sfKnowEarnForm");
+
+    form?.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      try {
+        await saveQuestion(form);
+      } catch (error) {
+        SF.showToast(error.message);
+      }
     });
 
-    box.querySelectorAll("[data-ke-edit]").forEach(button => {
-      button.addEventListener("click", async () => {
-        try {
-          await SF.adminKnowEarnEdit(button.dataset.keEdit);
-        } catch (error) {
-          SF.showToast(error.message);
-        }
-      });
-    });
+    box.querySelector("#sfKnowEarnClear")
+      ?.addEventListener("click", clearForm);
 
-    box.querySelectorAll("[data-ke-delete]").forEach(button => {
-      button.addEventListener("click", async () => {
-        try {
-          await SF.adminKnowEarnDelete(button.dataset.keDelete);
-        } catch (error) {
-          SF.showToast(error.message);
-        }
+    box.querySelectorAll("[data-ke-edit]")
+      .forEach(button => {
+        button.addEventListener("click", () =>
+          editQuestion(button.dataset.keEdit)
+        );
       });
-    });
+
+    box.querySelectorAll("[data-ke-toggle]")
+      .forEach(button => {
+        button.addEventListener("click", async () => {
+          try {
+            await toggleQuestion(
+              button.dataset.keToggle,
+              button.dataset.keActive === "true"
+            );
+          } catch (error) {
+            SF.showToast(error.message);
+          }
+        });
+      });
+
+    box.querySelectorAll("[data-ke-delete]")
+      .forEach(button => {
+        button.addEventListener("click", async () => {
+          try {
+            await deleteQuestion(button.dataset.keDelete);
+          } catch (error) {
+            SF.showToast(error.message);
+          }
+        });
+      });
   };
 
 })();
+        
