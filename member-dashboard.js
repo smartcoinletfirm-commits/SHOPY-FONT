@@ -1,3 +1,4 @@
+
 /* =====================================================
    SHOPY FONT — MEMBER DASHBOARD
    Emerald and white member workspace
@@ -539,7 +540,7 @@
 
           <button type="button"
             class="sf-earning-card know"
-            data-sf-dashboard-view="tasks">
+            data-sf-dashboard-action="know-earn">
 
             <span class="sf-earning-icon">🧠</span>
             <strong>KNOW &amp; EARN</strong>
@@ -714,6 +715,28 @@
     button.disabled = true;
 
     try {
+
+      /* ==========================================
+         KNOW & EARN — DIRECT OPEN
+         Does not route through the Tasks Centre.
+      ========================================== */
+
+      if (action === "know-earn") {
+
+        if (typeof SF.openKnowEarn !== "function") {
+          throw new Error(
+            "KNOW & EARN is not loaded. Please refresh the page."
+          );
+        }
+
+        await SF.openKnowEarn();
+        return;
+      }
+
+      /* ==========================================
+         NORMAL DASHBOARD NAVIGATION
+      ========================================== */
+
       if (view) {
         if (typeof SF.navigate !== "function") {
           throw new Error("Navigation is not ready. Reload the page.");
@@ -722,6 +745,10 @@
         await SF.navigate(view);
         return;
       }
+
+      /* ==========================================
+         REFERRAL ACTIONS
+      ========================================== */
 
       if (action === "copy") {
         if (typeof SF.copyReferralLink !== "function") {
@@ -741,16 +768,22 @@
         return;
       }
 
+      /* ==========================================
+         WALLET ACTIONS
+      ========================================== */
+
       if (["wallet", "bonus", "withdraw"].includes(action)) {
         const wallet = $("sfWalletPanel");
 
         if (!wallet) {
-          throw new Error("Wallet is not available. Please reload the dashboard.");
+          throw new Error(
+            "Wallet is not available. Please reload the dashboard."
+          );
         }
 
         wallet.scrollIntoView({
-          behavior:"smooth",
-          block:"start"
+          behavior: "smooth",
+          block: "start"
         });
 
         if (action === "bonus") {
@@ -760,14 +793,18 @@
             if (claim && !claim.disabled) {
               claim.click();
             } else {
-              SF.showToast("Check your wallet for your welcome bonus.");
+              SF.showToast(
+                "Check your wallet for your welcome bonus."
+              );
             }
           }, 350);
         }
 
         if (action === "withdraw") {
           if (isCommunityMember()) {
-            SF.showToast("Withdrawals are not available for Community accounts.");
+            SF.showToast(
+              "Withdrawals are not available for Community accounts."
+            );
           } else {
             window.setTimeout(() => {
               $("sfOpenWithdraw")?.click();
@@ -778,12 +815,18 @@
         return;
       }
 
+      /* ==========================================
+         COMMUNITY UPGRADE
+      ========================================== */
+
       if (action === "upgrade") {
         const workspace = $("activationWorkspace");
         const details = $("sfRegistrationDetails");
 
         if (!workspace || !details) {
-          throw new Error("Upgrade package selection is not available. Please contact support.");
+          throw new Error(
+            "Upgrade package selection is not available. Please contact support."
+          );
         }
 
         workspace.style.display = "";
@@ -793,55 +836,20 @@
         details.classList.remove("hidden");
 
         details.scrollIntoView({
-          behavior:"smooth",
-          block:"start"
+          behavior: "smooth",
+          block: "start"
         });
 
-        SF.showToast("Select your full membership package and follow the payment instructions.");
+        SF.showToast(
+          "Select your full membership package and follow the payment instructions."
+        );
       }
 
     } catch (error) {
       console.error("Dashboard button error:", error);
-      SF.showToast(error.message || "This action could not be completed.");
 
-    } finally {
-      button.disabled = false;
-    }
-  }
-
-  function install() {
-    if (!SF.__memberDashboardClickHandler) {
-      document.addEventListener(
-        "click",
-        handleDashboardClick,
-        true
+      SF.showToast(
+        error.message || "This action could not be completed."
       );
 
-      SF.__memberDashboardClickHandler = true;
-    }
-
-    if (
-      typeof SF.loadDashboard === "function" &&
-      !SF.__updatedMemberDashboardWrapped
-    ) {
-      const originalLoadDashboard = SF.loadDashboard;
-
-      SF.loadDashboard = async function (...args) {
-        const result = await originalLoadDashboard.apply(this, args);
-        render();
-        return result;
-      };
-
-      SF.__updatedMemberDashboardWrapped = true;
-    }
-
-    render();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", install);
-  } else {
-    install();
-  }
-
-})();
+    } fi
