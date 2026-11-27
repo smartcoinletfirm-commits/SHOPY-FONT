@@ -1,514 +1,590 @@
 
-/* ==========================================================
+/* =========================================================
    SHOPY FONT — MONEY CALENDAR
-   10-Day Reward Cycle | Activity | Analytics | Loan
-   ========================================================== */
+   Frontend module
+   10-day activity cycle | $43.90 target | $17 loan
+========================================================= */
 
-(() => {
-  "use strict";
+(function () {
+    "use strict";
 
-  const MoneyCalendar = {
-    target: 43.90,
-    dailyTarget: 4.39,
-    cycleDays: 10,
-    referralsTarget: 2,
-    tasksTarget: 5,
-    visitsTarget: 2,
+    window.SHOPY_MONEY_CALENDAR = window.SHOPY_MONEY_CALENDAR || {};
 
-    supabase: null,
-    user: null,
-    cycle: null,
-    days: [],
-    loan: null,
+    const MC = window.SHOPY_MONEY_CALENDAR;
 
-    async init({ supabase, user }) {
-      this.supabase = supabase;
-      this.user = user;
+    MC.config = {
+        cycleDays: 10,
+        targetReward: 43.90,
+        dailyReward: 4.39,
+        referralsRequired: 2,
+        tasksRequired: 5,
+        calendarVisitsRequired: 2,
+        loanAmount: 17.00
+    };
 
-      this.render();
-      await this.load();
-      this.bind();
-    },
+    MC.state = {
+        user: null,
+        supabase: null,
+        cycle: null,
+        days: [],
+        loan: null,
+        initialized: false,
+        chart: null
+    };
 
-    async load() {
-      if (!this.supabase || !this.user) return;
+    MC.money = function (amount) {
+        return "$" + Number(amount || 0).toFixed(2);
+    };
 
-      try {
-        const { data: cycles } = await this.supabase
-          .from("sf_money_calendar_cycles")
-          .select("*")
-          .eq("user_id", this.user.id)
-          .order("cycle_number", { ascending: false })
-          .limit(1);
+    MC.escapeHTML = function (value) {
+        return String(value ?? "").replace(/[&<>"']/g, function (char) {
+            return {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            }[char];
+        });
+    };
 
-        this.cycle = cycles?.[0] || null;
+    MC.percent = function (earned, target) {
+        if (!target || target <= 0) return 0;
+        return Math.min(100, Math.max(0, (earned / target) * 100));
+    };
 
-        if (this.cycle) {
-          const { data: days } = await this.supabase
-            .from("sf_money_calendar_daily")
-            .select("*")
-            .eq("cycle_id", this.cycle.id)
-            .order("day_number");
+    MC.getToday = function () {
+        const now = new Date();
+        return now.toISOString().slice(0, 10);
+    };
 
-          this.days = days || [];
+    MC.getDayStatus = function (day) {
+        if (!day) return "pending";
+
+        if (day.status === "qualified" || day.status === "completed") {
+            return "qualified";
         }
 
-        const { data: loan } = await this.supabase
-          .from("sf_money_calendar_loans")
-          .select("*")
-          .eq("user_id", this.user.id)
-          .maybeSingle();
+        if (day.status === "failed" || day.status === "expired") {
+            return "failed";
+        }
 
-        this.loan = loan || null;
-      } catch (error) {
-        console.error("Money Calendar loading error:", error);
-      }
+        if (
+            Number(day.referrals_completed || 0) >= MC.config.referralsRequired &&
+            Number(day.tasks_completed || 0) >= MC.config.tasksRequired &&
+            Number(day.calendar_visits || 0) >= MC.config.calendarVisitsRequired
+        ) {
+            return "qualified";
+        }
 
-      this.render();
-      this.bind();
-    },
+        return "pending";
+    };
 
-    money(value) {
-      return "$" + Number(value || 0).toFixed(2);
-    },
+    MC.getCycleProgress = function () {
+        const days = MC.state.days || [];
+        const qualified = days.filter(function (day) {
+            return MC.getDayStatus(day) === "qualified";
+        }).length;
 
-    percent(value, target) {
-      if (!target) return 0;
-      return Math.min(100, Math.max(0, (value / target) * 100));
-    },
+        return {
+            qualifiedDays: qualified,
+            totalDays: MC.config.cycleDays,
+            percentage: Math.min(100, (qualified / MC.config.cycleDays) * 100)
+        };
+    };
 
-    render() {
-      const root = document.getElementById("money-calendar-root");
-      if (!root) return;
+    MC.getEarned = function () {
+        const days = MC.state.days || [];
 
-      const earned = Number(this.cycle?.earned_reward_usd || 0);
-      const progress = this.percent(earned, this.target);
-      const completedDays = this.days.filter(d => d.daily_qualified).length;
-
-      root.innerHTML = `
-        <section class="mc-wrap">
-
-          <header class="mc-header">
-            <div class="mc-eyebrow">SHOPY FONT • PERFORMANCE PROGRAM</div>
-            <h1>Money Calendar</h1>
-            <p>Build consistency. Complete activities. Track your progress.</p>
-          </header>
-
-          <div class="mc-reward-card">
-            <div class="mc-card-top">
-              <div>
-                <small>10-DAY REWARD TARGET</small>
-                <h2>$43.90</h2>
-              </div>
-              <div class="mc-target-icon">↗</div>
-            </div>
-
-            <div class="mc-earned-row">
-              <span>Verified progress</span>
-              <strong>${this.money(earned)}</strong>
-            </div>
-
-            <div class="mc-progress-track">
-              <div class="mc-progress-fill" style="width:${progress}%"></div>
-            </div>
-
-            <div class="mc-progress-foot">
-              <span>${progress.toFixed(1)}% completed</span>
-              <span>${this.money(Math.max(0, this.target-earned))} remaining</span>
-            </div>
-
-            <div class="mc-reward-note">
-              Rewards are activity-dependent and subject to verification
-              and applicable program terms.
-            </div>
-          </div>
-
-          <div class="mc-stats">
-            <div class="mc-stat">
-              <small>Qualified days</small>
-              <strong>${completedDays}/10</strong>
-            </div>
-            <div class="mc-stat">
-              <small>Cycle</small>
-              <strong>${this.cycle?.cycle_number || 0}</strong>
-            </div>
-            <div class="mc-stat">
-              <small>Extensions</small>
-              <strong>${this.cycle?.extension_days || 0}</strong>
-            </div>
-          </div>
-
-          <div class="mc-section">
-            <div class="mc-section-heading">
-              <h2>Daily Activity Calendar</h2>
-              <span>10 days</span>
-            </div>
-
-            <div class="mc-calendar">
-              ${Array.from({ length: 10 }, (_, i) => {
-                const day = this.days.find(d => Number(d.day_number) === i + 1);
-                const status = day?.daily_qualified
-                  ? "qualified"
-                  : day?.status === "failed"
-                    ? "failed"
-                    : day
-                      ? "active"
-                      : "locked";
-
-                return `
-                  <div class="mc-day ${status}" data-day="${i+1}">
-                    <span class="mc-day-number">DAY ${i+1}</span>
-                    <span class="mc-day-icon">
-                      ${status === "qualified" ? "✓" :
-                        status === "failed" ? "!" :
-                        status === "active" ? "◷" : "·"}
-                    </span>
-                    <span class="mc-day-value">
-                      ${day?.daily_qualified ? "$4.39" : "—"}
-                    </span>
-                  </div>
-                `;
-              }).join("")}
-            </div>
-          </div>
-
-          <div class="mc-section">
-            <div class="mc-section-heading">
-              <h2>Today's Activity</h2>
-              <span>Daily targets</span>
-            </div>
-
-            <div class="mc-activity-list">
-              ${this.activityRow("referrals", "Invite new members", "2 referrals", 2)}
-              ${this.activityRow("tasks", "Complete tasks", "5 tasks", 5)}
-              ${this.activityRow("visits", "Check Money Calendar", "2 visits", 2)}
-            </div>
-          </div>
-
-          <div class="mc-section">
-            <div class="mc-section-heading">
-              <h2>Performance Analytics</h2>
-            </div>
-
-            <div class="mc-graph-card">
-              <canvas id="mc-reward-chart"></canvas>
-            </div>
-
-            <div class="mc-analytics-grid">
-              <div>
-                <small>Activity completion</small>
-                <strong>${completedDays * 10}%</strong>
-              </div>
-              <div>
-                <small>Average/day</small>
-                <strong>${this.money(earned / Math.max(1, completedDays))}</strong>
-              </div>
-              <div>
-                <small>Target remaining</small>
-                <strong>${this.money(Math.max(0, this.target - earned))}</strong>
-              </div>
-              <div>
-                <small>Cycle target</small>
-                <strong>$43.90</strong>
-              </div>
-            </div>
-          </div>
-
-          <div class="mc-section mc-growth">
-            <div class="mc-section-heading">
-              <h2>Referral Growth Centre</h2>
-              <span>Grow your network</span>
-            </div>
-
-            <div class="mc-growth-item">
-              <strong>01 · Share your referral link</strong>
-              <p>Share your invitation with friends, classmates and people interested in digital opportunities.</p>
-            </div>
-
-            <div class="mc-growth-item">
-              <strong>02 · Use WhatsApp</strong>
-              <p>Share useful information in your status and relevant groups. Avoid spamming people.</p>
-            </div>
-
-            <div class="mc-growth-item">
-              <strong>03 · Use Facebook</strong>
-              <p>Make informative posts explaining the platform and how registration works.</p>
-            </div>
-
-            <div class="mc-growth-item">
-              <strong>04 · Follow up</strong>
-              <p>Answer questions and help interested people understand the requirements.</p>
-            </div>
-
-            <button class="mc-btn mc-secondary" id="mc-share-btn">
-              Share Referral Link
-            </button>
-          </div>
-
-          <div class="mc-section mc-cycle-section">
-            <div class="mc-section-heading">
-              <h2>Reward Cycle</h2>
-            </div>
-
-            <div class="mc-cycle-status">
-              <strong>${this.cycle?.status || "Not started"}</strong>
-              <p>
-                Complete your activity requirements and have your
-                results verified to finish the cycle.
-              </p>
-            </div>
-
-            <button
-              class="mc-btn mc-primary"
-              id="mc-start-btn"
-              ${this.cycle?.status === "active" ? "disabled" : ""}
-            >
-              ${this.cycle ? "Request Next Cycle" : "Start 10-Day Cycle"}
-            </button>
-
-            <button class="mc-btn mc-secondary" id="mc-withdraw-btn">
-              Request Withdrawal
-            </button>
-          </div>
-
-          <div class="mc-section mc-loan">
-            <div class="mc-loan-header">
-              <div>
-                <small>FINANCIAL RESPONSIBILITY</small>
-                <h2>Must Repay Loan</h2>
-              </div>
-              <div class="mc-loan-icon">$17</div>
-            </div>
-
-            <p>
-              Members who successfully complete their first cycle with
-              all 10 days qualified and no extensions may become
-              eligible to request a $17 loan.
-            </p>
-
-            ${this.renderLoan()}
-
-            <div class="mc-loan-warning">
-              This is a repayable loan, not a reward. Approval,
-              disbursement and repayment are subject to review and terms.
-            </div>
-          </div>
-
-        </section>
-      `;
-
-      this.drawGraph();
-    },
-
-    activityRow(type, title, target, goal) {
-      const day = this.days.find(d => {
-        return d.activity_date === new Date().toISOString().slice(0,10);
-      });
-
-      const amount = type === "referrals"
-        ? day?.referrals_completed || 0
-        : type === "tasks"
-          ? day?.tasks_completed || 0
-          : day?.calendar_visits_completed || 0;
-
-      const pct = this.percent(amount, goal);
-
-      return `
-        <div class="mc-activity">
-          <div class="mc-activity-top">
-            <div>
-              <strong>${title}</strong>
-              <small>Target: ${target}</small>
-            </div>
-            <span>${amount}/${goal}</span>
-          </div>
-          <div class="mc-mini-track">
-            <div style="width:${pct}%"></div>
-          </div>
-        </div>
-      `;
-    },
-
-    renderLoan() {
-      if (!this.loan) {
-        return `
-          <div class="mc-loan-status">
-            <strong>No loan record</strong>
-            <p>Complete your first cycle to check eligibility.</p>
-          </div>
-          <button class="mc-btn mc-secondary" id="mc-loan-btn">
-            Check Loan Eligibility
-          </button>
-        `;
-      }
-
-      const outstanding = Number(this.loan.outstanding_usd || 0);
-      const paid = Number(this.loan.amount_repaid_usd || 0);
-
-      return `
-        <div class="mc-loan-stats">
-          <div><small>Loan</small><strong>$17.00</strong></div>
-          <div><small>Repaid</small><strong>${this.money(paid)}</strong></div>
-          <div><small>Outstanding</small><strong>${this.money(outstanding)}</strong></div>
-        </div>
-
-        <div class="mc-mini-track">
-          <div style="width:${this.percent(paid, 17)}%"></div>
-        </div>
-
-        <p class="mc-loan-state">
-          Status: ${this.loan.status.replace(/_/g, " ")}
-        </p>
-
-        <button class="mc-btn mc-secondary" id="mc-loan-btn">
-          ${this.loan.status === "repaid"
-            ? "Loan Repaid"
-            : "View Loan Details"}
-        </button>
-      `;
-    },
-
-    drawGraph() {
-      const canvas = document.getElementById("mc-reward-chart");
-      if (!canvas) return;
-
-      const labels = Array.from({ length: 10 }, (_, i) => `Day ${i+1}`);
-      const data = labels.map((_, i) => {
-        const day = this.days.find(d => Number(d.day_number) === i+1);
-        return Number(day?.reward_usd || 0);
-      });
-
-      if (typeof Chart === "undefined") {
-        canvas.parentElement.innerHTML = `
-          <div class="mc-graph-fallback">
-            <p>Daily reward progression</p>
-            ${data.map((v, i) => `
-              <div class="mc-bar-row">
-                <span>Day ${i+1}</span>
-                <div class="mc-bar">
-                  <div style="width:${this.percent(v, 4.39)}%"></div>
-                </div>
-                <strong>${this.money(v)}</strong>
-              </div>
-            `).join("")}
-          </div>
-        `;
-        return;
-      }
-
-      if (this.chart) this.chart.destroy();
-
-      this.chart = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [{
-            label: "Daily Reward USD",
-            data,
-            borderWidth: 3,
-            tension: 0.35,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: true }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              suggestedMax: 4.39
+        return days.reduce(function (total, day) {
+            if (MC.getDayStatus(day) === "qualified") {
+                return total + Number(day.reward_usd || MC.config.dailyReward);
             }
-          }
+            return total;
+        }, 0);
+    };
+
+    MC.getExtensions = function () {
+        return Number(
+            MC.state.cycle?.extension_days ||
+            MC.state.cycle?.extensionDays ||
+            0
+        );
+    };
+
+    MC.getReferralLink = function () {
+        const input = document.querySelector("#sfDashboardReferralLink");
+        if (input && input.value) return input.value;
+
+        const element = document.querySelector("[data-referral-link]");
+        if (element) {
+            return element.value || element.textContent || "";
         }
-      });
-    },
 
-    bind() {
-      document.getElementById("mc-start-btn")
-        ?.addEventListener("click", () => this.startCycle());
+        return "";
+    };
 
-      document.getElementById("mc-share-btn")
-        ?.addEventListener("click", () => this.shareReferral());
+    MC.showMessage = function (message, type) {
+        const target = document.getElementById("mcMessage");
+        if (!target) return;
 
-      document.getElementById("mc-withdraw-btn")
-        ?.addEventListener("click", () => this.withdraw());
+        target.className = "mc-message " + (type || "");
+        target.textContent = message;
+        target.classList.remove("mc-hidden");
+    };
 
-      document.getElementById("mc-loan-btn")
-        ?.addEventListener("click", () => this.requestLoan());
-    },
+    MC.createDay = function (dayNumber) {
+        const existing = MC.state.days.find(function (day) {
+            return Number(day.day_number) === dayNumber;
+        });
 
-    async startCycle() {
-      if (!this.supabase) return;
+        if (existing) return existing;
 
-      const btn = document.getElementById("mc-start-btn");
-      if (btn) btn.disabled = true;
+        return {
+            day_number: dayNumber,
+            referrals_completed: 0,
+            tasks_completed: 0,
+            calendar_visits: 0,
+            reward_usd: 0,
+            status: "pending"
+        };
+    };
 
-      const { data, error } = await this.supabase.rpc(
-        "sf_money_calendar_start_cycle"
-      );
+    MC.renderDay = function (dayNumber) {
+        const day = MC.createDay(dayNumber);
+        const status = MC.getDayStatus(day);
 
-      if (error) {
-        alert(error.message);
-      } else {
-        alert("Your cycle request has been submitted.");
-        await this.load();
-      }
+        const referrals = Number(day.referrals_completed || 0);
+        const tasks = Number(day.tasks_completed || 0);
+        const visits = Number(day.calendar_visits || 0);
 
-      if (btn) btn.disabled = false;
-    },
+        const referralOK = referrals >= MC.config.referralsRequired;
+        const tasksOK = tasks >= MC.config.tasksRequired;
+        const visitsOK = visits >= MC.config.calendarVisitsRequired;
 
-    async requestLoan() {
-      if (!this.supabase) return;
+        const className = [
+            "mc-day",
+            status === "qualified" ? "is-qualified" : "",
+            status === "failed" ? "is-failed" : ""
+        ].filter(Boolean).join(" ");
 
-      const confirmed = confirm(
-        "You are requesting a repayable $17 loan. " +
-        "This loan must be repaid. Continue?"
-      );
+        let statusText = "Pending";
+        let statusClass = "";
 
-      if (!confirmed) return;
+        if (status === "qualified") {
+            statusText = "Qualified";
+            statusClass = "success";
+        } else if (status === "failed") {
+            statusText = "Failed";
+            statusClass = "failed";
+        }
 
-      const { error } = await this.supabase.rpc(
-        "sf_money_calendar_request_loan"
-      );
+        const activityStatus = function (done, required) {
+            return done >= required
+                ? '<span class="mc-check">✓ Complete</span>'
+                : '<span class="mc-pending">' + done + "/" + required + "</span>";
+        };
 
-      if (error) {
-        alert(error.message);
-      } else {
-        alert("Loan request submitted for review.");
-        await this.load();
-      }
-    },
+        return `
+            <div class="${className}">
+                <div class="mc-day-top">
+                    <div class="mc-day-title">Day ${dayNumber}</div>
+                    <span class="mc-day-status ${statusClass}">
+                        ${statusText}
+                    </span>
+                </div>
 
-    async shareReferral() {
-      const link = document.querySelector("[data-referral-link]")?.value
-        || document.querySelector("[data-referral-link]")?.textContent
-        || window.location.origin;
+                <div class="mc-requirements">
 
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: "SHOPY FONT",
-            text: "Join me on SHOPY FONT.",
-            url: link
-          });
-        } catch (_) {}
-      } else {
-        await navigator.clipboard.writeText(link);
-        alert("Referral link copied.");
-      }
-    },
+                    <div class="mc-requirement">
+                        <span>👥 Referrals</span>
+                        <span class="mc-requirement-value">
+                            ${activityStatus(referrals, MC.config.referralsRequired)}
+                        </span>
+                    </div>
 
-    async withdraw() {
-      alert(
-        "Withdrawal requests will be connected to the SHOPY FONT " +
-        "withdrawal system in the next integration step."
-      );
-    }
-  };
+                    <div class="mc-requirement">
+                        <span>✅ Tasks</span>
+                        <span class="mc-requirement-value">
+                            ${activityStatus(tasks, MC.config.tasksRequired)}
+                        </span>
+                    </div>
 
-  window.SHOPY_MONEY_CALENDAR = MoneyCalendar;
-})();
-                
+                    <div class="mc-requirement">
+                        <span>📅 Calendar visits</span>
+                        <span class="mc-requirement-value">
+                            ${activityStatus(visits, MC.config.calendarVisitsRequired)}
+                        </span>
+                    </div>
+
+                </div>
+
+                <hr class="mc-divider">
+
+                <div class="mc-requirement">
+                    <span>Daily reward</span>
+                    <span class="mc-requirement-value">
+                        ${MC.money(status === "qualified" ? (day.reward_usd || MC.config.dailyReward) : 0)}
+                    </span>
+                </div>
+
+                ${
+                    day.failed_requirements && day.failed_requirements.length
+                    ? `<div class="mc-message warning">
+                        Outstanding activities:
+                        ${MC.escapeHTML(day.failed_requirements.join(", "))}
+                       </div>`
+                    : ""
+                }
+            </div>
+        `;
+    };
+
+    MC.renderLoan = function () {
+        const loan = MC.state.loan;
+        const eligible = MC.state.cycle &&
+            MC.state.cycle.status === "completed" &&
+            MC.getExtensions() === 0;
+
+        if (!loan) {
+            return `
+                <div class="mc-loan-card">
+                    <div class="mc-heading">
+                        <h3>💳 Must Repay Loan</h3>
+                    </div>
+
+                    <div class="mc-loan-amount">
+                        ${MC.money(MC.config.loanAmount)}
+                    </div>
+
+                    <div class="mc-loan-status">
+                        ${
+                            eligible
+                            ? "Your cycle may qualify you for a loan request."
+                            : "Complete your first cycle perfectly to unlock loan eligibility."
+                        }
+                    </div>
+
+                    <div class="mc-warning-box" style="margin-top:14px">
+                        This loan must be repaid. Loan requests are subject to review
+                        and approval. Eligibility is not automatic disbursement.
+                    </div>
+
+                    <button class="mc-button mc-button-gold"
+                        id="mcRequestLoan"
+                        ${eligible ? "" : "disabled"}>
+                        Request $17 Loan
+                    </button>
+                </div>
+            `;
+        }
+
+        const amount = Number(loan.amount_usd || MC.config.loanAmount);
+        const repaid = Number(loan.amount_repaid || 0);
+        const outstanding = Math.max(0, amount - repaid);
+        const progress = amount > 0 ? Math.min(100, (repaid / amount) * 100) : 0;
+
+        return `
+            <div class="mc-loan-card">
+                <div class="mc-heading">
+                    <h3>💳 Must Repay Loan</h3>
+                    <span class="mc-tag">
+                        ${MC.escapeHTML(loan.status || "Requested")}
+                    </span>
+                </div>
+
+                <div class="mc-loan-amount">${MC.money(amount)}</div>
+
+                <div class="mc-loan-status">
+                    Amount repaid: ${MC.money(repaid)}
+                </div>
+
+                <div class="mc-loan-progress">
+                    <div class="mc-loan-progress-fill"
+                         style="width:${progress}%"></div>
+                </div>
+
+                <div class="mc-progress-caption">
+                    <span>${progress.toFixed(1)}% repaid</span>
+                    <span>${MC.money(outstanding)} remaining</span>
+                </div>
+
+                <div class="mc-warning-box" style="margin-top:14px">
+                    You are responsible for repaying the outstanding loan.
+                    ${loan.due_at ? "Due date: " + MC.escapeHTML(new Date(loan.due_at).toLocaleDateString()) : ""}
+                </div>
+            </div>
+        `;
+    };
+
+    MC.render = function () {
+        const root = document.getElementById("money-calendar-root");
+        if (!root) return;
+
+        const cycle = MC.state.cycle;
+        const days = MC.state.days || [];
+
+        if (!cycle) {
+            root.innerHTML = `
+                <div class="mc-wrap">
+                    <div class="mc-panel">
+                        <div class="mc-heading">
+                            <div>
+                                <h2>📅 Money Calendar</h2>
+                                <div class="mc-subtitle">
+                                    Your 10-day activity cycle
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mc-empty">
+                            <h3>No active cycle</h3>
+                            <p>
+                                Your 10-day cycle will appear here after
+                                your cycle request is approved.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mc-panel">
+                        ${MC.renderLoan()}
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        const progress = MC.getCycleProgress();
+        const earned = MC.getEarned();
+        const rewardPercent = MC.percent(earned, MC.config.targetReward);
+        const extensions = MC.getExtensions();
+
+        const calendarHTML = Array.from(
+            { length: MC.config.cycleDays },
+            function (_, index) {
+                return MC.renderDay(index + 1);
+            }
+        ).join("");
+
+        root.innerHTML = `
+            <div class="mc-wrap">
+
+                <div class="mc-panel">
+
+                    <div class="mc-heading">
+                        <div>
+                            <h2>📅 Money Calendar</h2>
+                            <div class="mc-subtitle">
+                                10-day activity and reward cycle
+                            </div>
+                        </div>
+
+                        <span class="mc-tag">
+                            ${MC.escapeHTML(cycle.status || "Active")}
+                        </span>
+                    </div>
+
+                    <div class="mc-target">
+                        <div class="mc-target-label">
+                            Cycle reward target
+                        </div>
+
+                        <div class="mc-target-amount">
+                            ${MC.money(MC.config.targetReward)}
+                        </div>
+
+                        <div class="mc-target-meta">
+                <span>10 days</span>
+                <span>•</span>
+                <span>${MC.money(MC.config.dailyReward)} per qualified day</span>
+                </div>
+
+                <div class="mc-progress-track">
+                    <div class="mc-progress-fill"
+                         style="width:${progress.percentage}%"></div>
+                </div>
+
+                <div class="mc-progress-caption">
+                    <span>${progress.qualifiedDays}/10 qualified days</span>
+                    <span>${progress.percentage.toFixed(0)}%</span>
+                </div>
+            </div>
+
+            <div class="mc-stats-grid">
+
+                <div class="mc-stat">
+                    <div class="mc-stat-label">Reward earned</div>
+                    <div class="mc-stat-value">${MC.money(earned)}</div>
+                    <div class="mc-stat-note">Cycle progress</div>
+                </div>
+
+                <div class="mc-stat">
+                    <div class="mc-stat-label">Remaining target</div>
+                    <div class="mc-stat-value">
+                        ${MC.money(Math.max(0, MC.config.targetReward - earned))}
+                    </div>
+                    <div class="mc-stat-note">To cycle target</div>
+                </div>
+
+                <div class="mc-stat">
+                    <div class="mc-stat-label">Qualified days</div>
+                    <div class="mc-stat-value">
+                        ${progress.qualifiedDays}/10
+                    </div>
+                    <div class="mc-stat-note">Daily activity completed</div>
+                </div>
+
+                <div class="mc-stat">
+                    <div class="mc-stat-label">Extension days</div>
+                    <div class="mc-stat-value">${extensions}</div>
+                    <div class="mc-stat-note">Cycle adjustments</div>
+                </div>
+
+            </div>
+
+            <div id="mcMessage" class="mc-message mc-hidden"></div>
+
+            <div class="mc-heading">
+                <h3>Your 10-Day Calendar</h3>
+            </div>
+
+            <div class="mc-calendar-grid">
+                ${calendarHTML}
+            </div>
+
+            <div class="mc-warning-box" style="margin-top:16px">
+                Daily activity requirements:
+                <strong>2 referrals + 5 tasks + 2 calendar visits.</strong>
+                Activities must be verified according to platform rules.
+                Missing activities may affect cycle eligibility and duration.
+            </div>
+
+            </div>
+
+            <div class="mc-panel">
+                <div class="mc-heading">
+                    <div>
+                        <h3>📊 Cycle Performance</h3>
+                        <div class="mc-subtitle">
+                            Analyze your daily reward progress
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mc-chart-container">
+                    <canvas id="mcRewardChart"></canvas>
+                </div>
+            </div>
+
+            <div class="mc-panel">
+                <div class="mc-heading">
+                    <h3>👥 Referral Growth Guide</h3>
+                </div>
+
+                <div class="mc-activity-list">
+                    <div class="mc-activity-item">
+                        <div class="mc-activity-title">Daily target: 2 referrals</div>
+                        <div class="mc-activity-description">
+                            Share your official referral link and invite new
+                            members to join SHOPY FONT.
+                        </div>
+                    </div>
+
+                    <div class="mc-activity-item">
+                        <div class="mc-activity-title">Build consistently</div>
+                        <div class="mc-activity-description">
+                            Focus on explaining the platform clearly and helping
+                            your referrals understand the activities.
+                        </div>
+                    </div>
+
+                    <div class="mc-activity-item">
+                        <div class="mc-activity-title">Your referral link</div>
+                        <div class="mc-activity-description">
+                            ${
+                                MC.getReferralLink()
+                                ? MC.escapeHTML(MC.getReferralLink())
+                                : "Your referral link will appear in your dashboard."
+                            }
+                        </div>
+                    </div>
+
+                    <button class="mc-button mc-button-secondary"
+                        id="mcShareReferral">
+                        Share Referral Link
+                    </button>
+                </div>
+            </div>
+
+            <div class="mc-panel">
+                ${MC.renderLoan()}
+            </div>
+
+            <div class="mc-panel">
+                <div class="mc-heading">
+                    <h3>💰 Cycle Actions</h3>
+                </div>
+
+                <div class="mc-warning-box">
+                    Withdrawal and new cycle requests will be available
+                    after cycle completion and backend verification.
+                </div>
+
+                <button class="mc-button mc-button-primary"
+                    id="mcRequestWithdrawal"
+                    ${cycle.status === "completed" ? "" : "disabled"}>
+                    Request Cycle Withdrawal
+                </button>
+
+                <button class="mc-button mc-button-secondary"
+                    id="mcStartNextCycle"
+                    ${cycle.status === "completed" ? "" : "disabled"}>
+                    Request Next 10-Day Cycle
+                </button>
+
+                <p class="mc-small">
+                    Reward eligibility, withdrawals, cycle extensions, and
+                    loan approvals are subject to verified activity and
+                    platform review.
+                </p>
+            </div>
+
+            </div>
+        `;
+
+        MC.renderChart();
+        MC.bindEvents();
+    };
+
+    MC.renderChart = function () {
+        const canvas = document.getElementById("mcRewardChart");
+        if (!canvas || !window.Chart) return;
+
+        if (MC.state.chart) {
+            MC.state.chart.destroy();
+        }
+
+        const days = MC.state.days || [];
+
+        const labels = Array.from(
+            { length: MC.config.cycleDays },
+            function (_, i) {
+                return "Day " + (i + 1);
+            }
+        );
+
+        const values = labels.map(function (_, i) {
+            const day = days.find(function (d) {
+                return Number(d.day_number) === i + 1;
+            });
+
+            return day && MC.getDayStatus(day) === "qualified"
+                ? Number(day.reward_usd || MC.config.dailyReward)
+                : 0;
+        });
+
+        MC.state.chart = new Chart(canvas, {
+            type: "bar",
+            data: {
+                labels: labels,
+                dataset
