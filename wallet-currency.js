@@ -4,8 +4,8 @@
 
     const SF = window.SF;
 
-    if (!SF || !SF.wallet || !SF.supabase) {
-        console.warn("SHOPY FONT currency switcher: wallet or Supabase not ready.");
+    if (!SF || !SF.wallet || typeof SF.getClient !== "function") {
+        console.error("SHOPY FONT: Wallet or Supabase client is not ready.");
         return;
     }
 
@@ -14,7 +14,7 @@
 
     const STORAGE_KEY = "sf_wallet_display_currency";
 
-    const currencyInfo = {
+    const currencies = {
         USD: { name: "US Dollar", symbol: "$", locale: "en-US", decimals: 2 },
         KES: { name: "Kenyan Shilling", symbol: "KES ", locale: "en-KE", decimals: 2 },
         NGN: { name: "Nigerian Naira", symbol: "₦", locale: "en-NG", decimals: 2 },
@@ -43,244 +43,90 @@
 
     let rates = { USD: 1 };
     let selectedCurrency = "USD";
-    let walletSnapshot = null;
-    let transactionsSnapshot = [];
-    let currencySelector = null;
-    let originalRender = null;
-
-    function getSupabaseClient() {
-        return SF.supabase;
-    }
+    let walletData = null;
+    let transactionData = [];
 
     function getCountryCurrency() {
-        const country =
-            SF.profile?.country ||
-            SF.userProfile?.country ||
-            SF.currentUser?.country ||
-            "";
+        const country = String(SF.profile?.country || "")
+            .trim()
+            .toLowerCase();
 
-        return countryCurrencies[String(country).trim().toLowerCase()] || "USD";
+        return countryCurrencies[country] || "USD";
     }
 
-    async function readRates() {
-        const client = getSupabaseClient();
+    async function loadRates() {
+        const db = SF.getClient();
 
-        const { data, error } = await client
+        const { data, error } = await db
             .from("sf_currency_rates")
-            .select("currency_code, exchange_rate_per_usd, country_name, currency_name")
+            .select("currency_code, exchange_rate_per_usd")
             .eq("is_active", true);
 
         if (error) {
-            console.error("SHOPY FONT currency rates error:", error);
+            console.error("Currency rates could not load:", error);
             return;
         }
 
-        const updatedRates = { USD: 1 };
+        const result = { USD: 1 };
 
         (data || []).forEach(function (item) {
             const code = String(item.currency_code || "").toUpperCase();
             const rate = Number(item.exchange_rate_per_usd);
 
-            if (
-                currencyInfo[code] &&
-                code !== "USD" &&
-                Number.isFinite(rate) &&
-                rate > 0
-            ) {
-                updatedRates[code] = rate;
+            if (currencies[code] && code !== "USD" && rate > 0) {
+                result[code] = rate;
             }
         });
 
-        rates = updatedRates;
+        rates = result;
     }
 
-    function getAvailableCurrencies() {
-        return Object.keys(currencyInfo).filter(function (code) {
+    function availableCurrencies() {
+        return Object.keys(currencies).filter(function (code) {
             return code === "USD" || Number(rates[code]) > 0;
         });
     }
 
-    function formatAmount(usdAmount) {
-        const amount = Number(usdAmount) || 0;
-        const info = currencyInfo[selectedCurrency] || currencyInfo.USD;
+    function money(usdAmount) {
+        const info = currencies[selectedCurrency] || currencies.USD;
         const rate = Number(rates[selectedCurrency]) || 1;
-        const converted = amount * rate;
+        const amount = (Number(usdAmount) || 0) * rate;
 
         const formatted = new Intl.NumberFormat(info.locale, {
             minimumFractionDigits: info.decimals,
             maximumFractionDigits: info.decimals
-        }).format(Math.abs(converted));
+        }).format(Math.abs(amount));
 
-        return (converted < 0 ? "-" : "") + info.symbol + formatted;
+        return (amount < 0 ? "-" : "") + info.symbol + formatted;
     }
 
-    function getTransactionSign(transaction) {
-        const type = String(transaction.transaction_type || "").toLowerCase();
-
-        const positiveTypes = [
-            "earning",
-            "earnings",
-            "credit",
-            "deposit",
-            "bonus",
-            "reward",
-            "commission",
-            "referral",
-            "refund"
-        ];
-
-        return positiveTypes.some(function (item) {
-            return type.includes(item);
-        }) ? "+" : "-";
-    }
-
-    function updateWalletDisplay() {
-        if (!walletSnapshot) return;
-
-        const available = Number(walletSnapshot.available_balance_usd) || 0;
-        const reserved = Number(walletSnapshot.reserved_balance_usd) || 0;
-        const earned = Number(walletSnapshot.total_earned_usd) || 0;
-        const withdrawn = Number(walletSnapshot.total_withdrawn_usd) || 0;
-
-        const mainBalance = document.querySelector(".sf-wallet-main strong");
-        const stats = document.querySelectorAll(".sf-wallet-stats strong");
-
-        if (mainBalance) {
-            mainBalance.textContent = formatAmount(available);
-        }
-
-        if (stats.length >= 3) {
-            stats[0].textContent = formatAmount(reserved);
-            stats[1].textContent = formatAmount(earned);
-            stats[2].textContent = formatAmount(withdrawn);
-        }
-
-        const transactionElements = document.querySelectorAll(
-            ".sf-wallet-transaction"
-        );
-
-        transactionElements.forEach(function (element, index) {
-            const transaction = transactionsSnapshot[index];
-            if (!transaction) return;
-
-            const amountElement = element.querySelector("strong");
-
-            if (amountElement) {
-                amountElement.textContent =
-                    getTransactionSign(transaction) +
-                    formatAmount(Math.abs(Number(transaction.amount_usd) || 0));
-            }
-        });
-
-        const heading = document.querySelector(".sf-wallet-heading h2");
-
-        if (heading) {
-            heading.textContent = "My " + selectedCurrency + " Wallet";
-        }
-
-        const note = document.querySelector(".sf-wallet-heading p");
-
-        if (note) {
-            note.textContent =
-                "Displaying your wallet in " +
-                selectedCurrency +
-                ". Your actual wallet and transaction records remain in USD.";
-        }
-    }
-
-    function createCurrencySelector() {
-        const heading = document.querySelector(".sf-wallet-heading");
-        if (!heading) return;
-
-        let wrapper = heading.querySelector(".sf-wallet-currency-control");
-
-        if (!wrapper) {
-            wrapper = document.createElement("label");
-            wrapper.className = "sf-wallet-currency-control";
-
-            const label = document.createElement("span");
-            label.textContent = "Display currency";
-
-            currencySelector = document.createElement("select");
-            currencySelector.id = "sfWalletCurrencySelector";
-            currencySelector.setAttribute("aria-label", "Choose wallet display currency");
-
-            wrapper.appendChild(label);
-            wrapper.appendChild(currencySelector);
-            heading.appendChild(wrapper);
-        } else {
-            currencySelector = wrapper.querySelector("select");
-        }
-
-        const available = getAvailableCurrencies();
-
-        currencySelector.innerHTML = "";
-
-        available.forEach(function (code) {
-            const option = document.createElement("option");
-            option.value = code;
-            option.textContent = code + " — " + currencyInfo[code].name;
-            currencySelector.appendChild(option);
-        });
-
-        const savedCurrency = localStorage.getItem(STORAGE_KEY);
-        const countryCurrency = getCountryCurrency();
-
-        if (savedCurrency && available.includes(savedCurrency)) {
-            selectedCurrency = savedCurrency;
-        } else if (available.includes(countryCurrency)) {
-            selectedCurrency = countryCurrency;
-        } else {
-            selectedCurrency = "USD";
-        }
-
-        currencySelector.value = selectedCurrency;
-
-        currencySelector.onchange = function () {
-            const newCurrency = currencySelector.value;
-
-            if (!available.includes(newCurrency)) return;
-
-            selectedCurrency = newCurrency;
-            localStorage.setItem(STORAGE_KEY, selectedCurrency);
-            updateWalletDisplay();
-        };
-
-        addCurrencyStyles();
-    }
-
-    function addCurrencyStyles() {
-        if (document.getElementById("sf-wallet-currency-styles")) return;
+    function addStyles() {
+        if (document.getElementById("sf-currency-switcher-style")) return;
 
         const style = document.createElement("style");
-        style.id = "sf-wallet-currency-styles";
+        style.id = "sf-currency-switcher-style";
 
         style.textContent = `
             .sf-wallet-currency-control {
                 display: flex;
                 flex-direction: column;
                 gap: 6px;
-                margin-top: 14px;
+                margin-top: 12px;
                 max-width: 260px;
                 font-size: 13px;
-                font-weight: 600;
+                font-weight: 700;
+                color: #176b47;
             }
 
             .sf-wallet-currency-control select {
                 width: 100%;
-                min-height: 42px;
-                padding: 9px 12px;
-                border: 1px solid #cbd5d1;
+                min-height: 44px;
+                padding: 10px 12px;
+                border: 1px solid #b8d3c2;
                 border-radius: 10px;
-                background: #ffffff;
-                color: #123b2d;
+                background: #fff;
+                color: #173b2e;
                 font-size: 14px;
-                outline: none;
-            }
-
-            .sf-wallet-currency-control select:focus {
-                border-color: #13865c;
-                box-shadow: 0 0 0 2px rgba(19, 134, 92, 0.12);
             }
 
             @media (max-width: 600px) {
@@ -294,43 +140,187 @@
         document.head.appendChild(style);
     }
 
-    async function refreshCurrencyDisplay() {
-        await readRates();
-        createCurrencySelector();
-        updateWalletDisplay();
+    function createSelector() {
+        const heading = document.querySelector(".sf-wallet-heading");
+        if (!heading) return;
+
+        const content = heading.querySelector(":scope > div") || heading;
+
+        let wrapper = document.getElementById("sfWalletCurrencyControl");
+
+        if (!wrapper) {
+            wrapper = document.createElement("label");
+            wrapper.id = "sfWalletCurrencyControl";
+            wrapper.className = "sf-wallet-currency-control";
+
+            const label = document.createElement("span");
+            label.textContent = "Choose wallet display currency";
+
+            const select = document.createElement("select");
+            select.id = "sfWalletCurrencySelector";
+            select.setAttribute("aria-label", "Choose wallet display currency");
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(select);
+            content.appendChild(wrapper);
+        }
+
+        const select = wrapper.querySelector("select");
+        const available = availableCurrencies();
+
+        select.innerHTML = "";
+
+        available.forEach(function (code) {
+            const option = document.createElement("option");
+            option.value = code;
+            option.textContent = code + " — " + currencies[code].name;
+            select.appendChild(option);
+        });
+
+        let saved = "";
+
+        try {
+            saved = localStorage.getItem(STORAGE_KEY) || "";
+        } catch (error) {
+            console.warn("Currency preference storage unavailable.");
+        }
+
+        if (available.includes(saved)) {
+            selectedCurrency = saved;
+        } else {
+            const countryCurrency = getCountryCurrency();
+            selectedCurrency = available.includes(countryCurrency)
+                ? countryCurrency
+                : "USD";
+        }
+
+        select.value = selectedCurrency;
+
+        select.onchange = function () {
+            selectedCurrency = select.value;
+
+            try {
+                localStorage.setItem(STORAGE_KEY, selectedCurrency);
+            } catch (error) {
+                console.warn("Could not save currency preference.");
+            }
+
+            updateDisplay();
+        };
+
+        addStyles();
     }
 
-    function installWalletWrapper() {
+    function updateDisplay() {
+        if (!walletData) return;
+
+        const mainBalance = document.querySelector(".sf-wallet-main strong");
+        const stats = document.querySelectorAll(".sf-wallet-stats strong");
+
+        if (mainBalance) {
+            mainBalance.textContent = money(walletData.available_usd);
+        }
+
+        if (stats.length >= 3) {
+            stats[0].textContent = money(walletData.reserved_usd);
+            stats[1].textContent = money(walletData.total_earned_usd);
+            stats[2].textContent = money(walletData.total_withdrawn_usd);
+        }
+
+        const transactionElements = document.querySelectorAll(
+            ".sf-wallet-transaction"
+        );
+
+        transactionElements.forEach(function (element, index) {
+            const transaction = transactionData[index];
+            if (!transaction) return;
+
+            const amountElement = element.querySelector(":scope > strong");
+            if (!amountElement) return;
+
+            const type = String(transaction.transaction_type || "").toLowerCase();
+            const positive = ["earning", "deposit", "credit"].includes(type);
+
+            amountElement.textContent =
+                (positive ? "+" : "−") +
+                money(Math.abs(Number(transaction.amount_usd) || 0));
+        });
+
+        const heading = document.querySelector(".sf-wallet-heading h2");
+        if (heading) {
+            heading.textContent = "My " + selectedCurrency + " Wallet";
+        }
+
+        const note = document.querySelector(".sf-wallet-heading p");
+        if (note) {
+            note.textContent =
+                "Display currency: " + selectedCurrency +
+                ". Your actual wallet ledger remains in USD.";
+        }
+
+        const symbol = document.querySelector(".sf-wallet-symbol");
+        if (symbol) {
+            symbol.textContent = currencies[selectedCurrency].symbol.trim();
+        }
+    }
+
+    async function loadWalletData() {
+        if (!SF.currentUser?.id) return;
+
+        const db = SF.getClient();
+        const userId = SF.currentUser.id;
+
+        const [walletResult, historyResult] = await Promise.all([
+            db.from("sf_usd_wallets")
+                .select("available_usd,reserved_usd,total_earned_usd,total_withdrawn_usd")
+                .eq("user_id", userId)
+                .maybeSingle(),
+
+            db.from("sf_usd_wallet_transactions")
+                .select("transaction_type,amount_usd,description,created_at")
+                .eq("user_id", userId)
+                .order("created_at", { ascending: false })
+                .limit(10)
+        ]);
+
+        if (walletResult.error) throw walletResult.error;
+        if (historyResult.error) throw historyResult.error;
+
+        walletData = walletResult.data;
+        transactionData = historyResult.data || [];
+    }
+
+    async function refresh() {
+        try {
+            await loadRates();
+            await loadWalletData();
+
+            if (!walletData) return;
+
+            createSelector();
+            updateDisplay();
+        } catch (error) {
+            console.error("SHOPY FONT currency switcher error:", error);
+        }
+    }
+
+    function install() {
         if (typeof SF.wallet.render !== "function") {
-            console.warn("SHOPY FONT currency switcher: wallet render function unavailable.");
+            console.error("SHOPY FONT wallet render function not found.");
             return;
         }
 
-        if (SF.wallet.render.__currencyWrapped) return;
+        const originalRender = SF.wallet.render;
 
-        originalRender = SF.wallet.render;
+        if (originalRender.__currencyWrapped) return;
 
         const wrappedRender = async function () {
             const result = await originalRender.apply(this, arguments);
 
-            try {
-                walletSnapshot = SF.wallet.walletSnapshot || SF.wallet.currentWallet || null;
-                transactionsSnapshot =
-                    SF.wallet.transactionsSnapshot ||
-                    SF.wallet.transactions ||
-                    [];
+            const panel = document.getElementById("sfWalletPanel");
 
-                if (!walletSnapshot) {
-                    console.warn(
-                        "Currency switcher could not access the wallet snapshot. " +
-                        "The wallet display remains unchanged."
-                    );
-                    return result;
-                }
-
-                await refreshCurrencyDisplay();
-            } catch (error) {
-                console.error("SHOPY FONT currency display error:", error);
+            if (panel && panel.querySelector(".sf-wallet-heading")) {
+                await refresh();
             }
 
             return result;
@@ -340,36 +330,18 @@
         SF.wallet.render = wrappedRender;
     }
 
-    function start() {
-        installWalletWrapper();
-
-        const observer = new MutationObserver(function () {
-            if (!currencySelector && walletSnapshot) {
-                createCurrencySelector();
-                updateWalletDisplay();
-            }
-        });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", start, { once: true });
-    } else {
-        start();
-    }
+    install();
 
     window.SFWalletCurrency = {
-        refresh: refreshCurrencyDisplay,
+        refresh: refresh,
         getRates: function () {
-            return Object.assign({}, rates);
+            return { ...rates };
         },
         getSelectedCurrency: function () {
             return selectedCurrency;
         }
     };
+
+    console.log("SHOPY FONT currency switcher installed.");
 })();
-       
+            
