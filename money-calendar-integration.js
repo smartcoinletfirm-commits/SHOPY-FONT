@@ -4,14 +4,17 @@
 
     const MCI = {
         initialized: false,
+        engineInitialized: false,
         observer: null,
         refreshTimer: null,
         busy: false,
-        lastRefresh: 0,
         rootId: "money-calendar-root",
         sectionId: "sf-money-calendar-section"
     };
 
+    // ------------------------------
+    // USER
+    // ------------------------------
     MCI.getUser = function () {
         return window.SF?.currentUser ||
             window.SF?.user ||
@@ -19,6 +22,9 @@
             null;
     };
 
+    // ------------------------------
+    // SUPABASE CLIENT
+    // ------------------------------
     MCI.getClient = function () {
         return window.SF?.getClient?.() ||
             window.supabaseClient ||
@@ -26,28 +32,33 @@
             null;
     };
 
+    // ------------------------------
+    // APPROVED DASHBOARD
+    // ------------------------------
     MCI.getDashboard = function () {
         return document.getElementById("approvedDashboard");
     };
 
-    // Only show the calendar to an actually visible approved dashboard.
-    MCI.isApprovedDashboardVisible = function () {
+    MCI.isDashboardVisible = function () {
         const dashboard = MCI.getDashboard();
+        const user = MCI.getUser();
 
-        if (!dashboard) return false;
-        if (!MCI.getUser()?.id) return false;
+        if (!dashboard || !user?.id) return false;
+
         if (dashboard.classList.contains("hidden")) return false;
+
         if (dashboard.style.display === "none") return false;
 
-        if (dashboard.offsetWidth === 0 && dashboard.offsetHeight === 0) {
-            return false;
-        }
-
-        return true;
+        return dashboard.offsetWidth > 0 ||
+            dashboard.offsetHeight > 0;
     };
 
+    // ------------------------------
+    // CREATE CALENDAR SECTION
+    // ------------------------------
     MCI.createSection = function () {
         const dashboard = MCI.getDashboard();
+
         if (!dashboard) return null;
 
         let section = document.getElementById(MCI.sectionId);
@@ -61,7 +72,11 @@
         section.innerHTML = `
             <div class="mc-wrap">
                 <div class="mc-panel">
-                    <div id="${MCI.rootId}"></div>
+                    <div id="${MCI.rootId}">
+                        <div class="mc-message">
+                            Loading Money Calendar...
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -71,8 +86,10 @@
         return section;
     };
 
-    // Load the user's most recent cycle.
-    MCI.getLatestCycle = async function (client, userId) {
+    // ------------------------------
+    // LOAD LATEST CYCLE
+    // ------------------------------
+    MCI.loadCycle = async function (client, userId) {
         const result = await client
             .from("sf_money_calendar_cycles")
             .select("*")
@@ -81,162 +98,262 @@
             .limit(1);
 
         if (result.error) {
-            throw result.error;
+            throw new Error(
+                "Cycle loading failed: " + result.error.message
+            );
         }
 
         return result.data?.[0] || null;
     };
 
-    // Create the FIRST cycle only.
-    // A completed or expired previous cycle must not cause an
-    // automatic new cycle.
-    MCI.ensureFirstCycle = async function (client, userId) {
-        let cycle = await MCI.getLatestCycle(client, userId);
-
-        if (cycle) {
-            return cycle;
-        }
-
-        const initialization = await client.rpc(
+    // ------------------------------
+    // INITIALIZE FIRST CYCLE ONLY
+    // ------------------------------
+    MCI.initializeFirstCycle = async function (client) {
+        const result = await client.rpc(
             "sf_money_calendar_initialize_cycle"
         );
 
-        if (initialization.error) {
-            throw initialization.error;
-        }
-
-        // Fetch the newly created cycle.
-        cycle = await MCI.getLatestCycle(client, userId);
-
-        if (!cycle) {
+        if (result.error) {
             throw new Error(
-                "Cycle initialization succeeded, but the cycle could not be loaded."
+                "Cycle initialization failed: " +
+                result.error.message
             );
         }
 
-        return cycle;
+        return result.data;
     };
 
+    // ------------------------------
+    // LOAD DAILY RECORDS
+    // ------------------------------
+    MCI.loadDays = async function (client, userId, cycleId) {
+        if (!cycleId) return [];
+
+        const result = await client
+            .from("sf_money_calendar_daily")
+            .select("*")
+            .eq("user_id", userId)
+            .eq("cycle_id", cycleId)
+            .order("day_number", { ascending: true });
+
+        if (result.error) {
+            throw new Error(
+                "Daily records loading failed: " +
+                result.error.message
+            );
+        }
+
+        return result.data || [];
+    };
+
+    // ------------------------------
+    // LOAD LOAN (OPTIONAL)
+    // ------------------------------
+    MCI.loadLoan = async function (client, userId) {
+        try {
+            const result = await client
+                .from("sf_money_calendar_loans")
+                .select("*")
+                .eq("user_id", userId)
+                .order("created_at", { ascending: false })
+                .limit(1);
+
+            if (result.error) {
+                console.warn(
+                    "Money Calendar loan loading warning:",
+                    result.error.message
+                );
+
+                return null;
+            }
+
+            return result.data?.[0] || null;
+
+        } catch (error) {
+            console.warn(
+                "Money Calendar loan loading warning:",
+                error
+            );
+
+            return null;
+        }
+    };
+
+    // ------------------------------
+    // LOAD ALL CALENDAR DATA
+    // ------------------------------
     MCI.loadData = async function () {
         const client = MCI.getClient();
         const user = MCI.getUser();
 
-        if (!client || !user?.id) {
-            return {
-                cycle: null,
-                days: [],
-                loan: null
-            };
+        if (!client) {
+            throw new Error("Supabase client not found.");
         }
 
-        // Check existing history before creating anything.
-        let cycle = await MCI.getLatestCycle(client, user.id);
+        if (!user?.id) {
+            throw new Error("Logged-in user could not be identified.");
+        }
 
-        // Initialize ONLY if the user has never had a cycle.
+        let cycle = await MCI.loadCycle(client, user.id);
+
+        // Create a first cycle only when no history exists.
         if (!cycle) {
-            cycle = await MCI.ensureFirstCycle(client, user.id);
+            await MCI.initializeFirstCycle(client);
+
+            cycle = await MCI.loadCycle(client, user.id);
         }
 
-        let days = [];
-
-        if (cycle) {
-            const dailyResult = await client
-                .from("sf_money_calendar_daily")
-                .select("*")
-                .eq("cycle_id", cycle.id)
-                .eq("user_id", user.id)
-                .order("day_number", { ascending: true });
-
-            if (dailyResult.error) {
-                throw dailyResult.error;
-            }
-
-            days = dailyResult.data || [];
+        if (!cycle) {
+            throw new Error(
+                "No Money Calendar cycle could be found or created."
+            );
         }
 
-        // Load the user's most recent loan record.
-        const loanResult = await client
-            .from("sf_money_calendar_loans")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(1);
+        const days = await MCI.loadDays(
+            client,
+            user.id,
+            cycle.id
+        );
 
-        if (loanResult.error) {
-            throw loanResult.error;
-        }
+        const loan = await MCI.loadLoan(
+            client,
+            user.id
+        );
 
         return {
             cycle: cycle,
             days: days,
-            loan: loanResult.data?.[0] || null
+            loan: loan
         };
     };
 
-    MCI.renderCalendar = async function (force) {
-        if (!MCI.isApprovedDashboardVisible()) {
+    // ------------------------------
+    // SHOW ERROR
+    // ------------------------------
+    MCI.showError = function (error) {
+        const root = document.getElementById(MCI.rootId);
+
+        if (!root) return;
+
+        const message = String(
+            error?.message ||
+            error ||
+            "Unknown error"
+        );
+
+        root.innerHTML = "";
+
+        const box = document.createElement("div");
+        box.className = "mc-message warning";
+        box.style.padding = "16px";
+
+        const heading = document.createElement("strong");
+        heading.textContent = "Money Calendar could not load";
+
+        const details = document.createElement("p");
+        details.textContent = message;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "Retry";
+
+        button.onclick = function () {
+            MCI.refresh();
+        };
+
+        box.appendChild(heading);
+        box.appendChild(details);
+        box.appendChild(button);
+
+        root.appendChild(box);
+    };
+
+    // ------------------------------
+    // RENDER CALENDAR
+    // ------------------------------
+    MCI.renderCalendar = async function () {
+        if (MCI.busy) return;
+
+        if (!MCI.isDashboardVisible()) {
             MCI.hideCalendar();
             return;
         }
 
-        // Prevent overlapping database requests.
-        if (MCI.busy) return;
-
-        // Avoid unnecessary refreshes from dashboard DOM mutations.
-        const now = Date.now();
-
-        if (!force && now - MCI.lastRefresh < 1500) {
-            return;
-        }
-
         MCI.busy = true;
-        MCI.lastRefresh = now;
 
         try {
             const section = MCI.createSection();
 
-            if (!section) return;
+            if (!section) {
+                throw new Error(
+                    "Approved dashboard container was not found."
+                );
+            }
 
             section.style.display = "block";
 
             const MC = window.SHOPY_MONEY_CALENDAR;
 
             if (!MC) {
-                console.error(
-                    "Money Calendar engine is missing. Check money-calendar.js."
+                throw new Error(
+                    "Money Calendar engine not found. Check money-calendar.js."
                 );
-                return;
             }
 
-            if (!MC.state.initialized) {
-                MC.init({
-                    user: MCI.getUser(),
-                    supabase: MCI.getClient()
+            const client = MCI.getClient();
+            const user = MCI.getUser();
+
+            if (!client) {
+                throw new Error(
+                    "Supabase client is unavailable."
+                );
+            }
+
+            if (!user?.id) {
+                throw new Error(
+                    "Your login session could not be identified."
+                );
+            }
+
+            // Initialize the engine using its correct parameters.
+            if (!MCI.engineInitialized) {
+                await MC.init({
+                    supabase: client,
+                    user: user
                 });
+
+                MCI.engineInitialized = true;
             }
 
+            // Load database data.
             const data = await MCI.loadData();
 
-            MC.refresh(data);
+            // Update the calendar UI.
+            if (typeof MC.refresh === "function") {
+                MC.refresh(data);
+            } else {
+                throw new Error(
+                    "Money Calendar refresh function is missing."
+                );
+            }
 
         } catch (error) {
-            console.error("Money Calendar integration error:", error);
+            console.error(
+                "Money Calendar integration error:",
+                error
+            );
 
-            const root = document.getElementById(MCI.rootId);
+            MCI.showError(error);
 
-            if (root) {
-                root.innerHTML = `
-                    <div class="mc-message warning">
-                        Money Calendar could not load your data.
-                        Please refresh or try again later.
-                    </div>
-                `;
-            }
         } finally {
             MCI.busy = false;
         }
     };
 
+    // ------------------------------
+    // HIDE CALENDAR
+    // ------------------------------
     MCI.hideCalendar = function () {
         const section = document.getElementById(MCI.sectionId);
 
@@ -245,23 +362,29 @@
         }
     };
 
+    // ------------------------------
+    // SCHEDULE REFRESH
+    // ------------------------------
     MCI.scheduleRefresh = function () {
         if (MCI.refreshTimer) {
             clearTimeout(MCI.refreshTimer);
         }
 
         MCI.refreshTimer = setTimeout(function () {
-            MCI.renderCalendar(false);
-        }, 300);
+            MCI.renderCalendar();
+        }, 500);
     };
 
+    // ------------------------------
+    // WATCH DASHBOARD
+    // ------------------------------
     MCI.watchDashboard = function () {
         if (MCI.observer) {
             MCI.observer.disconnect();
         }
 
         MCI.observer = new MutationObserver(function () {
-            if (MCI.isApprovedDashboardVisible()) {
+            if (MCI.isDashboardVisible()) {
                 MCI.scheduleRefresh();
             } else {
                 MCI.hideCalendar();
@@ -276,6 +399,9 @@
         });
     };
 
+    // ------------------------------
+    // INIT
+    // ------------------------------
     MCI.init = function () {
         if (MCI.initialized) return;
 
@@ -283,14 +409,19 @@
 
         MCI.watchDashboard();
 
-        MCI.renderCalendar(true);
+        MCI.renderCalendar();
     };
 
+    // ------------------------------
+    // MANUAL REFRESH
+    // ------------------------------
     MCI.refresh = function () {
-        MCI.lastRefresh = 0;
-        return MCI.renderCalendar(true);
+        return MCI.renderCalendar();
     };
 
+    // ------------------------------
+    // DESTROY
+    // ------------------------------
     MCI.destroy = function () {
         if (MCI.observer) {
             MCI.observer.disconnect();
@@ -306,15 +437,24 @@
             window.SHOPY_MONEY_CALENDAR.destroy();
         }
 
-        MCI.busy = false;
         MCI.initialized = false;
-        MCI.lastRefresh = 0;
+        MCI.engineInitialized = false;
+        MCI.busy = false;
     };
 
+    // ------------------------------
+    // GLOBAL ACCESS
+    // ------------------------------
     window.SHOPY_MONEY_CALENDAR_INTEGRATION = MCI;
 
+    // ------------------------------
+    // START
+    // ------------------------------
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", MCI.init);
+        document.addEventListener(
+            "DOMContentLoaded",
+            MCI.init
+        );
     } else {
         MCI.init();
     }
