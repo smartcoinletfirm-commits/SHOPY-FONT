@@ -583,8 +583,140 @@
                 : 0;
         });
 
-        MC.state.chart = new Chart(canvas, {
+        
+MC.state.chart = new Chart(canvas, {
             type: "bar",
             data: {
                 labels: labels,
-                dataset
+                datasets: [{
+                    label: "Daily reward (USD)",
+                    data: values,
+                    borderRadius: 6,
+                    backgroundColor: "#10b981"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: "#d1d5db"
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: "#9ca3af"
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: {
+                            color: "#9ca3af"
+                        },
+                        grid: {
+                            color: "rgba(255,255,255,.07)"
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    MC.bindEvents = function () {
+        const root = document.getElementById("money-calendar-root");
+        if (!root) return;
+
+        const shareButton = root.querySelector("#mcShareReferral");
+        if (shareButton) {
+            shareButton.onclick = async function () {
+                const link = MC.getReferralLink();
+
+                if (!link) {
+                    MC.showMessage("Referral link is not available yet.", "warning");
+                    return;
+                }
+
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: "SHOPY FONT",
+                            text: "Join SHOPY FONT — The World Connected Through Opportunity",
+                            url: link
+                        });
+                    } catch (_) {}
+                } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(link);
+                    MC.showMessage("Referral link copied.", "success");
+                }
+            };
+        }
+
+        const withdrawalButton = root.querySelector("#mcRequestWithdrawal");
+        if (withdrawalButton) {
+            withdrawalButton.onclick = function () {
+                MC.showMessage(
+                    "Withdrawal frontend is ready. Withdrawal processing will be connected to the verified backend.",
+                    "warning"
+                );
+            };
+        }
+
+        const nextCycleButton = root.querySelector("#mcStartNextCycle");
+        if (nextCycleButton) {
+            nextCycleButton.onclick = function () {
+                MC.showMessage(
+                    "Next-cycle request interface is ready. Backend cycle controls will be connected next.",
+                    "warning"
+                );
+            };
+        }
+
+        const loanButton = root.querySelector("#mcRequestLoan");
+        if (loanButton) {
+            loanButton.onclick = function () {
+                MC.showMessage(
+                    "Loan request interface is ready. Eligibility verification and admin approval will be connected to the backend.",
+                    "warning"
+                );
+            };
+        }
+    };
+
+    MC.init = function (options) {
+        options = options || {};
+
+        MC.state.user = options.user || window.SF?.currentUser || null;
+        MC.state.supabase = options.supabase || window.SF?.getClient?.() || null;
+
+        MC.render();
+
+        MC.state.initialized = true;
+    };
+
+    MC.refresh = function (data) {
+        data = data || {};
+
+        MC.state.cycle = data.cycle || null;
+        MC.state.days = Array.isArray(data.days) ? data.days : [];
+        MC.state.loan = data.loan || null;
+
+        MC.render();
+    };
+
+    MC.destroy = function () {
+        if (MC.state.chart) {
+            MC.state.chart.destroy();
+            MC.state.chart = null;
+        }
+
+        MC.state.initialized = false;
+    };
+
+})();
