@@ -631,10 +631,221 @@
     </div>
     `;
 
-        MC.renderChart();
+                MC.renderChart();
         MC.bindEvents();
     };
 
     // -----------------------------
     // CHART
-    // ----------------------
+    // -----------------------------
+    MC.renderChart = function () {
+        const canvas = document.getElementById("mcRewardChart");
+
+        if (!canvas || !window.Chart) return;
+
+        if (MC.state.chart) {
+            MC.state.chart.destroy();
+            MC.state.chart = null;
+        }
+
+        const days = MC.state.days || [];
+
+        const labels = Array.from(
+            { length: MC.config.cycleDays },
+            function (_, index) {
+                return "Day " + (index + 1);
+            }
+        );
+
+        const values = labels.map(function (_, index) {
+            const day = days.find(function (item) {
+                return Number(item.day_number) === index + 1;
+            });
+
+            return day && MC.getDayStatus(day) === "qualified"
+                ? MC.config.dailyReward
+                : 0;
+        });
+
+        MC.state.chart = new Chart(canvas, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Qualified reward target (USD)",
+                    data: values,
+                    borderRadius: 6,
+                    backgroundColor: "#10b981"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: "#d1d5db"
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: "#9ca3af"
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: {
+                            color: "#9ca3af"
+                        },
+                        grid: {
+                            color: "rgba(255,255,255,.07)"
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    // -----------------------------
+    // EVENTS
+    // -----------------------------
+    MC.bindEvents = function () {
+        const root = document.getElementById("money-calendar-root");
+
+        if (!root) return;
+
+        const shareButton = root.querySelector("#mcShareReferral");
+
+        if (shareButton) {
+            shareButton.onclick = async function () {
+                const link = MC.getReferralLink();
+
+                if (!link) {
+                    MC.showMessage(
+                        "Referral link is not available yet.",
+                        "warning"
+                    );
+                    return;
+                }
+
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: "SHOPY FONT",
+                            text: "Join SHOPY FONT — The World Connected Through Opportunity",
+                            url: link
+                        });
+                    } catch (_) {}
+                } else if (navigator.clipboard) {
+                    try {
+                        await navigator.clipboard.writeText(link);
+                        MC.showMessage(
+                            "Referral link copied.",
+                            "success"
+                        );
+                    } catch (_) {
+                        MC.showMessage(
+                            "Could not copy the referral link.",
+                            "warning"
+                        );
+                    }
+                }
+            };
+        }
+
+        const withdrawalButton =
+            root.querySelector("#mcRequestWithdrawal");
+
+        if (withdrawalButton) {
+            withdrawalButton.onclick = function () {
+                MC.showMessage(
+                    "Withdrawal processing is not yet connected to the verified backend.",
+                    "warning"
+                );
+            };
+        }
+
+        const nextCycleButton =
+            root.querySelector("#mcStartNextCycle");
+
+        if (nextCycleButton) {
+            nextCycleButton.onclick = function () {
+                MC.showMessage(
+                    "Next-cycle requests are not yet connected to the backend.",
+                    "warning"
+                );
+            };
+        }
+
+        const loanButton = root.querySelector("#mcRequestLoan");
+
+        if (loanButton) {
+            loanButton.onclick = function () {
+                MC.showMessage(
+                    "Loan requests are not yet connected to the backend.",
+                    "warning"
+                );
+            };
+        }
+    };
+
+    // -----------------------------
+    // INITIALIZE
+    // -----------------------------
+    MC.init = function (options) {
+        options = options || {};
+
+        MC.state.user =
+            options.user ||
+            window.SF?.currentUser ||
+            window.SF?.user ||
+            null;
+
+        MC.state.supabase =
+            options.supabase ||
+            window.SF?.getClient?.() ||
+            window.supabaseClient ||
+            window.supabase ||
+            null;
+
+        MC.render();
+
+        MC.state.initialized = true;
+    };
+
+    // -----------------------------
+    // REFRESH DATA
+    // -----------------------------
+    MC.refresh = function (data) {
+        data = data || {};
+
+        MC.state.cycle = data.cycle || null;
+
+        MC.state.days = Array.isArray(data.days)
+            ? data.days.map(MC.normalizeDay)
+            : [];
+
+        MC.state.loan = data.loan || null;
+
+        MC.render();
+    };
+
+    // -----------------------------
+    // DESTROY
+    // -----------------------------
+    MC.destroy = function () {
+        if (MC.state.chart) {
+            MC.state.chart.destroy();
+            MC.state.chart = null;
+        }
+
+        MC.state.initialized = false;
+    };
+
+})();
