@@ -368,3 +368,210 @@
     grid-template-columns: 1fr !important;
   }
 }
+/* =========================================
+   SHOPY FONT — PREMIUM DASHBOARD OVERRIDE
+   Strong selectors to beat injected styles
+========================================= */
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview {
+  max-width: 1120px !important;
+  margin: 0 auto 32px !important;
+  color: #172b22 !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-welcome {
+  min-height: 175px !important;
+  padding: 30px !important;
+  border: 1px solid rgba(214,174,96,.35) !important;
+  border-radius: 24px !important;
+  background: linear-gradient(120deg,#073d2b 0%,#08734f 65%,#0b8b60 100%) !important;
+  box-shadow: 0 16px 36px rgba(7,61,43,.15) !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-welcome small {
+  color: #e9d39e !important;
+  font-size: 11px !important;
+  letter-spacing: 2px !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-welcome h2 {
+  color: #fff !important;
+  font-size: clamp(25px,4vw,35px) !important;
+  line-height: 1.2 !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-welcome p {
+  color: #e0eee7 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary {
+  display: grid !important;
+  grid-template-columns: minmax(0,.85fr) minmax(0,1.4fr) !important;
+  gap: 16px !important;
+  margin-top: 18px !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary-card {
+  min-height: 120px !important;
+  padding: 22px !important;
+  border: 1px solid #e1eae4 !important;
+  border-radius: 19px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 24px rgba(15,45,31,.055) !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary-card span {
+  font-size: 11px !important;
+  letter-spacing: 1.2px !important;
+  color: #718176 !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary-card strong {
+  font-size: 29px !important;
+  color: #173c2c !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary-card.wallet {
+  background: linear-gradient(120deg,#07583e,#0b8b60) !important;
+  border-color: #0b8b60 !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary-card.wallet span,
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary-card.wallet strong {
+  color: #fff !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-earning-opportunities,
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-referral {
+  margin-top: 22px !important;
+  padding: 25px !important;
+  border: 1px solid #e2ebe5 !important;
+  border-radius: 21px !important;
+  background: #fff !important;
+  box-shadow: 0 9px 28px rgba(15,45,31,.05) !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-earning-opportunities h3,
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-referral h3,
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-workspace h3 {
+  font-size: 21px !important;
+  color: #173c2c !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-earning-card {
+  min-height: 165px !important;
+  padding: 22px !important;
+  border-radius: 18px !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-ref-stats article {
+  padding: 15px !important;
+  border: 1px solid #e1eae4 !important;
+  border-radius: 14px !important;
+  background: #f8fbf9 !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-quick-grid {
+  gap: 15px !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-quick-card {
+  min-height: 145px !important;
+  padding: 20px !important;
+  border: 1px solid #e1eae4 !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 22px rgba(15,45,31,.05) !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-quick-card strong {
+  color: #173c2c !important;
+  font-size: 15px !important;
+}
+
+body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-quick-card small {
+  color: #718176 !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+
+@media(max-width:700px) {
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview {
+    margin-bottom: 24px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-welcome {
+    min-height: 155px !important;
+    padding: 23px 19px !important;
+    border-radius: 20px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-welcome h2 {
+    font-size: 25px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary {
+    grid-template-columns: 1fr !important;
+    gap: 11px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary-card {
+    min-height: 95px !important;
+    padding: 18px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-summary-card strong {
+    font-size: 27px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-earning-opportunities,
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-referral {
+    padding: 19px !important;
+    border-radius: 18px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-earning-grid {
+    grid-template-columns: 1fr !important;
+    gap: 13px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-earning-card {
+    min-height: 135px !important;
+    padding: 19px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-quick-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: 11px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-quick-card {
+    min-height: 135px !important;
+    padding: 15px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-ref-stats {
+    grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+    gap: 7px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-ref-stats article {
+    padding: 10px 7px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-ref-stats strong {
+    font-size: 19px !important;
+  }
+
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-dash-ref-stats span {
+    font-size: 10px !important;
+  }
+}
+
+@media(max-width:360px) {
+  body.sf-dashboard-mode #dashboardView #approvedDashboard #sfMemberOverview .sf-quick-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
